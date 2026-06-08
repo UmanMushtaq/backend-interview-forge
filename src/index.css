@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Semantic theme tokens. RGB channel triplets so Tailwind's <alpha-value>
+ * opacity modifiers (e.g. bg-primary/10) work everywhere.
+ */
+:root {
+  --bg: 248 250 252;
+  --surface: 255 255 255;
+  --surface-2: 241 245 249;
+  --border: 226 232 240;
+  --text: 15 23 42;
+  --muted: 100 116 139;
+  --primary: 13 148 136;
+  --primary-foreground: 255 255 255;
+  --success: 16 185 129;
+  --warning: 217 119 6;
+  --danger: 220 38 38;
+}
+
+.dark {
+  --bg: 9 12 20;
+  --surface: 17 22 34;
+  --surface-2: 24 31 47;
+  --border: 36 46 66;
+  --text: 226 232 240;
+  --muted: 148 163 184;
+  --primary: 45 212 191;
+  --primary-foreground: 6 16 18;
+  --success: 52 211 153;
+  --warning: 245 158 11;
+  --danger: 248 113 113;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg text-text font-sans antialiased;
+}
+
+/* Custom scrollbars that fit the dark UI */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted) / 0.6);
+}
+
+/* Markdown rendering inside explanations / problem statements */
+.prose-forge {
+  @apply text-text/90 leading-relaxed;
+}
+.prose-forge p {
+  @apply my-2;
+}
+.prose-forge h1,
+.prose-forge h2,
+.prose-forge h3 {
+  @apply font-semibold text-text mt-4 mb-2;
+}
+.prose-forge h1 {
+  @apply text-xl;
+}
+.prose-forge h2 {
+  @apply text-lg;
+}
+.prose-forge h3 {
+  @apply text-base;
+}
+.prose-forge ul {
+  @apply list-disc pl-5 my-2 space-y-1;
+}
+.prose-forge ol {
+  @apply list-decimal pl-5 my-2 space-y-1;
+}
+.prose-forge a {
+  @apply text-primary underline underline-offset-2;
+}
+.prose-forge strong {
+  @apply text-text font-semibold;
+}
+.prose-forge code {
+  @apply font-mono text-[0.85em] bg-surface-2 text-primary px-1.5 py-0.5 rounded border border-border;
+}
+.prose-forge pre {
+  @apply bg-surface-2 border border-border rounded-lg p-3 my-3 overflow-x-auto text-sm;
+}
+.prose-forge pre code {
+  @apply bg-transparent border-0 p-0 text-text/90;
+}
+.prose-forge blockquote {
+  @apply border-l-2 border-primary pl-3 italic text-muted my-3;
+}
+.prose-forge table {
+  @apply w-full my-3 text-sm border-collapse;
+}
+.prose-forge th,
+.prose-forge td {
+  @apply border border-border px-2 py-1 text-left;
+}
