@@ -61,6 +61,24 @@ export function Settings() {
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-5">
+        <h3 className="mb-1 font-semibold">AI features (optional)</h3>
+        <p className="mb-3 text-sm text-muted">
+          Add your own free Gemini API key to unlock AI-generated fresh tests and the AI mock interviewer. It is stored
+          only on this device and never leaves your browser except to call Google directly.
+        </p>
+        <input
+          type="password"
+          value={settings.geminiApiKey ?? ''}
+          onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
+          placeholder="Paste your Gemini API key…"
+          className="w-full rounded-lg border border-border bg-surface-2 p-2.5 text-sm outline-none focus:border-primary/50"
+        />
+        <p className="mt-2 text-xs text-muted">
+          Get a free key at aistudio.google.com/apikey. AI features that use it are rolling out next.
+        </p>
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-5">
         <h3 className="mb-3 font-semibold">Data</h3>
         <div className="flex flex-wrap items-center gap-3">
           <button

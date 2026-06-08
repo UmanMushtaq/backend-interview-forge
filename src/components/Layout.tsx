@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
+  GraduationCap,
   BookOpen,
   Code2,
   Network,
@@ -23,6 +24,7 @@ import { OnboardingModal } from './OnboardingModal';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/learn', label: 'Learn', icon: GraduationCap, end: false },
   { to: '/quiz', label: 'Quizzes', icon: BookOpen, end: false },
   { to: '/code', label: 'Coding', icon: Code2, end: false },
   { to: '/design', label: 'System Design', icon: Network, end: false },

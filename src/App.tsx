@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
+import { LearnList } from './pages/LearnList';
+import { ModulePage } from './pages/ModulePage';
 import { QuizHub } from './pages/QuizHub';
 import { QuizSession } from './pages/QuizSession';
 import { CodingList } from './pages/CodingList';
@@ -18,6 +20,8 @@ export default function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/learn" element={<LearnList />} />
+        <Route path="/learn/:moduleId" element={<ModulePage />} />
         <Route path="/quiz" element={<QuizHub />} />
         <Route path="/quiz/:category" element={<QuizSession />} />
         <Route path="/code" element={<CodingList />} />

@@ -5,6 +5,8 @@ import type {
   DesignSelfScore,
   LastActivity,
   InterviewProgressEntry,
+  ModuleProgress,
+  ModuleStatus,
 } from '../types';
 import { applyQuizAnswer } from './spacedRepetition';
 
@@ -23,11 +25,26 @@ function defaultState(): ProgressState {
     designProgress: {},
     sqlProgress: {},
     interviewProgress: {},
+    moduleProgress: {},
     studyHistory: {},
     settings: { ...defaultSettings },
     lastActivity: undefined,
   };
 }
+
+export function emptyModuleProgress(): ModuleProgress {
+  return {
+    lessonsRead: [],
+    status: 'not-started',
+    attempts: 0,
+    bestScore: 0,
+    lastScore: 0,
+    lastAttemptAt: 0,
+    seenQuestionIds: [],
+  };
+}
+
+export const MODULE_PASS_THRESHOLD = 70;
 
 function load(): ProgressState {
   if (typeof localStorage === 'undefined') return defaultState();
@@ -44,6 +61,7 @@ function load(): ProgressState {
       designProgress: parsed.designProgress ?? {},
       sqlProgress: parsed.sqlProgress ?? {},
       interviewProgress: parsed.interviewProgress ?? {},
+      moduleProgress: parsed.moduleProgress ?? {},
       studyHistory: parsed.studyHistory ?? {},
       settings: { ...defaultSettings, ...(parsed.settings ?? {}) },
     };
@@ -220,6 +238,55 @@ export function setInterviewConfidence(
     };
     return bumpStudyToday(withInterview, 1, 0);
   });
+}
+
+export function markLessonRead(moduleId: string, lessonId: string): void {
+  setState((s) => {
+    const prev = s.moduleProgress[moduleId] ?? emptyModuleProgress();
+    if (prev.lessonsRead.includes(lessonId)) return s;
+    return {
+      ...s,
+      moduleProgress: {
+        ...s.moduleProgress,
+        [moduleId]: {
+          ...prev,
+          lessonsRead: [...prev.lessonsRead, lessonId],
+          status: prev.status === 'not-started' ? 'learning' : prev.status,
+        },
+      },
+      lastActivity: { label: 'Learn', path: `/learn/${moduleId}`, timestamp: Date.now() },
+    };
+  });
+}
+
+/** Records a module test attempt; returns the score %. Status becomes mastered at >= MODULE_PASS_THRESHOLD. */
+export function recordModuleAttempt(
+  moduleId: string,
+  askedIds: string[],
+  correctCount: number,
+  total: number,
+): number {
+  const score = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+  setState((s) => {
+    const prev = s.moduleProgress[moduleId] ?? emptyModuleProgress();
+    const status: ModuleStatus = score >= MODULE_PASS_THRESHOLD ? 'mastered' : 'needs-review';
+    const next: ModuleProgress = {
+      lessonsRead: prev.lessonsRead,
+      status,
+      attempts: prev.attempts + 1,
+      bestScore: Math.max(prev.bestScore, score),
+      lastScore: score,
+      lastAttemptAt: Date.now(),
+      seenQuestionIds: [...prev.seenQuestionIds, ...askedIds].slice(-60),
+    };
+    const withModule: ProgressState = {
+      ...s,
+      moduleProgress: { ...s.moduleProgress, [moduleId]: next },
+      lastActivity: { label: 'Learn', path: `/learn/${moduleId}`, timestamp: Date.now() },
+    };
+    return bumpStudyToday(withModule, total, 0);
+  });
+  return score;
 }
 
 export function logStudyMinutes(minutes: number): void {

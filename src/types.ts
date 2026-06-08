@@ -14,7 +14,8 @@ export type QuizDifficulty = 'foundation' | 'core' | 'expert';
 
 export interface QuizQuestion {
   id: string;
-  category: QuizCategory;
+  // One of the six dashboard QuizCategory values, or a Learn-module id (e.g. "javascript").
+  category: string;
   subcategory: string;
   difficulty: QuizDifficulty;
   question: string;
@@ -152,6 +153,42 @@ export interface Settings {
   theme: ThemeMode;
   targetRole: TargetRole;
   onboarded: boolean;
+  /** Optional, user-supplied Gemini API key. Stored only on this device. */
+  geminiApiKey?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Learn modules (study material + adaptive relearn loop)
+// ---------------------------------------------------------------------------
+
+export interface Lesson {
+  id: string;
+  title: string;
+  content: string; // markdown
+}
+
+export interface LearnModule {
+  id: string;
+  title: string;
+  blurb: string;
+  /** When set, the module quiz draws from this existing quiz category pool. */
+  quizCategory?: QuizCategory;
+  lessons: Lesson[];
+  /** Module-specific question pool (for topics without a dashboard category). */
+  questions?: QuizQuestion[];
+}
+
+export type ModuleStatus = 'not-started' | 'learning' | 'needs-review' | 'mastered';
+
+export interface ModuleProgress {
+  lessonsRead: string[];
+  status: ModuleStatus;
+  attempts: number;
+  bestScore: number;
+  lastScore: number;
+  lastAttemptAt: number;
+  /** Recently-asked question ids, so retakes rotate to fresh questions. */
+  seenQuestionIds: string[];
 }
 
 export interface LastActivity {
@@ -166,6 +203,7 @@ export interface ProgressState {
   designProgress: Record<string, DesignProgressEntry>;
   sqlProgress: Record<string, SqlProgressEntry>;
   interviewProgress: Record<string, InterviewProgressEntry>;
+  moduleProgress: Record<string, ModuleProgress>;
   studyHistory: Record<string, StudyHistoryEntry>;
   settings: Settings;
   lastActivity?: LastActivity;
