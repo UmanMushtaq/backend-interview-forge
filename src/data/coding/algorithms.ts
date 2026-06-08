@@ -83,4 +83,32 @@ export const algorithms: CodingProblem[] = [
     interviewContext:
       'Deep clone forces you to reason about reference vs value semantics and the prototype chain — and to ask whether structuredClone already exists in the runtime.',
   },
+  {
+    id: 'algorithms-promiseall-001',
+    title: 'Implement Promise.all',
+    difficulty: 'medium',
+    category: 'algorithms',
+    description:
+      'Implement promiseAll(promises): resolve to an array of results in the SAME order as the input once all settle, and reject as soon as any input rejects.',
+    starterCode: `export function promiseAll(promises: Array<Promise<any>>): Promise<any[]> {\n  // TODO\n  return Promise.resolve([]);\n}\n`,
+    solution: `export function promiseAll(promises: Array<Promise<any>>): Promise<any[]> {\n  return new Promise((resolve, reject) => {\n    const results: any[] = new Array(promises.length);\n    let remaining = promises.length;\n    if (remaining === 0) {\n      resolve(results);\n      return;\n    }\n    promises.forEach((p, i) => {\n      Promise.resolve(p).then((v) => {\n        results[i] = v;\n        remaining -= 1;\n        if (remaining === 0) resolve(results);\n      }, reject);\n    });\n  });\n}\n`,
+    testCases: [
+      {
+        name: 'resolves in input order',
+        input: "return await promiseAll([Promise.resolve(1), new Promise((r) => setTimeout(() => r(2), 20)), Promise.resolve(3)]);",
+        expectedOutput: [1, 2, 3],
+      },
+      {
+        name: 'rejects if any input rejects',
+        input: "try { await promiseAll([Promise.resolve(1), Promise.reject(new Error('x'))]); return 'no'; } catch { return 'caught'; }",
+        expectedOutput: 'caught',
+      },
+    ],
+    hints: [
+      'Resolve into a pre-sized array by index so order is preserved.',
+      'Track a remaining counter; resolve at zero and forward any rejection immediately.',
+    ],
+    interviewContext:
+      'Reimplementing Promise.all proves you understand the event loop, fan-out concurrency, and fail-fast aggregation.',
+  },
 ];

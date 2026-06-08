@@ -60,4 +60,32 @@ export const cache: CodingProblem[] = [
     interviewContext:
       'LRU is the canonical cache eviction question. Using Map ordering for O(1) operations shows you know the language as well as the algorithm.',
   },
+  {
+    id: 'cache-ttl-001',
+    title: 'Cache with TTL',
+    difficulty: 'hard',
+    category: 'cache',
+    description:
+      'Implement a TTLCache. set(key, value, ttlMs) stores a value that expires after ttlMs. get(key) returns the value before expiry and undefined once it has expired.',
+    starterCode: `export class TTLCache {\n  set(key: string, value: any, ttlMs: number): void {\n    // TODO\n  }\n  get(key: string): any {\n    // TODO\n    return undefined;\n  }\n}\n`,
+    solution: `export class TTLCache {\n  private store = new Map<string, { value: any; expires: number }>();\n  set(key: string, value: any, ttlMs: number): void {\n    this.store.set(key, { value, expires: Date.now() + ttlMs });\n  }\n  get(key: string): any {\n    const e = this.store.get(key);\n    if (!e) return undefined;\n    if (Date.now() >= e.expires) {\n      this.store.delete(key);\n      return undefined;\n    }\n    return e.value;\n  }\n}\n`,
+    testCases: [
+      {
+        name: 'returns the value before it expires',
+        input: "const c = new TTLCache(); c.set('k', 7, 1000); return c.get('k');",
+        expectedOutput: 7,
+      },
+      {
+        name: 'returns undefined after the TTL elapses',
+        input: "const c = new TTLCache(); c.set('k', 7, 20); await new Promise((r) => setTimeout(r, 50)); return c.get('k') === undefined;",
+        expectedOutput: true,
+      },
+    ],
+    hints: [
+      'Store an absolute expiry timestamp alongside each value.',
+      'On get, compare Date.now() to the stored expiry and evict if it has passed.',
+    ],
+    interviewContext:
+      'TTL caching is everywhere (sessions, rate counters, hot reads). The key insight is storing an absolute expiry, not a countdown.',
+  },
 ];

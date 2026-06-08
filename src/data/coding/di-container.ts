@@ -90,4 +90,32 @@ export const diContainer: CodingProblem[] = [
     interviewContext:
       'Singleton scope is the NestJS default. Interviewers want to hear that the container caches instances so shared state and connections are reused.',
   },
+  {
+    id: 'di-resolve-001',
+    title: 'Recursive dependency resolution',
+    difficulty: 'hard',
+    category: 'di-container',
+    description:
+      'Build a Container whose factories receive the container so they can resolve their own dependencies. resolve(name) must resolve transitive dependencies and throw if it detects a circular dependency.',
+    starterCode: `export class Container {\n  register(name: string, factory: (c: Container) => any): void {\n    // TODO\n  }\n  resolve(name: string): any {\n    // TODO\n    return undefined;\n  }\n}\n`,
+    solution: `export class Container {\n  private factories = new Map<string, (c: Container) => any>();\n  private instances = new Map<string, any>();\n  private resolving = new Set<string>();\n  register(name: string, factory: (c: Container) => any): void {\n    this.factories.set(name, factory);\n  }\n  resolve(name: string): any {\n    if (this.instances.has(name)) return this.instances.get(name);\n    if (this.resolving.has(name)) throw new Error('Circular dependency: ' + name);\n    const factory = this.factories.get(name);\n    if (!factory) throw new Error('Unknown service: ' + name);\n    this.resolving.add(name);\n    const instance = factory(this);\n    this.resolving.delete(name);\n    this.instances.set(name, instance);\n    return instance;\n  }\n}\n`,
+    testCases: [
+      {
+        name: 'resolves transitive dependencies',
+        input: "const c = new Container(); c.register('a', () => 'A'); c.register('b', (ct) => ct.resolve('a') + 'B'); return c.resolve('b');",
+        expectedOutput: 'AB',
+      },
+      {
+        name: 'throws on a circular dependency',
+        input: "const c = new Container(); c.register('x', (ct) => ct.resolve('y')); c.register('y', (ct) => ct.resolve('x')); try { c.resolve('x'); return 'no-throw'; } catch { return 'threw'; }",
+        expectedOutput: 'threw',
+      },
+    ],
+    hints: [
+      'Pass `this` into each factory so it can resolve its own dependencies.',
+      'Track names currently being resolved in a Set; seeing one twice means a cycle.',
+    ],
+    interviewContext:
+      'This is what a real IoC container does: build the dependency graph on demand and fail loudly on cycles instead of overflowing the stack.',
+  },
 ];
