@@ -9,19 +9,37 @@ export const typescript: LearnModule = {
       id: 'ts-structural',
       title: 'Structural typing and interfaces',
       content:
-        'TypeScript is structurally typed: a value is assignable if it has the required shape, regardless of the declared name. Interfaces and type aliases both describe shapes; interfaces can be merged and extended, while type aliases can express unions, intersections, and mapped types. Prefer precise types over any, and reach for unknown when a value truly is unknown so the compiler forces you to narrow it.',
+        'TypeScript is structurally typed: a value is assignable if it has the required shape, regardless of the declared name. Interfaces and type aliases both describe shapes; interfaces can be merged and extended, while type aliases can express unions, intersections, and mapped types. Prefer precise types over any, and reach for unknown when a value truly is unknown so the compiler forces you to narrow it. Declaration merging lets you extend an existing interface from a different file, which is useful for augmenting third-party types. In interviews, the structural vs nominal typing distinction often comes up — TypeScript is structural, meaning two classes with the same methods are interchangeable even if unrelated, which surprises developers coming from Java or C#.',
     },
     {
       id: 'ts-generics',
       title: 'Generics and utility types',
       content:
-        'Generics let you write reusable code that preserves type information, like a Repository of T or a function that returns the same type it receives. Constraints (T extends ...) restrict what can be passed. Built-in utility types — Partial, Pick, Omit, Record, Readonly, ReturnType — cover most day-to-day transformations without hand-writing new interfaces.',
+        'Generics let you write reusable code that preserves type information, like a Repository<T> or a function that returns the same type it receives. Constraints (T extends ...) restrict what can be passed. Built-in utility types — Partial, Pick, Omit, Record, Readonly, ReturnType, Parameters, Awaited — cover most day-to-day transformations without hand-writing new interfaces. Conditional types (T extends U ? X : Y) and infer let you express complex type logic, for example extracting the resolved type of a Promise. A common interview question is to implement a simplified version of Partial or Pick using mapped types and the keyof operator.',
     },
     {
       id: 'ts-narrowing',
       title: 'Narrowing and discriminated unions',
       content:
-        'The compiler narrows types through control flow: typeof checks, truthiness, the in operator, and custom type guards (functions returning x is Type). A discriminated union gives each variant a common literal tag (e.g. kind), so a switch on that tag lets TypeScript know exactly which fields exist in each branch — the safest way to model state machines and API responses.',
+        'The compiler narrows types through control flow: typeof checks, truthiness, the in operator, instanceof, and custom type guards (functions returning "x is Type"). A discriminated union gives each variant a common literal tag (e.g. kind), so a switch on that tag lets TypeScript know exactly which fields exist in each branch — the safest way to model state machines and API responses. Exhaustiveness checking uses a never-typed default: if a new variant is added to the union but the switch is not updated, the compiler flags an error. This pattern is powerful for modelling complex domain logic safely.',
+    },
+    {
+      id: 'ts-enums-unknown-never',
+      title: 'Enums vs unions, unknown, any, and never',
+      content:
+        'String literal unions ("red" | "green" | "blue") are usually preferred over enums because they are simpler, have no runtime cost, and do not require a separate import. Const enums are erased at compile time but can cause issues with isolated module compilation. The any type disables all type checking, spreading unsafety everywhere it touches. The unknown type is the safe alternative: it accepts any value but you must narrow it before use. The never type represents values that can never exist — a function that always throws has return type never, and the unreachable default branch of an exhaustive switch has type never, which you can exploit for compile-time exhaustiveness checks.',
+    },
+    {
+      id: 'ts-satisfies-keyof-typeof',
+      title: 'satisfies, keyof, typeof, and declaration files',
+      content:
+        'The keyof operator produces a union of an object type\'s property names, useful for generic lookups. The typeof operator (in type position) extracts the TypeScript type of a value, so you can create a type from a const object without duplication. The satisfies keyword (TS 4.9) validates that a value matches a type while preserving the narrowest inferred type — unlike a type annotation, which widens. Declaration files (.d.ts) describe the types of plain JavaScript libraries; DefinitelyTyped (@types/*) provides community-maintained ones. Understanding module augmentation in .d.ts files, such as adding properties to Express Request, is a common backend TypeScript task.',
+    },
+    {
+      id: 'ts-declaration-files',
+      title: 'Declaration files and module augmentation',
+      content:
+        'Declaration files (.d.ts) contain only type information with no runtime code, telling TypeScript the shape of JavaScript libraries or global APIs. When you install a package like express and also install @types/express, the declaration file teaches TypeScript what req.body and res.json look like. Module augmentation lets you add properties to existing modules in a type-safe way — for example, adding a user property to Express\'s Request interface so every handler can access req.user without casting. Triple-slash references (reference types="node") import global type definitions. Writing your own .d.ts files for internal JavaScript modules is a migration strategy when converting a large codebase to TypeScript incrementally.',
     },
   ],
   questions: [
@@ -90,7 +108,7 @@ export const typescript: LearnModule = {
       category: 'typescript',
       subcategory: 'generics',
       difficulty: 'core',
-      question: 'What does the constraint in function f<T extends { id: string }>(x: T) guarantee?',
+      question: 'What does the constraint in "function f<T extends { id: string }>(x: T)" guarantee?',
       options: [
         'T can be any type at all',
         'x is guaranteed to have a string id property while preserving its concrete type',
@@ -99,7 +117,162 @@ export const typescript: LearnModule = {
       ],
       correctIndex: 1,
       explanation:
-        'The extends constraint requires T to have an id: string, so you can safely read x.id, while returning T keeps the caller’s exact type instead of widening it.',
+        'The extends constraint requires T to have an id: string, so you can safely read x.id, while returning T keeps the caller\'s exact type instead of widening it.',
+    },
+    {
+      id: 'ts-q-never',
+      category: 'typescript',
+      subcategory: 'types',
+      difficulty: 'expert',
+      question: 'What is the never type useful for in a switch statement over a discriminated union?',
+      options: [
+        'It makes the switch run faster',
+        'Assigning the value to a never variable in the default branch causes a compile error if a variant is unhandled',
+        'It prevents runtime errors by throwing automatically',
+        'never is only used for function return types',
+      ],
+      correctIndex: 1,
+      explanation:
+        'If all union variants are handled, the default branch is unreachable and TypeScript types the value as never. Assigning it to a never variable is a compile-time exhaustiveness check — add a variant and the compiler immediately reports an error.',
+    },
+    {
+      id: 'ts-q-interface-vs-type',
+      category: 'typescript',
+      subcategory: 'structural-typing',
+      difficulty: 'core',
+      question: 'Which feature does an interface have that a type alias does not?',
+      options: [
+        'The ability to describe a union',
+        'Declaration merging — multiple declarations with the same name are combined',
+        'The ability to use generics',
+        'The ability to be exported',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Interface declarations with the same name in the same scope merge into one type. Type aliases are unique; re-declaring one is an error. This merging is important for augmenting third-party interfaces like Express Request.',
+    },
+    {
+      id: 'ts-q-keyof',
+      category: 'typescript',
+      subcategory: 'utility-types',
+      difficulty: 'core',
+      question: 'What does keyof T produce?',
+      options: [
+        'An array of T\'s property names at runtime',
+        'A union type of all property name strings of T',
+        'A mapped type with optional properties',
+        'The prototype of T',
+      ],
+      correctIndex: 1,
+      explanation:
+        'keyof T is a compile-time operator that produces a string (or symbol/number) union of all keys of type T. It is the foundation of many generic utilities like Pick and Record.',
+    },
+    {
+      id: 'ts-q-typeof-satisfies',
+      category: 'typescript',
+      subcategory: 'utility-types',
+      difficulty: 'expert',
+      question: 'What advantage does "satisfies" (TS 4.9) have over a plain type annotation?',
+      options: [
+        'satisfies runs the type check at runtime',
+        'satisfies validates the shape but keeps the narrowest inferred type; an annotation widens to the declared type',
+        'satisfies is just an alias for "as"',
+        'satisfies only works with string literals',
+      ],
+      correctIndex: 1,
+      explanation:
+        'With a type annotation, the variable is widened to the annotated type, losing literal information. satisfies checks conformance while preserving the inferred narrow type, giving you both safety and precision.',
+    },
+    {
+      id: 'ts-q-type-guard',
+      category: 'typescript',
+      subcategory: 'narrowing',
+      difficulty: 'core',
+      question: 'A function with the return type "x is Dog" is called a…',
+      options: ['Type assertion', 'User-defined type guard', 'Mapped type', 'Conditional type'],
+      correctIndex: 1,
+      explanation:
+        'A user-defined type guard is a function that returns a boolean and has a type predicate (x is T) as its return type. When it returns true, TypeScript narrows x to T in the calling scope.',
+    },
+    {
+      id: 'ts-q-enum-vs-union',
+      category: 'typescript',
+      subcategory: 'enums',
+      difficulty: 'core',
+      question: 'Why do many TypeScript codebases prefer string literal unions over enums?',
+      options: [
+        'Enums are not valid TypeScript',
+        'String literal unions are simpler, have no runtime overhead, and do not need a separate import',
+        'Enums cannot have string values',
+        'String unions enable declaration merging',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Enums compile to runtime objects and can behave unexpectedly (numeric enums are bidirectionally mapped). String literal unions are erased at compile time, are more readable in logs, and require no import — so they are the community-preferred choice.',
+    },
+    {
+      id: 'ts-q-awaited',
+      category: 'typescript',
+      subcategory: 'utility-types',
+      difficulty: 'expert',
+      question: 'What does the Awaited<T> utility type do?',
+      options: [
+        'Wraps T in a Promise',
+        'Recursively unwraps Promise layers to get the resolved value type',
+        'Makes all properties of T optional',
+        'Converts T to unknown',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Awaited<Promise<Promise<string>>> resolves to string. It recursively unwraps Promise types, which is useful for inferring what async functions actually return after all awaits.',
+    },
+    {
+      id: 'ts-q-readonly',
+      category: 'typescript',
+      subcategory: 'utility-types',
+      difficulty: 'foundation',
+      question: 'What does Readonly<T> do, and does it affect runtime behaviour?',
+      options: [
+        'It freezes the object at runtime using Object.freeze',
+        'It marks all properties as non-optional at compile time only',
+        'It marks all properties as readonly at compile time; runtime behaviour is unchanged',
+        'It converts T to a primitive type',
+      ],
+      correctIndex: 2,
+      explanation:
+        'Readonly<T> is a compile-time constraint that prevents property reassignment in TypeScript code, but it emits no runtime code. The underlying JavaScript object can still be mutated if type assertions are used.',
+    },
+    {
+      id: 'ts-q-declaration-merging',
+      category: 'typescript',
+      subcategory: 'declaration-files',
+      difficulty: 'expert',
+      question: 'How do you add a custom "user" property to Express\'s Request interface in a TypeScript project?',
+      options: [
+        'Edit node_modules/@types/express directly',
+        'Use module augmentation: declare a new namespace block adding to the Express.Request interface in a .d.ts file',
+        'Cast req to any in every handler',
+        'Create a new class that extends Request',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Module augmentation lets you add properties to existing third-party interfaces without editing node_modules. A .d.ts file with the same module path as the package, adding to its interface, is picked up by the compiler automatically.',
+    },
+    {
+      id: 'ts-q-conditional-types',
+      category: 'typescript',
+      subcategory: 'generics',
+      difficulty: 'expert',
+      question: 'What does "T extends Promise<infer U> ? U : T" do?',
+      options: [
+        'Wraps T in a Promise if it is not already one',
+        'Extracts the resolved type U if T is a Promise, otherwise returns T unchanged',
+        'Checks if T is a class instance',
+        'Creates a union of T and U',
+      ],
+      correctIndex: 1,
+      explanation:
+        'This is a conditional type with infer. If T is assignable to Promise<U>, TypeScript infers U as the wrapped type and returns it. Otherwise, T is returned. It is the manual version of what Awaited<T> does.',
     },
   ],
 };
