@@ -2148,6 +2148,1821 @@ function setup() {
 
 **WeakMap/WeakSet for object-keyed caches** — as shown earlier, they prevent this class of leak automatically.`,
     },
+    {
+      id: 'js-string-methods',
+      title: 'String Methods: Complete Reference',
+      content: `## Strings Are Immutable
+
+Every string method returns a **new string** — the original is never modified.
+
+\`\`\`javascript
+const s = 'hello';
+s.toUpperCase();  // 'HELLO'
+console.log(s);   // 'hello' — unchanged
+\`\`\`
+
+## Searching
+
+\`\`\`javascript
+const str = 'Hello, World!';
+
+str.indexOf('o');           // 4  (first match, -1 if not found)
+str.lastIndexOf('o');       // 8  (last match)
+str.includes('World');      // true
+str.startsWith('Hello');    // true
+str.endsWith('!');          // true
+str.search(/world/i);       // 7  (regex, returns index or -1)
+\`\`\`
+
+## Extracting Substrings
+
+\`\`\`javascript
+const str = 'Hello, World!';
+
+str.slice(7, 12);       // 'World'  (start inclusive, end exclusive)
+str.slice(-6);          // 'orld!'  (negative = from end)
+str.substring(7, 12);   // 'World'  (swaps args if start > end; no negatives)
+str.at(0);              // 'H'  (ES2022, supports negative: str.at(-1) = '!')
+str[0];                 // 'H'  (read-only access)
+str.charAt(0);          // 'H'
+str.charCodeAt(0);      // 72  (UTF-16 code unit)
+str.codePointAt(0);     // 72  (full Unicode code point, handles emoji)
+\`\`\`
+
+Prefer \`slice\` over \`substring\` — it handles negatives and is more predictable.
+
+## Transforming
+
+\`\`\`javascript
+'hello'.toUpperCase();              // 'HELLO'
+'HELLO'.toLowerCase();              // 'hello'
+'  hello  '.trim();                 // 'hello'
+'  hello  '.trimStart();            // 'hello  '
+'  hello  '.trimEnd();              // '  hello'
+'abc'.repeat(3);                    // 'abcabcabc'
+'5'.padStart(4, '0');               // '0005'  (useful for IDs)
+'5'.padEnd(4, '-');                 // '5---'
+'Hello'.replace('l', 'r');         // 'Herlo'  (first match only)
+'Hello'.replaceAll('l', 'r');      // 'Herro'  (all matches, ES2021)
+'Hello'.replace(/l/g, 'r');        // 'Herro'  (regex with g flag)
+\`\`\`
+
+## Splitting and Joining
+
+\`\`\`javascript
+'a,b,c'.split(',');           // ['a', 'b', 'c']
+'hello'.split('');            // ['h', 'e', 'l', 'l', 'o']
+'hello'.split('', 3);         // ['h', 'e', 'l']  (limit)
+['a', 'b', 'c'].join('-');    // 'a-b-c'  (Array method, not String)
+\`\`\`
+
+## Pattern Matching
+
+\`\`\`javascript
+'hello123'.match(/\d+/);           // ['123'] with index info
+'hello123world456'.match(/\d+/g);  // ['123', '456']  (all matches with g)
+'cat bat'.matchAll(/[cb]at/g);     // iterator of all matches with groups
+
+'hello world'.replace(/(\w+)\s(\w+)/, '$2 $1');  // 'world hello'
+'hello'.replace(/(\w+)/, (match) => match.toUpperCase());  // 'HELLO'
+\`\`\`
+
+## Template Literals and String.raw
+
+\`\`\`javascript
+const name = 'Alice';
+\`Hello, \${name}!\`  // 'Hello, Alice!'
+
+// String.raw — raw string without processing escape sequences
+String.raw\`Line1\nLine2\`  // 'Line1\\nLine2' (backslash-n literally)
+// Useful for regex patterns and Windows paths
+\`\`\`
+
+## Unicode and Normalization
+
+\`\`\`javascript
+'café'.normalize('NFC');   // canonical composed form
+'\\u{1F600}'.length;        // 2 — emoji is two UTF-16 code units
+[...'\\u{1F600}'].length;   // 1 — spread uses code points
+\`\`\`
+
+## String.fromCharCode and fromCodePoint
+
+\`\`\`javascript
+String.fromCharCode(72, 101, 108, 108, 111);  // 'Hello'
+String.fromCodePoint(128512);                  // '😀'
+\`\`\``,
+    },
+    {
+      id: 'js-regex',
+      title: 'Regular Expressions: Patterns, Flags & Groups',
+      content: `## Creating Regular Expressions
+
+\`\`\`javascript
+const re1 = /pattern/flags;          // literal — compiled at parse time
+const re2 = new RegExp('pattern', 'flags');  // constructor — dynamic patterns
+
+const dynamic = 'hello';
+const re3 = new RegExp(\`^\${dynamic}\`, 'i');  // built from variable
+\`\`\`
+
+## Flags
+
+| Flag | Meaning |
+|------|---------|
+| \`g\` | Global — find all matches, not just first |
+| \`i\` | Case-insensitive |
+| \`m\` | Multiline — \`^\`/\`$\` match start/end of each line |
+| \`s\` | DotAll — \`.\` matches newlines too (ES2018) |
+| \`u\` | Unicode mode — enables \`\\p{}\` properties, treats surrogates correctly |
+| \`v\` | Unicode sets — superset of \`u\`, enables set operations in classes (ES2024) |
+| \`d\` | Indices — adds \`indices\` property to matches (ES2022) |
+| \`y\` | Sticky — match only at \`lastIndex\` position |
+
+## Character Classes
+
+\`\`\`javascript
+/[abc]/      // any of a, b, c
+/[^abc]/     // NOT a, b, or c
+/[a-z]/      // a through z
+/[a-zA-Z0-9]/ // alphanumeric
+/./          // any char except newline (use /s flag to include newline)
+/\\d/         // digit [0-9]
+/\\D/         // non-digit
+/\\w/         // word char [a-zA-Z0-9_]
+/\\W/         // non-word
+/\\s/         // whitespace (space, tab, newline, etc.)
+/\\S/         // non-whitespace
+/\\b/         // word boundary
+/\\B/         // non-word boundary
+\`\`\`
+
+## Quantifiers
+
+\`\`\`javascript
+/a*/    // 0 or more
+/a+/    // 1 or more
+/a?/    // 0 or 1 (optional)
+/a{3}/  // exactly 3
+/a{2,4}/ // 2 to 4
+/a{2,}/  // 2 or more
+\`\`\`
+
+**Greedy vs Lazy**: by default quantifiers are greedy (match as much as possible). Add \`?\` to make lazy:
+
+\`\`\`javascript
+'<b>bold</b>'.match(/<.+>/)[0];   // '<b>bold</b>'  — greedy
+'<b>bold</b>'.match(/<.+?>/)[0];  // '<b>'           — lazy
+\`\`\`
+
+## Anchors
+
+\`\`\`javascript
+/^hello/    // 'hello' at start of string (or line with /m)
+/world$/    // 'world' at end of string (or line with /m)
+/^hello$/   // exactly 'hello'
+/\\bword\\b/ // 'word' as whole word
+\`\`\`
+
+## Groups and Captures
+
+\`\`\`javascript
+// Capturing group — remembered for back-references and result
+/([a-z]+)\\s([a-z]+)/
+
+const m = 'hello world'.match(/([a-z]+)\\s([a-z]+)/);
+m[0]  // 'hello world' — full match
+m[1]  // 'hello'       — group 1
+m[2]  // 'world'       — group 2
+
+// Non-capturing group — groups without capturing
+/(?:[a-z]+)\\s(?:[a-z]+)/
+
+// Named capturing groups (ES2018)
+const { groups } = '2024-01-15'.match(/(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})/);
+groups.year   // '2024'
+groups.month  // '01'
+groups.day    // '15'
+\`\`\`
+
+## Lookahead and Lookbehind
+
+Assert what comes before/after without including it in the match:
+
+\`\`\`javascript
+// Positive lookahead: match X only if followed by Y
+/\\d+(?= dollars)/   // matches '100' in '100 dollars' but not '100 euros'
+
+// Negative lookahead
+/\\d+(?! dollars)/   // matches number NOT followed by ' dollars'
+
+// Positive lookbehind (ES2018)
+/(?<=\\$)\\d+/        // matches '100' in '$100' but not '€100'
+
+// Negative lookbehind
+/(?<!\\$)\\d+/        // matches '100' NOT preceded by '$'
+\`\`\`
+
+## String Methods with RegExp
+
+\`\`\`javascript
+/\\d+/.test('abc123');                   // true
+'abc123'.search(/\\d+/);                // 3 (index)
+'hello world'.replace(/\\w+/g, s => s.toUpperCase()); // 'HELLO WORLD'
+'one1two2three'.split(/\\d/);            // ['one', 'two', 'three']
+
+// matchAll — iterate all matches with groups
+const str = 'cat bat sat';
+for (const match of str.matchAll(/([cbst])at/g)) {
+  console.log(match[0], match[1]);  // 'cat','c'  'bat','b'  'sat','s'
+}
+\`\`\`
+
+## Unicode Properties (with /u or /v flag)
+
+\`\`\`javascript
+/\\p{Letter}/u      // any Unicode letter
+/\\p{Decimal_Number}/u  // any decimal digit in any script
+/\\p{Emoji}/u       // emoji characters
+/\\p{Script=Greek}/u // Greek script characters
+\`\`\``,
+    },
+    {
+      id: 'js-execution-context',
+      title: 'Execution Context, Call Stack & Scope Chain',
+      content: `## What Is an Execution Context?
+
+An **execution context** is the environment in which JavaScript code is evaluated and executed. Every time a function is called, a new execution context is created for it.
+
+There are three types:
+- **Global Execution Context (GEC)** — created when the script starts; represents the global scope
+- **Function Execution Context (FEC)** — created for each function call
+- **Eval Execution Context** — for code run inside \`eval()\` (avoid in production)
+
+## Phases of an Execution Context
+
+Each context has two phases:
+
+### Creation Phase
+1. **Variable Environment** is set up — \`var\` declarations are hoisted and initialised to \`undefined\`; \`let\`/\`const\` go into the TDZ
+2. **Scope chain** is established — references to outer environments
+3. **\`this\`** binding is determined
+
+### Execution Phase
+Code runs line by line; variable assignments happen here.
+
+\`\`\`javascript
+// Simplified mental model of the GEC creation phase:
+// Variable Environment: { greet: <function>, name: undefined }
+// this: window / global
+
+var name = 'Alice';   // assigned in execution phase
+function greet() {
+  // new FEC created here when called
+  var msg = 'Hello';  // local to this FEC
+  return msg + ' ' + name;  // accesses outer scope via scope chain
+}
+\`\`\`
+
+## The Call Stack
+
+The call stack (also called the execution stack) is a LIFO data structure that tracks the currently active execution contexts:
+
+\`\`\`javascript
+function c() { return 'c'; }
+function b() { return c(); }
+function a() { return b(); }
+a();
+
+// Stack frames (top = currently executing):
+// c() ← executing
+// b() ← waiting
+// a() ← waiting
+// global ← waiting
+\`\`\`
+
+When a function returns, its context is popped off the stack. The stack starts with the global context and ends when the script finishes.
+
+**Stack overflow** occurs when the call stack exceeds its limit (usually ~10,000 frames in V8), typically from infinite recursion:
+
+\`\`\`javascript
+function infinite() { return infinite(); }
+infinite();  // RangeError: Maximum call stack size exceeded
+\`\`\`
+
+## Lexical Environment vs Variable Environment
+
+- **Variable Environment**: stores \`var\` bindings and function declarations
+- **Lexical Environment**: stores \`let\`/\`const\`/\`class\` bindings
+
+Modern engines treat these similarly, but the distinction explains why \`var\` ignores block scope while \`let\`/\`const\` do not.
+
+## Scope Chain
+
+The scope chain links each lexical environment to its **outer lexical environment**, forming a chain up to the global scope. This chain is determined at definition time (lexical/static scoping), not at call time:
+
+\`\`\`javascript
+const x = 'global';
+
+function outer() {
+  const x = 'outer';
+  function inner() {
+    // inner's scope chain: inner → outer → global
+    console.log(x);  // 'outer' — found in outer before reaching global
+  }
+  inner();
+}
+outer();
+\`\`\`
+
+This is why closures work: the inner function's lexical environment keeps a reference to the outer function's environment even after it returns.
+
+## Dynamic vs Lexical Scope
+
+JavaScript uses **lexical (static) scope** — the scope of a variable is determined by where it is written in the source code, not where it is called from.
+
+\`\`\`javascript
+const x = 'global';
+function getX() { return x; }
+
+function outer() {
+  const x = 'outer';
+  return getX();  // returns 'global' — getX sees its definition scope, not caller's scope
+}
+outer();  // 'global'
+\`\`\`
+
+If JavaScript used dynamic scope, \`getX\` would return \`'outer'\`. It does not — always remember: scope is where you **write** the function.`,
+    },
+    {
+      id: 'js-es2016-es2017',
+      title: 'ES2016 (ES7) & ES2017 (ES8): New Features',
+      content: `## ES2016 (ES7) — Two Key Additions
+
+### Array.prototype.includes()
+
+Replaces the \`indexOf\` pattern for checking existence. Key advantage: correctly handles \`NaN\`.
+
+\`\`\`javascript
+[1, 2, 3].includes(2);           // true
+[1, 2, 3].includes(4);           // false
+[1, NaN, 3].includes(NaN);       // true  ✓
+[1, NaN, 3].indexOf(NaN);        // -1   ✗ (indexOf uses ===, NaN !== NaN)
+
+// Optional start index
+[1, 2, 3, 2].includes(2, 2);     // true  (search from index 2)
+[1, 2, 3, 2].includes(2, 3);     // true  (found at index 3)
+\`\`\`
+
+### Exponentiation Operator (**)
+
+\`\`\`javascript
+2 ** 10       // 1024  (same as Math.pow(2, 10))
+2 ** 0.5      // ~1.414 (square root)
+(-2) ** 2     // 4
+let x = 2;
+x **= 3;      // x = 8  (assignment form)
+\`\`\`
+
+## ES2017 (ES8) — Major Features
+
+### async/await
+
+The most impactful ES2017 addition — already covered in depth in the async/await lesson.
+
+### Object.entries() and Object.values()
+
+\`\`\`javascript
+const user = { name: 'Alice', age: 30, active: true };
+
+Object.values(user);   // ['Alice', 30, true]
+Object.entries(user);  // [['name','Alice'], ['age',30], ['active',true]]
+
+// Common pattern: transform object values
+const doubled = Object.fromEntries(
+  Object.entries(scores).map(([k, v]) => [k, v * 2])
+);
+
+// Iterate
+for (const [key, value] of Object.entries(config)) {
+  console.log(\`\${key}: \${value}\`);
+}
+\`\`\`
+
+### String Padding: padStart / padEnd
+
+\`\`\`javascript
+'42'.padStart(6);          // '    42'  (default fill: space)
+'42'.padStart(6, '0');     // '000042'  (useful for IDs, timestamps)
+'42'.padEnd(6, '.');       // '42....'
+'hello'.padStart(3);       // 'hello'   (no truncation if already longer)
+
+// Real use: format fixed-width columns
+const rows = [['Alice', 95], ['Bob', 100]];
+rows.forEach(([name, score]) => {
+  console.log(name.padEnd(10) + score.toString().padStart(5));
+});
+// Alice          95
+// Bob           100
+\`\`\`
+
+### Object.getOwnPropertyDescriptors()
+
+Returns descriptors for ALL own properties — useful for exact object cloning including getters/setters:
+
+\`\`\`javascript
+const source = {
+  get fullName() { return this.first + ' ' + this.last; },
+  first: 'Alice',
+  last: 'Smith',
+};
+
+// Object.assign loses getters (calls them, copies the value)
+const wrongCopy = Object.assign({}, source);
+// wrongCopy.fullName is 'Alice Smith' (a string), not a getter
+
+// Correct: preserve getters
+const correctCopy = Object.defineProperties({}, Object.getOwnPropertyDescriptors(source));
+// correctCopy.fullName is still a live getter
+\`\`\`
+
+### Trailing Commas in Function Parameters
+
+\`\`\`javascript
+function fn(
+  param1,
+  param2,  // ← trailing comma now allowed (cleaner git diffs)
+) {}
+
+fn(
+  arg1,
+  arg2,  // ← also allowed in calls
+);
+\`\`\`
+
+### Atomics and SharedArrayBuffer
+
+For true multi-threaded JavaScript using \`Worker\`s:
+
+\`\`\`javascript
+// In main thread:
+const sab = new SharedArrayBuffer(4);  // 4 bytes shared with workers
+const arr = new Int32Array(sab);
+
+// In worker thread — atomic operations prevent race conditions:
+Atomics.add(arr, 0, 1);     // atomically increment
+Atomics.load(arr, 0);       // atomically read
+Atomics.store(arr, 0, 42);  // atomically write
+Atomics.wait(arr, 0, 0);    // block until arr[0] !== 0
+Atomics.notify(arr, 0, 1);  // wake 1 waiting thread
+\`\`\``,
+    },
+    {
+      id: 'js-es2018-es2019',
+      title: 'ES2018 (ES9) & ES2019 (ES10): New Features',
+      content: `## ES2018 (ES9)
+
+### Promise.prototype.finally()
+
+Runs a callback when the promise settles (either way) — without changing the value:
+
+\`\`\`javascript
+fetch('/api/data')
+  .then(res => res.json())
+  .catch(err => handleError(err))
+  .finally(() => hideSpinner());  // always hides spinner
+
+// finally does NOT receive a value and its return is ignored
+// (unless it throws, which replaces the current rejection)
+Promise.resolve(42)
+  .finally(() => console.log('done'))  // logs 'done'
+  .then(v => console.log(v));          // logs 42 — value passes through
+\`\`\`
+
+### Object Rest and Spread
+
+Object spread was ES2018 (array spread was ES2015):
+
+\`\`\`javascript
+// Object spread
+const merged = { ...defaults, ...overrides };
+const copy = { ...original };
+const withExtras = { ...user, role: 'admin' };
+
+// Object rest in destructuring
+const { a, b, ...rest } = { a: 1, b: 2, c: 3, d: 4 };
+// a = 1, b = 2, rest = { c: 3, d: 4 }
+
+function omit({ password, ...safeUser }) {
+  return safeUser;  // strip sensitive fields
+}
+\`\`\`
+
+### Async Iteration (for await...of)
+
+Iterate over async data sources — Promises, async generators, streams:
+
+\`\`\`javascript
+async function processStream(readableStream) {
+  for await (const chunk of readableStream) {
+    process(chunk);  // awaits each chunk before processing next
+  }
+}
+
+// Works with async generators
+async function* paginate(url) {
+  let cursor = null;
+  do {
+    const { data, next } = await fetch(\`\${url}?cursor=\${cursor}\`).then(r => r.json());
+    yield* data;
+    cursor = next;
+  } while (cursor);
+}
+\`\`\`
+
+### RegExp Named Capture Groups
+
+\`\`\`javascript
+const re = /(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})/;
+const { groups } = '2024-01-15'.match(re);
+groups.year   // '2024'
+groups.month  // '01'
+\`\`\`
+
+### RegExp Lookbehind Assertions
+
+\`\`\`javascript
+/(?<=\\$)\\d+/.exec('$100');   // '100' — only after $
+/(?<!\\$)\\d+/.exec('€100');   // '100' — only NOT after $
+\`\`\`
+
+### RegExp dotAll flag (s)
+
+\`\`\`javascript
+/hello.world/.test('hello\\nworld');   // false — . doesn't match newline
+/hello.world/s.test('hello\\nworld');  // true — s flag makes . match anything
+\`\`\`
+
+---
+
+## ES2019 (ES10)
+
+### Array.prototype.flat() and flatMap()
+
+\`\`\`javascript
+[1, [2, 3], [4, [5, 6]]].flat();       // [1, 2, 3, 4, [5, 6]]  (one level)
+[1, [2, 3], [4, [5, 6]]].flat(2);      // [1, 2, 3, 4, 5, 6]
+[1, [2, [3]]].flat(Infinity);          // [1, 2, 3]
+
+// flatMap = map + flat(1), more efficient
+['hello world', 'foo bar'].flatMap(s => s.split(' '));
+// ['hello', 'world', 'foo', 'bar']
+
+// Filter + map in one pass (return empty array to "remove")
+users.flatMap(u => u.active ? [u.name] : []);
+\`\`\`
+
+### Object.fromEntries()
+
+The inverse of \`Object.entries()\`:
+
+\`\`\`javascript
+const entries = [['a', 1], ['b', 2]];
+Object.fromEntries(entries);  // { a: 1, b: 2 }
+
+// Transform object values cleanly:
+const prices = { apple: 0.99, banana: 0.5 };
+const discounted = Object.fromEntries(
+  Object.entries(prices).map(([k, v]) => [k, v * 0.9])
+);
+// { apple: 0.891, banana: 0.45 }
+
+// Convert Map to plain object:
+Object.fromEntries(new Map([['key', 'val']]));  // { key: 'val' }
+\`\`\`
+
+### Optional Catch Binding
+
+The \`catch\` parameter is now optional when you don't need the error:
+
+\`\`\`javascript
+// Before ES2019
+try { JSON.parse(str); } catch (e) { /* e unused */ }
+
+// ES2019+
+try { JSON.parse(str); } catch { return false; }
+\`\`\`
+
+### String.trimStart() and trimEnd()
+
+\`\`\`javascript
+'  hello  '.trimStart();  // 'hello  '
+'  hello  '.trimEnd();    // '  hello'
+// Aliases: trimLeft() / trimRight() (non-standard but widely supported)
+\`\`\`
+
+### Symbol.prototype.description
+
+\`\`\`javascript
+const sym = Symbol('my description');
+sym.toString();   // 'Symbol(my description)'
+sym.description;  // 'my description'  ← ES2019
+\`\`\`
+
+### Array.prototype.sort Stability Guaranteed
+
+Before ES2019, \`.sort()\` was not guaranteed to be stable (equal elements might reorder). ES2019 requires a **stable sort** — equal elements preserve their original relative order. All modern engines already did this; now it is spec-required.`,
+    },
+    {
+      id: 'js-es2020-es2021',
+      title: 'ES2020 (ES11) & ES2021 (ES12): New Features',
+      content: `## ES2020 (ES11)
+
+### BigInt
+
+For integers larger than \`Number.MAX_SAFE_INTEGER\` (2^53 − 1):
+
+\`\`\`javascript
+const big = 9007199254740993n;    // n suffix
+const also = BigInt('9007199254740993');
+
+big + 1n                    // 9007199254740994n
+big * 2n                    // 18014398509481986n
+typeof big                  // 'bigint'
+
+// Cannot mix with regular numbers without explicit conversion
+big + 1;                    // TypeError
+Number(big) + 1;            // loses precision if very large
+\`\`\`
+
+Use cases: cryptography, financial calculations, database IDs (PostgreSQL BIGINT), blockchain.
+
+### Optional Chaining (?.)
+
+Safe property access — already covered but note it also works for:
+
+\`\`\`javascript
+obj?.prop               // property
+obj?.[expr]             // computed property
+arr?.[0]                // array index
+fn?.()                  // function call — if fn is null/undefined, returns undefined
+obj?.method?.()         // method call — safe even if method is absent
+\`\`\`
+
+### Nullish Coalescing (??)
+
+Already covered; key distinction from \`||\`:
+
+\`\`\`javascript
+0 || 'default'     // 'default'  — treats 0 as falsy
+0 ?? 'default'     // 0          — only null/undefined trigger fallback
+'' ?? 'fallback'   // ''         — empty string is not null/undefined
+false ?? true      // false
+\`\`\`
+
+### Promise.allSettled()
+
+\`\`\`javascript
+const results = await Promise.allSettled([
+  fetch('/api/users'),
+  fetch('/api/missing'),
+  fetch('/api/posts'),
+]);
+
+results.forEach(result => {
+  if (result.status === 'fulfilled') console.log(result.value);
+  else console.error(result.reason);
+});
+// Never rejects — you always get all results
+\`\`\`
+
+### globalThis
+
+A universal reference to the global object across environments:
+
+\`\`\`javascript
+// Browser: window
+// Node.js: global
+// Web Worker: self
+// All: globalThis  ← works everywhere
+globalThis.setTimeout(() => {}, 0);
+\`\`\`
+
+### String.prototype.matchAll()
+
+Returns an iterator of all regex matches including capturing groups:
+
+\`\`\`javascript
+const str = 'test1 test2 test3';
+const matches = [...str.matchAll(/test(\\d)/g)];
+matches[0][0]  // 'test1' (full match)
+matches[0][1]  // '1' (group 1)
+matches[1][1]  // '2'
+// Requires the /g flag; returns iterator (use spread or for...of)
+\`\`\`
+
+### Dynamic import() and import.meta
+
+\`\`\`javascript
+// import.meta — module metadata in ESM
+console.log(import.meta.url);  // file URL of current module
+// In Node: file:///path/to/module.js
+\`\`\`
+
+---
+
+## ES2021 (ES12)
+
+### String.prototype.replaceAll()
+
+\`\`\`javascript
+'aabbcc'.replace('b', 'x');     // 'axbcc'  — only first match
+'aabbcc'.replaceAll('b', 'x');  // 'aaxxcc' — all matches
+'aabbcc'.replace(/b/g, 'x');    // 'aaxxcc' — same with regex /g
+
+// With a function
+'hello world'.replaceAll(/\\w+/g, s => s.toUpperCase());  // 'HELLO WORLD'
+\`\`\`
+
+### Promise.any() and AggregateError
+
+Resolves with the **first fulfilled** promise; rejects only if ALL reject:
+
+\`\`\`javascript
+const fastest = await Promise.any([
+  fetch('https://mirror1.example.com/data'),
+  fetch('https://mirror2.example.com/data'),
+  fetch('https://mirror3.example.com/data'),
+]);
+// Returns whichever responds first successfully
+
+// If all reject:
+try {
+  await Promise.any([Promise.reject('a'), Promise.reject('b')]);
+} catch (e) {
+  e instanceof AggregateError  // true
+  e.errors                     // ['a', 'b']
+}
+\`\`\`
+
+### Logical Assignment Operators
+
+\`\`\`javascript
+// ||= assign if falsy
+x ||= 'default';   // x = x || 'default'
+
+// &&= assign if truthy
+x &&= x.trim();    // x = x && x.trim()  (safe transform)
+
+// ??= assign if null/undefined
+x ??= 'default';   // x = x ?? 'default'
+\`\`\`
+
+### Numeric Separators
+
+\`\`\`javascript
+const million = 1_000_000;
+const hex = 0xFF_FF_FF;
+const binary = 0b1111_0000;
+const float = 3.141_592_653;
+// Purely visual — ignored by the engine
+\`\`\`
+
+### WeakRef and FinalizationRegistry
+
+\`\`\`javascript
+// WeakRef — weak reference to an object (doesn't prevent GC)
+let obj = { data: 'heavy' };
+const ref = new WeakRef(obj);
+
+// later:
+const val = ref.deref();  // undefined if GC'd, otherwise the object
+if (val) use(val);
+
+// FinalizationRegistry — callback when an object is GC'd
+const registry = new FinalizationRegistry((heldValue) => {
+  console.log(\`\${heldValue} was collected\`);
+});
+registry.register(obj, 'my object');
+// When obj is GC'd: 'my object was collected'
+\`\`\``,
+    },
+    {
+      id: 'js-es2022-es2024',
+      title: 'ES2022–ES2024 (ES13–ES15): Latest Features',
+      content: `## ES2022 (ES13)
+
+### Array.prototype.at()
+
+Negative indexing — cleaner than \`arr[arr.length - 1]\`:
+
+\`\`\`javascript
+const arr = [1, 2, 3, 4, 5];
+arr.at(0);    // 1   (same as arr[0])
+arr.at(-1);   // 5   (last element)
+arr.at(-2);   // 4   (second-to-last)
+
+'hello'.at(-1);  // 'o'
+\`\`\`
+
+### Object.hasOwn()
+
+Safer replacement for \`Object.prototype.hasOwnProperty.call()\`:
+
+\`\`\`javascript
+const obj = { a: 1 };
+obj.hasOwnProperty('a');        // true — but can be overridden if obj.hasOwnProperty = ...
+Object.hasOwn(obj, 'a');        // true — safe, always uses the built-in
+
+// Edge case where hasOwnProperty breaks:
+const bare = Object.create(null);  // no prototype, no hasOwnProperty method
+bare.x = 1;
+// bare.hasOwnProperty('x')  // TypeError!
+Object.hasOwn(bare, 'x');          // true — works correctly
+\`\`\`
+
+### Top-Level await (in ES Modules)
+
+\`\`\`javascript
+// config.js (ES module — .mjs or "type":"module" in package.json)
+const config = await fetch('/config.json').then(r => r.json());
+export { config };
+
+// Module loading waits for this file's top-level await before importing it
+\`\`\`
+
+### Error.cause
+
+Chain errors while preserving the original:
+
+\`\`\`javascript
+try {
+  await db.query(sql);
+} catch (err) {
+  throw new Error('Failed to load users', { cause: err });
+}
+
+// Reading:
+try { /* ... */ } catch (e) {
+  console.error(e.message);  // 'Failed to load users'
+  console.error(e.cause);    // original database error
+}
+\`\`\`
+
+### Class Static Blocks
+
+Run initialisation code for static class members:
+
+\`\`\`javascript
+class Config {
+  static debug;
+  static logLevel;
+
+  static {
+    // Runs once when class is defined
+    Config.debug = process.env.NODE_ENV !== 'production';
+    Config.logLevel = Config.debug ? 'verbose' : 'error';
+  }
+}
+\`\`\`
+
+### RegExp /d Flag (Indices)
+
+\`\`\`javascript
+const re = /(?<word>\\w+)/d;
+const m = re.exec('hello world');
+m.indices[0]         // [0, 5] — full match start/end
+m.indices.groups.word // [0, 5] — named group start/end
+\`\`\`
+
+---
+
+## ES2023 (ES14)
+
+### Non-Mutating Array Methods
+
+New methods that return a **new array** instead of mutating — safe for functional/immutable patterns:
+
+\`\`\`javascript
+const arr = [3, 1, 2];
+
+arr.toSorted();                     // [1, 2, 3] — new array
+arr.toSorted((a, b) => b - a);     // [3, 2, 1]
+arr.toReversed();                   // [2, 1, 3] — new array
+arr.toSpliced(1, 1, 9, 8);        // [3, 9, 8, 2] — new array
+arr.with(0, 99);                   // [99, 1, 2] — replace at index
+
+console.log(arr);  // [3, 1, 2] — still unchanged
+\`\`\`
+
+### Array.findLast() and findLastIndex()
+
+\`\`\`javascript
+[1, 2, 3, 4].findLast(n => n % 2 === 0);      // 4  (last even)
+[1, 2, 3, 4].findLastIndex(n => n % 2 === 0); // 3  (index of 4)
+// Compare: find/findIndex search from start
+\`\`\`
+
+---
+
+## ES2024 (ES15)
+
+### Promise.withResolvers()
+
+Cleaner way to create a promise with externally accessible resolve/reject:
+
+\`\`\`javascript
+// Before:
+let resolve, reject;
+const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+
+// ES2024:
+const { promise, resolve, reject } = Promise.withResolvers();
+// Use it later:
+setTimeout(() => resolve('done'), 1000);
+\`\`\`
+
+### Object.groupBy() and Map.groupBy()
+
+\`\`\`javascript
+const products = [
+  { name: 'apple', type: 'fruit' },
+  { name: 'banana', type: 'fruit' },
+  { name: 'carrot', type: 'vegetable' },
+];
+
+const byType = Object.groupBy(products, p => p.type);
+// { fruit: [{name:'apple',...}, {name:'banana',...}], vegetable: [{...}] }
+
+// Map.groupBy for non-string keys:
+Map.groupBy(products, p => p.type);  // Map with keys 'fruit', 'vegetable'
+\`\`\`
+
+### Set Methods
+
+\`\`\`javascript
+const a = new Set([1, 2, 3, 4]);
+const b = new Set([3, 4, 5, 6]);
+
+a.union(b);                // Set {1,2,3,4,5,6}
+a.intersection(b);         // Set {3,4}
+a.difference(b);           // Set {1,2}  (in a but not b)
+a.symmetricDifference(b);  // Set {1,2,5,6}  (in either but not both)
+a.isSubsetOf(b);           // false
+a.isSupersetOf(new Set([1,2]));  // true
+a.isDisjointFrom(b);       // false  (share 3,4)
+\`\`\``,
+    },
+    {
+      id: 'js-proxy-reflect',
+      title: 'Proxy & Reflect: Intercepting Object Operations',
+      content: `## What Is a Proxy?
+
+A \`Proxy\` wraps an object and intercepts fundamental operations — property reads, writes, function calls — via **trap** functions defined in a handler object.
+
+\`\`\`javascript
+const target = { name: 'Alice', age: 30 };
+const handler = {
+  get(target, prop, receiver) {
+    console.log(\`Reading: \${prop}\`);
+    return Reflect.get(target, prop, receiver);  // forward to target
+  },
+  set(target, prop, value, receiver) {
+    console.log(\`Writing: \${prop} = \${value}\`);
+    return Reflect.set(target, prop, value, receiver);
+  },
+};
+
+const proxy = new Proxy(target, handler);
+proxy.name;         // logs 'Reading: name', returns 'Alice'
+proxy.age = 31;     // logs 'Writing: age = 31'
+\`\`\`
+
+## Common Traps
+
+| Trap | Triggered by |
+|------|-------------|
+| \`get(target, prop, receiver)\` | \`proxy.prop\` or \`proxy[prop]\` |
+| \`set(target, prop, value, receiver)\` | \`proxy.prop = value\` |
+| \`has(target, prop)\` | \`prop in proxy\` |
+| \`deleteProperty(target, prop)\` | \`delete proxy.prop\` |
+| \`apply(target, thisArg, args)\` | \`proxy()\` — target must be a function |
+| \`construct(target, args)\` | \`new proxy()\` |
+| \`ownKeys(target)\` | \`Object.keys(proxy)\`, \`for...in\` |
+| \`getPrototypeOf(target)\` | \`Object.getPrototypeOf(proxy)\` |
+
+## Practical Use Cases
+
+### Input Validation
+
+\`\`\`javascript
+function createValidator(target, schema) {
+  return new Proxy(target, {
+    set(obj, prop, value) {
+      if (schema[prop] && !schema[prop](value)) {
+        throw new TypeError(\`Invalid value for \${prop}: \${value}\`);
+      }
+      obj[prop] = value;
+      return true;
+    },
+  });
+}
+
+const user = createValidator({}, {
+  age: v => typeof v === 'number' && v >= 0 && v <= 150,
+});
+user.age = 25;   // OK
+user.age = -1;   // TypeError: Invalid value for age: -1
+\`\`\`
+
+### Reactive/Observable Objects
+
+The basis of Vue 3's reactivity system:
+
+\`\`\`javascript
+function reactive(obj, onChange) {
+  return new Proxy(obj, {
+    set(target, prop, value) {
+      const old = target[prop];
+      target[prop] = value;
+      if (old !== value) onChange(prop, value, old);
+      return true;
+    },
+  });
+}
+
+const state = reactive({ count: 0 }, (prop, newVal) => {
+  console.log(\`\${prop} changed to \${newVal}\`);
+});
+state.count++;  // logs: 'count changed to 1'
+\`\`\`
+
+### Auto-Mocking / Spy Objects
+
+\`\`\`javascript
+function createSpy() {
+  const calls = [];
+  return new Proxy(function() {}, {
+    apply(target, thisArg, args) {
+      calls.push(args);
+      return undefined;
+    },
+    get(target, prop) {
+      if (prop === 'calls') return calls;
+      return createSpy();  // nested spy
+    },
+  });
+}
+\`\`\`
+
+## Reflect API
+
+\`Reflect\` provides the same operations as Proxy traps as standalone functions — the "default behaviour". Always use Reflect inside Proxy traps to correctly forward operations (handles edge cases with \`this\` and \`receiver\`):
+
+\`\`\`javascript
+Reflect.get(target, prop, receiver)      // obj.prop
+Reflect.set(target, prop, value, receiver) // obj.prop = value; returns boolean
+Reflect.has(target, prop)                // prop in obj
+Reflect.deleteProperty(target, prop)     // delete obj.prop
+Reflect.ownKeys(target)                  // Object.getOwnPropertyNames + Symbols
+Reflect.apply(fn, thisArg, args)         // fn.apply(thisArg, args)
+Reflect.construct(Cls, args)             // new Cls(...args)
+\`\`\`
+
+## Revocable Proxies
+
+\`\`\`javascript
+const { proxy, revoke } = Proxy.revocable(target, handler);
+proxy.name;    // works
+revoke();
+proxy.name;    // TypeError — proxy is revoked
+\`\`\`
+
+Useful for capability-based security: grant access via proxy, revoke it when done.`,
+    },
+    {
+      id: 'js-functional',
+      title: 'Functional Programming: Pure Functions, Composition & Currying',
+      content: `## Core Principles
+
+Functional programming (FP) treats computation as the evaluation of mathematical functions and avoids changing state and mutable data.
+
+**Key ideas:**
+1. **Pure functions** — same input always gives same output, no side effects
+2. **Immutability** — don't mutate data; return new values
+3. **First-class functions** — functions as values
+4. **Function composition** — build complex behaviour from simple functions
+5. **Declarative style** — describe WHAT, not HOW
+
+## Pure Functions
+
+\`\`\`javascript
+// PURE — no side effects, deterministic
+function add(a, b) { return a + b; }
+function formatUser(user) { return { ...user, fullName: user.first + ' ' + user.last }; }
+
+// IMPURE — modifies external state
+let total = 0;
+function addToTotal(n) { total += n; }  // side effect!
+
+// IMPURE — depends on external state
+function getTime() { return new Date(); }  // different result each call
+\`\`\`
+
+## Immutability
+
+\`\`\`javascript
+// Mutable — modifies in place
+function addItem(arr, item) { arr.push(item); return arr; }  // bad
+
+// Immutable — returns new array
+function addItem(arr, item) { return [...arr, item]; }  // good
+
+// Immutable object update
+function updateUser(user, changes) { return { ...user, ...changes }; }
+
+// Nested immutable update
+function setCity(user, city) {
+  return { ...user, address: { ...user.address, city } };
+}
+\`\`\`
+
+## Function Composition
+
+Build a new function by chaining existing ones (output of one → input of next):
+
+\`\`\`javascript
+const compose = (...fns) => x => fns.reduceRight((v, f) => f(v), x);
+const pipe    = (...fns) => x => fns.reduce((v, f) => f(v), x);
+// compose: right-to-left; pipe: left-to-right (more readable)
+
+const process = pipe(
+  str => str.trim(),
+  str => str.toLowerCase(),
+  str => str.replace(/\\s+/g, '-'),
+);
+process('  Hello World  ');  // 'hello-world'
+\`\`\`
+
+## Currying
+
+Transform a multi-argument function into a chain of single-argument functions:
+
+\`\`\`javascript
+// Manual curry
+const multiply = a => b => a * b;
+const double   = multiply(2);   // partially applied
+const triple   = multiply(3);
+double(5);  // 10
+triple(5);  // 15
+
+// Curry utility
+function curry(fn) {
+  return function curried(...args) {
+    if (args.length >= fn.length) return fn(...args);
+    return (...more) => curried(...args, ...more);
+  };
+}
+
+const add = curry((a, b, c) => a + b + c);
+add(1)(2)(3)   // 6
+add(1, 2)(3)   // 6
+add(1)(2, 3)   // 6
+\`\`\`
+
+## Partial Application
+
+Fix some arguments of a function, return a new function for the rest:
+
+\`\`\`javascript
+function partial(fn, ...presetArgs) {
+  return function(...laterArgs) {
+    return fn(...presetArgs, ...laterArgs);
+  };
+}
+
+const multiply = (a, b) => a * b;
+const double = partial(multiply, 2);
+double(5);   // 10
+double(10);  // 20
+\`\`\`
+
+## Practical Patterns
+
+**Point-free style** — define functions by composition rather than explicit arguments:
+
+\`\`\`javascript
+const getActiveNames = pipe(
+  users => users.filter(u => u.active),
+  users => users.map(u => u.name),
+  names => names.sort(),
+);
+// vs imperative:
+function getActiveNames(users) {
+  return users.filter(u => u.active).map(u => u.name).sort();
+}
+\`\`\`
+
+**Transducers** — compose transformations efficiently (avoids multiple array passes):
+
+\`\`\`javascript
+// Normal: creates intermediate arrays
+data.filter(isValid).map(transform).reduce(combine, []);
+
+// With transducers: single pass, no intermediate allocations
+// (advanced — uses Ramda or custom implementation)
+\`\`\`
+
+## When to Use FP vs OOP
+
+**FP shines for**: data transformation pipelines, stateless utilities, event handlers, configuration parsing, functional reactive programming (RxJS).
+
+**OOP shines for**: modelling entities with state and behaviour (User, Order, Connection), complex lifecycle management, frameworks and UI components.
+
+Most real JavaScript code combines both — use FP for data pipelines and pure utilities, OOP for stateful entities.`,
+    },
+    {
+      id: 'js-design-patterns',
+      title: 'JavaScript Design Patterns: Creational, Structural & Behavioral',
+      content: `## Creational Patterns
+
+### Singleton
+
+Ensures only one instance of a class exists:
+
+\`\`\`javascript
+class Database {
+  static #instance = null;
+  #connection;
+
+  constructor(url) {
+    if (Database.#instance) return Database.#instance;
+    this.#connection = connect(url);
+    Database.#instance = this;
+  }
+
+  static getInstance(url) {
+    return Database.#instance ?? new Database(url);
+  }
+}
+// With ES modules, the module cache IS the singleton — just export an instance:
+export const db = new Database(process.env.DB_URL);
+\`\`\`
+
+### Factory
+
+Create objects without specifying their exact class:
+
+\`\`\`javascript
+class NotificationFactory {
+  static create(type, options) {
+    switch (type) {
+      case 'email':   return new EmailNotification(options);
+      case 'sms':     return new SmsNotification(options);
+      case 'push':    return new PushNotification(options);
+      default: throw new Error(\`Unknown type: \${type}\`);
+    }
+  }
+}
+
+const n = NotificationFactory.create('email', { to: 'user@example.com' });
+\`\`\`
+
+### Builder
+
+Construct complex objects step by step:
+
+\`\`\`javascript
+class QueryBuilder {
+  #table = '';
+  #conditions = [];
+  #limit = null;
+  #orderBy = null;
+
+  from(table) { this.#table = table; return this; }
+  where(condition) { this.#conditions.push(condition); return this; }
+  orderBy(col) { this.#orderBy = col; return this; }
+  take(n) { this.#limit = n; return this; }
+
+  build() {
+    let q = \`SELECT * FROM \${this.#table}\`;
+    if (this.#conditions.length) q += \` WHERE \${this.#conditions.join(' AND ')}\`;
+    if (this.#orderBy) q += \` ORDER BY \${this.#orderBy}\`;
+    if (this.#limit) q += \` LIMIT \${this.#limit}\`;
+    return q;
+  }
+}
+
+const query = new QueryBuilder()
+  .from('users')
+  .where('active = true')
+  .where('age > 18')
+  .orderBy('name')
+  .take(10)
+  .build();
+\`\`\`
+
+## Structural Patterns
+
+### Decorator
+
+Add behaviour to an object without modifying its class:
+
+\`\`\`javascript
+class Logger {
+  log(msg) { console.log(msg); }
+}
+
+function withTimestamp(logger) {
+  return {
+    log(msg) { logger.log(\`[\${new Date().toISOString()}] \${msg}\`); },
+  };
+}
+function withLevel(logger, level) {
+  return {
+    log(msg) { logger.log(\`[\${level.toUpperCase()}] \${msg}\`); },
+  };
+}
+
+const logger = withLevel(withTimestamp(new Logger()), 'info');
+logger.log('Server started');
+// [2024-01-15T10:00:00.000Z] [INFO] Server started
+\`\`\`
+
+### Facade
+
+Simplify a complex subsystem with a clean interface:
+
+\`\`\`javascript
+class PaymentFacade {
+  constructor() {
+    this.validator = new CardValidator();
+    this.fraud = new FraudDetector();
+    this.processor = new PaymentProcessor();
+    this.notifier = new NotificationService();
+  }
+
+  async charge(card, amount, userId) {
+    this.validator.validate(card);
+    await this.fraud.check(userId, amount);
+    const result = await this.processor.charge(card, amount);
+    await this.notifier.sendReceipt(userId, result);
+    return result;
+  }
+}
+// Callers use one method instead of orchestrating 4 services
+\`\`\`
+
+## Behavioral Patterns
+
+### Observer / Pub-Sub
+
+\`\`\`javascript
+class EventBus {
+  #channels = new Map();
+
+  subscribe(event, handler) {
+    if (!this.#channels.has(event)) this.#channels.set(event, new Set());
+    this.#channels.get(event).add(handler);
+    return () => this.#channels.get(event)?.delete(handler);
+  }
+
+  publish(event, data) {
+    this.#channels.get(event)?.forEach(h => h(data));
+  }
+}
+
+const bus = new EventBus();
+const unsub = bus.subscribe('user:created', user => sendWelcomeEmail(user));
+bus.publish('user:created', { email: 'alice@example.com' });
+unsub();  // clean up
+\`\`\`
+
+### Strategy
+
+Swap algorithms at runtime:
+
+\`\`\`javascript
+const sorters = {
+  bubble: arr => { /* ... */ },
+  merge:  arr => { /* ... */ },
+  quick:  arr => { /* ... */ },
+};
+
+class Sorter {
+  constructor(strategy = 'quick') { this.strategy = strategy; }
+  sort(data) { return sorters[this.strategy]([...data]); }
+}
+\`\`\`
+
+### Command
+
+Encapsulate actions as objects — enables undo, queuing, logging:
+
+\`\`\`javascript
+class CommandHistory {
+  #history = [];
+
+  execute(command) {
+    command.execute();
+    this.#history.push(command);
+  }
+
+  undo() {
+    this.#history.pop()?.undo();
+  }
+}
+
+const addItem = {
+  execute() { cart.push(item); },
+  undo()    { cart.pop(); },
+};
+\`\`\``,
+    },
+    {
+      id: 'js-recursion',
+      title: 'Recursion, Tree Traversal & Tail Calls',
+      content: `## What Is Recursion?
+
+A function that calls itself. Every recursive solution needs:
+1. **Base case** — condition that stops recursion
+2. **Recursive case** — function calls itself with a smaller/simpler input
+
+\`\`\`javascript
+function factorial(n) {
+  if (n <= 1) return 1;           // base case
+  return n * factorial(n - 1);    // recursive case
+}
+factorial(5);  // 5 * 4 * 3 * 2 * 1 = 120
+\`\`\`
+
+## The Call Stack and Recursion
+
+Each recursive call adds a frame to the call stack. Deep recursion can cause a **stack overflow**:
+
+\`\`\`javascript
+// Breaks at ~10,000 depth in Node.js
+function sum(n) {
+  if (n === 0) return 0;
+  return n + sum(n - 1);
+}
+sum(100000);  // RangeError: Maximum call stack size exceeded
+\`\`\`
+
+## Tail Call Optimization (TCO)
+
+A **tail call** is a function call as the last operation — the current frame can be replaced instead of stacked. ES2015 specified TCO, but only Safari implements it fully. In Node.js, use iteration for deep recursion.
+
+\`\`\`javascript
+// NOT tail-recursive — must keep frame to multiply after recursive call returns
+function factorial(n) {
+  return n <= 1 ? 1 : n * factorial(n - 1);  // * happens after return
+}
+
+// Tail-recursive — accumulator carries state
+function factorial(n, acc = 1) {
+  return n <= 1 ? acc : factorial(n - 1, n * acc);  // call is the last operation
+}
+\`\`\`
+
+## Memoized Recursion
+
+Cache results to avoid redundant computation:
+
+\`\`\`javascript
+function memoize(fn) {
+  const cache = new Map();
+  return function memo(...args) {
+    const key = JSON.stringify(args);
+    if (cache.has(key)) return cache.get(key);
+    const result = fn.apply(this, args);
+    cache.set(key, result);
+    return result;
+  };
+}
+
+const fib = memoize(function(n) {
+  return n <= 1 ? n : fib(n - 1) + fib(n - 2);
+});
+fib(40);  // instant — without memoization: 2^40 calls
+\`\`\`
+
+## Tree Traversal
+
+Recursion is natural for tree/graph structures:
+
+\`\`\`javascript
+// Depth-First traversal
+function dfs(node, visit) {
+  if (!node) return;
+  visit(node);                        // pre-order (visit before children)
+  node.children?.forEach(child => dfs(child, visit));
+}
+
+// Find in tree
+function findNode(root, predicate) {
+  if (!root) return null;
+  if (predicate(root)) return root;
+  for (const child of root.children ?? []) {
+    const found = findNode(child, predicate);
+    if (found) return found;
+  }
+  return null;
+}
+
+// Deep flatten
+function flatten(arr) {
+  return arr.reduce((acc, item) =>
+    Array.isArray(item) ? [...acc, ...flatten(item)] : [...acc, item], []);
+}
+
+// Deep clone
+function deepClone(value) {
+  if (value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(deepClone);
+  return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, deepClone(v)]));
+}
+\`\`\`
+
+## Iterative vs Recursive
+
+Prefer **iteration** when:
+- Input depth is unbounded (risk of stack overflow)
+- Performance is critical (function call overhead)
+- The language/runtime does not support TCO
+
+Prefer **recursion** when:
+- The problem is naturally hierarchical (trees, graphs, nested structures)
+- Clarity matters and depth is bounded
+- Paired with memoization for DP problems
+
+\`\`\`javascript
+// Iterative DFS using an explicit stack
+function dfsIterative(root, visit) {
+  const stack = [root];
+  while (stack.length) {
+    const node = stack.pop();
+    visit(node);
+    stack.push(...(node.children ?? []).reverse());  // reverse to maintain order
+  }
+}
+\`\`\``,
+    },
+    {
+      id: 'js-date-json',
+      title: 'Date Object & JSON: Parsing, Serialisation & Gotchas',
+      content: `## Creating Dates
+
+\`\`\`javascript
+new Date()                    // current moment
+new Date('2024-01-15')        // from ISO string (UTC midnight)
+new Date('2024-01-15T10:30:00Z')  // UTC explicit
+new Date(2024, 0, 15)         // year, month (0-indexed!), day — LOCAL time
+new Date(1705312200000)       // from Unix timestamp (milliseconds)
+
+Date.now()                    // Unix timestamp ms — no object creation
+\`\`\`
+
+**Month is 0-indexed**: January = 0, December = 11. This is a famous footgun.
+
+## Reading Dates
+
+\`\`\`javascript
+const d = new Date('2024-01-15T10:30:00Z');
+
+d.getFullYear()       // 2024
+d.getMonth()          // 0  (January!)
+d.getDate()           // 15  (day of month)
+d.getDay()            // 1  (day of week: 0=Sunday, 6=Saturday)
+d.getHours()          // 10  (local) vs d.getUTCHours()
+d.getMinutes()        // 30
+d.getTime()           // Unix timestamp ms
+d.toISOString()       // '2024-01-15T10:30:00.000Z'  — always UTC
+d.toLocaleDateString('en-GB')  // '15/01/2024'  (locale-aware)
+d.toLocaleDateString('fr-FR')  // '15/01/2024'
+\`\`\`
+
+## Date Arithmetic
+
+\`\`\`javascript
+const now = new Date();
+const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+const nextMonth = new Date(now);
+nextMonth.setMonth(now.getMonth() + 1);  // mutates!
+
+// Difference in days
+const diffMs = date2 - date1;    // dates subtract to milliseconds
+const diffDays = diffMs / (1000 * 60 * 60 * 24);
+\`\`\`
+
+For production date handling, use **Temporal** (Stage 3 proposal) or a library like **date-fns** or **Day.js** — native Date has many pitfalls.
+
+## Intl.DateTimeFormat
+
+\`\`\`javascript
+new Intl.DateTimeFormat('en-US', {
+  year: 'numeric', month: 'long', day: 'numeric',
+}).format(new Date());  // 'January 15, 2024'
+
+new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+  .format(-1, 'day');   // 'yesterday'
+\`\`\`
+
+## JSON.stringify
+
+\`\`\`javascript
+JSON.stringify(value)               // compact
+JSON.stringify(value, null, 2)      // pretty-print with 2-space indent
+
+// Replacer function — control what's included
+JSON.stringify(obj, (key, value) => {
+  if (key === 'password') return undefined;  // exclude sensitive fields
+  return value;
+});
+
+// Replacer array — whitelist keys
+JSON.stringify(user, ['name', 'email']);
+
+// toJSON method — custom serialisation
+class Money {
+  constructor(amount, currency) { this.amount = amount; this.currency = currency; }
+  toJSON() { return \`\${this.amount} \${this.currency}\`; }
+}
+JSON.stringify(new Money(100, 'EUR'));  // '"100 EUR"'
+\`\`\`
+
+**What JSON.stringify silently drops or changes:**
+- \`undefined\` values → omitted from objects, become \`null\` in arrays
+- Functions → omitted
+- Symbols → omitted
+- \`NaN\` and \`Infinity\` → \`null\`
+- \`Date\` objects → ISO string (loses the Date type — parsed as string)
+- \`Map\`, \`Set\`, \`RegExp\` → \`{}\` (empty object — data lost!)
+- Circular references → throws \`TypeError\`
+
+## JSON.parse
+
+\`\`\`javascript
+JSON.parse('{"name":"Alice","age":30}');  // { name: 'Alice', age: 30 }
+
+// Reviver — transform values while parsing
+const data = JSON.parse(text, (key, value) => {
+  if (key === 'date') return new Date(value);  // restore Date objects
+  return value;
+});
+\`\`\`
+
+## Safe JSON Handling
+
+\`\`\`javascript
+function safeParse(str, fallback = null) {
+  try { return JSON.parse(str); }
+  catch { return fallback; }
+}
+
+function safeStringify(obj) {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return '[Circular]';
+      seen.add(value);
+    }
+    return value;
+  });
+}
+\`\`\``,
+    },
+    {
+      id: 'js-memory-gc',
+      title: 'Memory Management, Garbage Collection & Leak Prevention',
+      content: `## Stack vs Heap
+
+**Stack** — fixed-size, fast, automatically managed. Holds:
+- Primitive values (number, boolean, string, etc.)
+- References (pointers) to objects
+- Function call frames (local variables, return address)
+
+**Heap** — dynamic, large, managed by the GC. Holds:
+- All objects, arrays, functions, closures
+
+\`\`\`javascript
+let x = 42;           // 42 is on the stack
+let obj = { a: 1 };   // reference (pointer) on stack, { a: 1 } on heap
+let copy = obj;       // copy of the reference — both point to same object on heap
+\`\`\`
+
+## Garbage Collection
+
+JavaScript uses **automatic garbage collection** — you don't \`free()\` memory manually. The GC reclaims memory for objects that are no longer reachable.
+
+### Mark-and-Sweep (V8's primary algorithm)
+
+1. **Mark** — starting from "roots" (global variables, call stack, registers), recursively mark every object that can be reached
+2. **Sweep** — collect all unmarked objects (unreachable = garbage)
+
+\`\`\`javascript
+let user = { name: 'Alice' };   // object on heap, reachable via 'user'
+user = null;                     // reference dropped — object now unreachable
+// GC will collect { name: 'Alice' } on next cycle
+\`\`\`
+
+### Generational GC
+
+V8 divides the heap into **young generation** (most objects — short-lived) and **old generation** (survivors). Young-gen GC runs frequently and is fast; old-gen is slower but less frequent. Most objects die young (allocated, used briefly, collected).
+
+## Common Memory Leaks
+
+### 1. Global Variables
+
+\`\`\`javascript
+function leaked() {
+  leakedVar = 'oops';  // no let/const/var — becomes global!
+}
+\`\`\`
+
+Always use \`'use strict'\` or ES modules to catch accidental globals.
+
+### 2. Forgotten Timers
+
+\`\`\`javascript
+// Leak: interval keeps running and holds closure reference
+const interval = setInterval(() => {
+  processData(heavyObject);  // heavyObject stays in memory
+}, 1000);
+// Fix:
+clearInterval(interval);
+\`\`\`
+
+### 3. Unremoved Event Listeners
+
+\`\`\`javascript
+class Component {
+  onEvent = () => this.update();  // reference to this
+
+  mount() {
+    emitter.on('data', this.onEvent);
+  }
+  unmount() {
+    emitter.off('data', this.onEvent);  // MUST remove or the whole component leaks
+  }
+}
+\`\`\`
+
+### 4. Closures Retaining Large Scopes
+
+\`\`\`javascript
+function setup() {
+  const bigBuffer = Buffer.alloc(10_000_000);  // 10 MB
+  return () => bigBuffer.length;               // keeps entire buffer in memory
+
+  // Fix: only keep what you need
+  const size = bigBuffer.length;
+  return () => size;  // bigBuffer can now be GC'd
+}
+\`\`\`
+
+### 5. Out-of-Control Caches
+
+\`\`\`javascript
+const cache = new Map();  // grows forever
+// Fix: bounded cache with LRU eviction, or use WeakMap for object keys
+\`\`\`
+
+## Memory-Efficient Patterns
+
+\`\`\`javascript
+// Use WeakMap for object-keyed caches
+const cache = new WeakMap();
+function getMetadata(obj) {
+  if (!cache.has(obj)) cache.set(obj, computeMeta(obj));
+  return cache.get(obj);
+}
+// When obj has no other references, the cache entry is GC'd automatically
+
+// Process large data lazily with generators (never holds everything in memory)
+async function* readLines(filePath) {
+  const stream = fs.createReadStream(filePath);
+  for await (const chunk of stream) {
+    for (const line of chunk.toString().split('\\n')) {
+      yield line;
+    }
+  }
+}
+\`\`\`
+
+## Diagnosing Leaks in Node.js
+
+\`\`\`javascript
+// Monitor heap usage
+const used = process.memoryUsage();
+console.log(\`Heap: \${Math.round(used.heapUsed / 1024 / 1024)} MB\`);
+
+// Force GC in --expose-gc mode (debugging only!)
+if (global.gc) global.gc();
+\`\`\`
+
+Use Node.js \`--inspect\` + Chrome DevTools heap snapshots to find what's retaining memory, or use \`clinic heap\` from the Clinic.js suite.`,
+    },
   ],
   questions: [
     // Variables and Types
@@ -2781,6 +4596,468 @@ function setup() {
       correctIndex: 2,
       explanation:
         'With a regular Map, the cache entry keeps the key (DOM element/object) alive even after all other references are gone. WeakMap holds its keys weakly, so once the key object has no other references, it can be garbage-collected and the entry is cleaned up automatically.',
+    },
+    // String Methods
+    {
+      id: 'js-q-slice-negative',
+      category: 'javascript',
+      subcategory: 'string-methods',
+      difficulty: 'foundation',
+      question: 'What does `"hello".slice(-3)` return?',
+      options: ['"hel"', '"llo"', '"ello"', 'TypeError'],
+      correctIndex: 1,
+      explanation:
+        '`slice` supports negative indices counting from the end. `-3` means start at index `length - 3 = 2`, so it returns the last 3 characters: `"llo"`.',
+    },
+    {
+      id: 'js-q-includes-nan',
+      category: 'javascript',
+      subcategory: 'string-methods',
+      difficulty: 'core',
+      question: 'Why should you prefer `Array.prototype.includes(NaN)` over `indexOf(NaN)`?',
+      options: [
+        'includes is faster',
+        'includes uses SameValueZero equality which treats NaN === NaN, while indexOf uses === where NaN !== NaN',
+        'indexOf throws on NaN',
+        'They behave identically for all values',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`indexOf` uses strict equality (`===`) where `NaN !== NaN`, so it always returns -1 for NaN. `includes` uses SameValueZero which correctly identifies NaN. This was a key motivation for adding `includes` in ES2016.',
+    },
+    {
+      id: 'js-q-replaceall',
+      category: 'javascript',
+      subcategory: 'string-methods',
+      difficulty: 'foundation',
+      question: 'What does `"aabbcc".replace("b", "x")` return?',
+      options: ['"aaxxcc"', '"axbcc"', '"aaxxcc"', '"aaxbcc"'],
+      correctIndex: 1,
+      explanation:
+        '`replace` with a string pattern only replaces the **first** occurrence. To replace all occurrences use `replaceAll("b", "x")` (ES2021) or a regex with the `g` flag: `replace(/b/g, "x")`.',
+    },
+    // Regex
+    {
+      id: 'js-q-regex-greedy',
+      category: 'javascript',
+      subcategory: 'regex',
+      difficulty: 'core',
+      question: 'The pattern `/<.+>/` applied to `"<b>bold</b>"` matches what?',
+      options: ['"<b>"', '"bold"', '"<b>bold</b>"', '"<b>bold</b></b>"'],
+      correctIndex: 2,
+      explanation:
+        'Quantifiers are **greedy** by default — they match as much as possible. `<.+>` matches from the first `<` to the last `>`, consuming `<b>bold</b>`. Use `<.+?>` (lazy) to match only `<b>`.',
+    },
+    {
+      id: 'js-q-regex-groups',
+      category: 'javascript',
+      subcategory: 'regex',
+      difficulty: 'core',
+      question: 'What is the purpose of `(?:...)` in a regular expression?',
+      options: [
+        'Named capture group',
+        'Lookahead assertion',
+        'Non-capturing group — groups without storing the match',
+        'Negative lookahead',
+      ],
+      correctIndex: 2,
+      explanation:
+        '`(?:...)` is a non-capturing group. It groups expressions for quantifiers or alternation but does not create a numbered capture group in the match result. Use it when you need grouping but not the overhead of capture.',
+    },
+    {
+      id: 'js-q-regex-lookahead',
+      category: 'javascript',
+      subcategory: 'regex',
+      difficulty: 'expert',
+      question: 'The regex `/\\d+(?= dollars)/` is applied to "100 dollars". What does it match?',
+      options: ['"100 dollars"', '"dollars"', '"100"', 'No match'],
+      correctIndex: 2,
+      explanation:
+        '`(?= dollars)` is a **positive lookahead** — it asserts that the match must be followed by " dollars" but does not include it in the match. So `\\d+` matches "100" and the lookahead confirms " dollars" follows without consuming it.',
+    },
+    // Execution Context
+    {
+      id: 'js-q-call-stack',
+      category: 'javascript',
+      subcategory: 'execution-context',
+      difficulty: 'core',
+      question: 'What error occurs when the call stack exceeds its maximum depth?',
+      options: ['StackError', 'MemoryError', 'RangeError: Maximum call stack size exceeded', 'RecursionError'],
+      correctIndex: 2,
+      explanation:
+        'Infinite or excessively deep recursion causes the call stack to overflow. JavaScript throws a `RangeError` with the message "Maximum call stack size exceeded". The limit is typically ~10,000 frames in V8.',
+    },
+    {
+      id: 'js-q-lexical-scope',
+      category: 'javascript',
+      subcategory: 'execution-context',
+      difficulty: 'core',
+      question: 'JavaScript uses lexical (static) scope. What does this mean?',
+      options: [
+        'Variables are resolved based on where the function is called',
+        'Variables are resolved based on where the function is defined in the source code',
+        'Every function creates its own global scope',
+        'Scope is determined at runtime, not at parse time',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Lexical scope means a function\'s scope chain is determined by where it is **written**, not where it is **called**. A function always sees the variables in the scope where it was defined, regardless of how or where it is invoked.',
+    },
+    // ES2016/2017
+    {
+      id: 'js-q-exponent',
+      category: 'javascript',
+      subcategory: 'es2016',
+      difficulty: 'foundation',
+      question: 'What does `2 ** 10` evaluate to?',
+      options: ['20', '1024', '210', '12'],
+      correctIndex: 1,
+      explanation:
+        '`**` is the exponentiation operator (ES2016). `2 ** 10` is 2 to the power of 10 = 1024. It is equivalent to `Math.pow(2, 10)`.',
+    },
+    {
+      id: 'js-q-padstart',
+      category: 'javascript',
+      subcategory: 'es2017',
+      difficulty: 'foundation',
+      question: 'What does `"7".padStart(3, "0")` return?',
+      options: ['"7"', '"007"', '"700"', '"0007"'],
+      correctIndex: 1,
+      explanation:
+        '`padStart(targetLength, padString)` pads the start of the string until it reaches the target length. `"7"` padded to length 3 with `"0"` becomes `"007"`. Useful for formatting IDs, times, and fixed-width columns.',
+    },
+    // ES2018/2019
+    {
+      id: 'js-q-finally-value',
+      category: 'javascript',
+      subcategory: 'es2018',
+      difficulty: 'core',
+      question: '`Promise.resolve(42).finally(() => 99).then(v => console.log(v))` — what logs?',
+      options: ['99', '42', 'undefined', 'TypeError'],
+      correctIndex: 1,
+      explanation:
+        '`finally` does not change the promise\'s resolved value — its return value is ignored. The `42` passes through to the next `.then`. Only if `finally` throws does it change the outcome (replacing the current value/rejection with the thrown error).',
+    },
+    {
+      id: 'js-q-object-rest',
+      category: 'javascript',
+      subcategory: 'es2018',
+      difficulty: 'foundation',
+      question: 'Given `const { a, ...rest } = { a: 1, b: 2, c: 3 }`, what is `rest`?',
+      options: ['{ a: 1 }', '{ b: 2, c: 3 }', '[2, 3]', '{ b: 2 }'],
+      correctIndex: 1,
+      explanation:
+        'Object rest syntax collects all remaining **own enumerable** properties not explicitly destructured. Since `a` is taken, `rest` gets `{ b: 2, c: 3 }`. Rest must be the last item in a destructuring pattern.',
+    },
+    {
+      id: 'js-q-flat',
+      category: 'javascript',
+      subcategory: 'es2019',
+      difficulty: 'foundation',
+      question: 'What does `[1, [2, [3]]].flat()` return?',
+      options: ['[1, 2, 3]', '[1, 2, [3]]', '[1, [2, 3]]', '[[1, 2, 3]]'],
+      correctIndex: 1,
+      explanation:
+        '`flat()` with no argument defaults to depth 1 — it flattens one level. `[1, [2, [3]]]` becomes `[1, 2, [3]]`. Use `flat(2)` to get `[1, 2, 3]`, or `flat(Infinity)` for arbitrary depth.',
+    },
+    {
+      id: 'js-q-optional-catch',
+      category: 'javascript',
+      subcategory: 'es2019',
+      difficulty: 'foundation',
+      question: 'Which is valid ES2019+ syntax?',
+      options: [
+        'try { } catch { }',
+        'try { } catch() { }',
+        'try { } finally catch { }',
+        'try { } catch(e = null) { }',
+      ],
+      correctIndex: 0,
+      explanation:
+        'ES2019 made the catch binding parameter optional. You can write `catch { }` without naming the error variable when you don\'t need it. Previously `catch (e) { }` was always required.',
+    },
+    // ES2020/2021
+    {
+      id: 'js-q-bigint',
+      category: 'javascript',
+      subcategory: 'es2020',
+      difficulty: 'core',
+      question: 'What happens when you try to add a BigInt and a regular Number: `1n + 1`?',
+      options: ['2n', '2', 'TypeError', 'NaN'],
+      correctIndex: 2,
+      explanation:
+        'You cannot mix BigInt and Number in arithmetic operations — JavaScript throws a `TypeError`. You must explicitly convert: `1n + BigInt(1)` or `Number(1n) + 1`. This prevents accidental precision loss.',
+    },
+    {
+      id: 'js-q-promise-any',
+      category: 'javascript',
+      subcategory: 'es2021',
+      difficulty: 'core',
+      question: '`Promise.any([p1, p2, p3])` — when does it reject?',
+      options: [
+        'When the first promise rejects',
+        'When any promise rejects',
+        'Only when ALL promises reject',
+        'It never rejects',
+      ],
+      correctIndex: 2,
+      explanation:
+        '`Promise.any` resolves with the **first fulfilled** promise. It only rejects if **all** input promises reject, and in that case it rejects with an `AggregateError` containing all rejection reasons. It is the opposite of `Promise.all`.',
+    },
+    {
+      id: 'js-q-numeric-sep',
+      category: 'javascript',
+      subcategory: 'es2021',
+      difficulty: 'foundation',
+      question: 'What is the value of `const n = 1_000_000`?',
+      options: ['1', '1000', '1000000', 'SyntaxError'],
+      correctIndex: 2,
+      explanation:
+        'Numeric separators (`_`) are purely visual aids introduced in ES2021. They are ignored by the engine — `1_000_000` is exactly `1000000`. They can be placed anywhere in a numeric literal for readability.',
+    },
+    // ES2022-2024
+    {
+      id: 'js-q-at-method',
+      category: 'javascript',
+      subcategory: 'es2022',
+      difficulty: 'foundation',
+      question: 'What does `[10, 20, 30].at(-1)` return?',
+      options: ['10', '20', '30', 'undefined'],
+      correctIndex: 2,
+      explanation:
+        '`Array.prototype.at()` (ES2022) supports negative indices. `-1` refers to the last element, `-2` to second-to-last, etc. This is cleaner than `arr[arr.length - 1]`. It also works on strings.',
+    },
+    {
+      id: 'js-q-error-cause',
+      category: 'javascript',
+      subcategory: 'es2022',
+      difficulty: 'core',
+      question: 'What is `Error.cause` used for?',
+      options: [
+        'Setting the error message',
+        'Chaining errors — preserving the original error that caused a higher-level error',
+        'Categorising errors by type',
+        'Suppressing error stack traces',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`new Error("High-level message", { cause: originalError })` lets you wrap errors while preserving the original. The `cause` property holds the original error, enabling full error chain inspection for debugging.',
+    },
+    {
+      id: 'js-q-toreversed',
+      category: 'javascript',
+      subcategory: 'es2023',
+      difficulty: 'core',
+      question: 'What is the key difference between `arr.reverse()` and `arr.toReversed()`?',
+      options: [
+        'toReversed is faster',
+        'reverse() mutates the original array; toReversed() returns a new reversed array',
+        'toReversed only works on sorted arrays',
+        'They are identical',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`reverse()` mutates in place and returns the same array. `toReversed()` (ES2023) returns a **new** reversed array, leaving the original unchanged. Same pattern applies to `toSorted()`, `toSpliced()`, and `with()`.',
+    },
+    {
+      id: 'js-q-group-by',
+      category: 'javascript',
+      subcategory: 'es2024',
+      difficulty: 'core',
+      question: 'What does `Object.groupBy([1,2,3,4], n => n % 2 === 0 ? "even" : "odd")` return?',
+      options: [
+        '{ even: 2, odd: 2 }',
+        '{ even: [2, 4], odd: [1, 3] }',
+        '[[1,3], [2,4]]',
+        'Map { "even" => [2,4], "odd" => [1,3] }',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`Object.groupBy` (ES2024) groups array elements by a key returned from the callback function. Each key maps to an array of all elements that returned that key. Use `Map.groupBy` when you need non-string keys.',
+    },
+    // Proxy & Reflect
+    {
+      id: 'js-q-proxy-trap',
+      category: 'javascript',
+      subcategory: 'proxy-reflect',
+      difficulty: 'expert',
+      question: 'Which Proxy trap intercepts `prop in proxy` operations?',
+      options: ['get', 'has', 'includes', 'ownKeys'],
+      correctIndex: 1,
+      explanation:
+        'The `has` trap intercepts the `in` operator. The `get` trap intercepts property reads. `ownKeys` intercepts `Object.keys()` and `for...in`. There is no `includes` trap.',
+    },
+    {
+      id: 'js-q-reflect-use',
+      category: 'javascript',
+      subcategory: 'proxy-reflect',
+      difficulty: 'expert',
+      question: 'Why should you use `Reflect.get(target, prop, receiver)` inside a Proxy `get` trap instead of just `target[prop]`?',
+      options: [
+        'Reflect.get is faster',
+        'Reflect.get correctly passes the receiver so getters on the target work with the right `this`',
+        'target[prop] would trigger the proxy recursively',
+        'Reflect.get prevents TypeError',
+      ],
+      correctIndex: 1,
+      explanation:
+        'When an object has a getter, `target[prop]` calls the getter with `this = target`, not the proxy. `Reflect.get(target, prop, receiver)` passes the `receiver` (the proxy itself) as `this`, making inherited getters work correctly in proxied objects.',
+    },
+    // Functional Programming
+    {
+      id: 'js-q-pure-function',
+      category: 'javascript',
+      subcategory: 'functional',
+      difficulty: 'core',
+      question: 'Which of these is a pure function?',
+      options: [
+        'function rand() { return Math.random(); }',
+        'function log(x) { console.log(x); return x; }',
+        'function add(a, b) { return a + b; }',
+        'let count = 0; function inc() { return ++count; }',
+      ],
+      correctIndex: 2,
+      explanation:
+        'A pure function always returns the same output for the same input and has no side effects. `add(a, b)` is deterministic and only depends on its arguments. `rand()` is non-deterministic, `log()` has a side effect (console output), and `inc()` reads/writes external state.',
+    },
+    {
+      id: 'js-q-compose-vs-pipe',
+      category: 'javascript',
+      subcategory: 'functional',
+      difficulty: 'core',
+      question: 'In functional programming, `compose(f, g)(x)` vs `pipe(f, g)(x)` — what is the difference?',
+      options: [
+        'compose and pipe are identical',
+        'compose applies functions right-to-left (g then f); pipe applies left-to-right (f then g)',
+        'compose applies functions left-to-right; pipe applies right-to-left',
+        'compose runs functions in parallel; pipe runs them sequentially',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`compose(f, g)(x)` = `f(g(x))` — right to left (mathematical notation). `pipe(f, g)(x)` = `g(f(x))` — left to right (data flows in reading order). Pipe is often more readable in JavaScript code.',
+    },
+    // Design Patterns
+    {
+      id: 'js-q-singleton-esm',
+      category: 'javascript',
+      subcategory: 'design-patterns',
+      difficulty: 'core',
+      question: 'What is the idiomatic way to implement a Singleton in ES modules?',
+      options: [
+        'Use a static class with a getInstance() method',
+        'Export an instance directly — the module cache ensures it is created once',
+        'Use Object.freeze on the constructor',
+        'Use a global variable',
+      ],
+      correctIndex: 1,
+      explanation:
+        'ES modules are cached after first load — `import` the same module twice and you get the same module object. Simply `export const db = new Database()` creates the instance once. The module cache IS the singleton pattern.',
+    },
+    {
+      id: 'js-q-observer-pattern',
+      category: 'javascript',
+      subcategory: 'design-patterns',
+      difficulty: 'core',
+      question: 'The Observer pattern and Pub/Sub pattern are related. What is the key distinction?',
+      options: [
+        'They are identical',
+        'Observer: subscribers know the publisher directly; Pub/Sub: an event bus decouples publishers from subscribers',
+        'Observer is for async events; Pub/Sub is synchronous',
+        'Pub/Sub requires a database; Observer does not',
+      ],
+      correctIndex: 1,
+      explanation:
+        'In classic Observer, subjects hold references to observers (tight coupling). In Pub/Sub, an event bus sits between them — publishers emit to the bus, subscribers listen from the bus. Neither knows about the other, enabling looser coupling.',
+    },
+    // Recursion
+    {
+      id: 'js-q-base-case',
+      category: 'javascript',
+      subcategory: 'recursion',
+      difficulty: 'foundation',
+      question: 'What happens if a recursive function has no base case?',
+      options: [
+        'It returns undefined',
+        'It runs once then stops',
+        'It calls itself until the call stack overflows with a RangeError',
+        'It throws a SyntaxError',
+      ],
+      correctIndex: 2,
+      explanation:
+        'Without a base case, recursion never stops. Each call adds a frame to the call stack until it exceeds the maximum depth (~10,000 in V8), causing a `RangeError: Maximum call stack size exceeded`.',
+    },
+    {
+      id: 'js-q-tail-call',
+      category: 'javascript',
+      subcategory: 'recursion',
+      difficulty: 'expert',
+      question: 'Which recursive function is tail-recursive?',
+      options: [
+        'function f(n) { return n <= 1 ? 1 : n * f(n-1); }',
+        'function f(n, acc = 1) { return n <= 1 ? acc : f(n-1, n * acc); }',
+        'function f(n) { return f(n-1) + f(n-2); }',
+        'function f(n) { return [n, ...f(n-1)]; }',
+      ],
+      correctIndex: 1,
+      explanation:
+        'A tail call is the very last operation before returning. In option B, the recursive call `f(n-1, n * acc)` IS the last operation — nothing happens after it returns. In option A, the result is multiplied by `n` after the call returns, so it is NOT tail-recursive.',
+    },
+    // Date & JSON
+    {
+      id: 'js-q-date-month',
+      category: 'javascript',
+      subcategory: 'date-json',
+      difficulty: 'foundation',
+      question: 'What does `new Date(2024, 0, 15).getMonth()` return?',
+      options: ['1', '0', '15', 'January'],
+      correctIndex: 1,
+      explanation:
+        'JavaScript months are **0-indexed**: January = 0, February = 1, ..., December = 11. This is a famous footgun. `new Date(2024, 0, 15)` creates January 15, 2024, and `getMonth()` returns `0`.',
+      interviewTip: 'Always remember: JS months are 0-indexed. If you see a date bug, check this first.',
+    },
+    {
+      id: 'js-q-json-loses',
+      category: 'javascript',
+      subcategory: 'date-json',
+      difficulty: 'core',
+      question: 'Which value is SILENTLY DROPPED when you `JSON.stringify({ fn: () => {}, name: "Alice" })`?',
+      options: ['"Alice"', 'The fn property', 'Nothing is dropped', 'The entire object'],
+      correctIndex: 1,
+      explanation:
+        '`JSON.stringify` silently omits properties with `undefined`, function, or Symbol values. The `fn` key disappears from the output entirely. Other values dropped/changed: `undefined` in arrays becomes `null`, `NaN`/`Infinity` become `null`, `Date` becomes an ISO string.',
+    },
+    // Memory & GC
+    {
+      id: 'js-q-gc-algorithm',
+      category: 'javascript',
+      subcategory: 'memory',
+      difficulty: 'expert',
+      question: 'What is the main advantage of mark-and-sweep over reference counting for garbage collection?',
+      options: [
+        'Mark-and-sweep is always faster',
+        'Mark-and-sweep correctly handles circular references; reference counting leaks them',
+        'Mark-and-sweep uses less memory',
+        'Reference counting cannot track objects',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Reference counting leaks memory when objects reference each other (A → B, B → A) even if nothing outside the cycle references them — the counts never reach zero. Mark-and-sweep starts from GC roots and marks all **reachable** objects, so cycles that have no outside references are correctly collected.',
+    },
+    {
+      id: 'js-q-stack-heap',
+      category: 'javascript',
+      subcategory: 'memory',
+      difficulty: 'core',
+      question: 'When you write `let obj = { a: 1 }`, what is stored on the stack vs the heap?',
+      options: [
+        'The entire object { a: 1 } is on the stack',
+        'Everything is on the heap',
+        'A reference (pointer) to the object is on the stack; the object { a: 1 } lives on the heap',
+        'The key "a" is on the stack; the value 1 is on the heap',
+      ],
+      correctIndex: 2,
+      explanation:
+        'Primitives and references live on the stack; objects live on the heap. `obj` is a variable holding a reference (memory address) on the stack. The actual `{ a: 1 }` object is allocated on the heap. This is why two variables can reference the same object.',
     },
   ],
 };
