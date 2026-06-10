@@ -3963,6 +3963,784 @@ if (global.gc) global.gc();
 
 Use Node.js \`--inspect\` + Chrome DevTools heap snapshots to find what's retaining memory, or use \`clinic heap\` from the Clinic.js suite.`,
     },
+    {
+      id: 'js-numbers-precision',
+      title: 'Numbers, Math & Floating-Point Precision',
+      content: `## The Number Type
+
+JavaScript has a single \`number\` type: a 64-bit IEEE 754 double-precision float. There is no separate integer type — every number is a float under the hood.
+
+\`\`\`javascript
+typeof 42        // 'number'
+typeof 42.5      // 'number'
+typeof Infinity  // 'number'
+typeof NaN       // 'number'
+\`\`\`
+
+## The Floating-Point Problem
+
+Because numbers are binary floats, decimal fractions cannot always be represented exactly:
+
+\`\`\`javascript
+0.1 + 0.2            // 0.30000000000000004  ← not 0.3!
+0.1 + 0.2 === 0.3    // false
+0.3 - 0.2            // 0.09999999999999998
+\`\`\`
+
+This is **not a JavaScript bug** — it is how IEEE 754 works in every language (Java, Python, C all have it). The number 0.1 has no exact binary representation, just as 1/3 has no exact decimal representation.
+
+**Comparing floats safely** — use an epsilon tolerance:
+
+\`\`\`javascript
+function almostEqual(a, b, epsilon = Number.EPSILON) {
+  return Math.abs(a - b) < epsilon;
+}
+almostEqual(0.1 + 0.2, 0.3);  // true
+\`\`\`
+
+## Money: Never Use Floats
+
+For financial calculations (critical in fintech), **never store money as floating-point dollars**. Use one of:
+
+\`\`\`javascript
+// Option 1: integer cents (most common)
+const price = 1099;            // €10.99 stored as 1099 cents
+const total = price * quantity; // exact integer math
+const display = (total / 100).toFixed(2);  // '21.98'
+
+// Option 2: BigInt for very large values (crypto wei, satoshis)
+const wei = 1000000000000000000n;  // 1 ETH in wei
+
+// Option 3: decimal library (decimal.js, big.js) for arbitrary precision
+import Decimal from 'decimal.js';
+new Decimal(0.1).plus(0.2).toString();  // '0.3' exactly
+\`\`\`
+
+## Special Numeric Values
+
+\`\`\`javascript
+Infinity            // result of 1 / 0
+-Infinity           // result of -1 / 0
+NaN                 // 'Not a Number' — result of invalid math (0/0, parseInt('x'))
+
+Number.isNaN(NaN)        // true  (use this, not global isNaN)
+Number.isFinite(42)      // true
+Number.isInteger(42.0)   // true
+Number.isSafeInteger(2 ** 53)  // false — beyond safe integer range
+\`\`\`
+
+\`NaN\` is the only value not equal to itself. Always check with \`Number.isNaN()\`, not \`=== NaN\` (which is always false). The global \`isNaN()\` coerces its argument (\`isNaN('foo')\` is \`true\`), so prefer \`Number.isNaN()\`.
+
+## Number Limits
+
+\`\`\`javascript
+Number.MAX_SAFE_INTEGER   // 9007199254740991 (2^53 - 1)
+Number.MIN_SAFE_INTEGER   // -9007199254740991
+Number.MAX_VALUE          // ~1.8e308 (largest representable)
+Number.EPSILON            // ~2.2e-16 (smallest difference between 1 and next float)
+
+9007199254740991 + 1      // 9007199254740992  ✓
+9007199254740991 + 2      // 9007199254740992  ✗ precision lost!
+// Use BigInt beyond this range
+\`\`\`
+
+## Conversion and Parsing
+
+\`\`\`javascript
+Number('42')        // 42
+Number('42px')      // NaN  — strict
+Number('')          // 0    — empty string is 0 (gotcha!)
+Number('  42  ')    // 42   — trims whitespace
+Number(null)        // 0
+Number(undefined)   // NaN
+Number(true)        // 1
+
+parseInt('42px')    // 42   — lenient, stops at non-digit
+parseInt('0xFF')    // 255  — auto-detects hex
+parseInt('11', 2)   // 3    — binary radix (ALWAYS specify radix!)
+parseFloat('3.14m') // 3.14
+
+(255).toString(16)  // 'ff'   — to hex
+(255).toString(2)   // '11111111' — to binary
+\`\`\`
+
+## Number Formatting
+
+\`\`\`javascript
+(3.14159).toFixed(2)        // '3.14'  (string!)
+(1234.5).toPrecision(2)     // '1.2e+3'
+(255).toString(16)          // 'ff'
+
+// Intl.NumberFormat — locale-aware, currency, percent
+new Intl.NumberFormat('de-DE', {
+  style: 'currency', currency: 'EUR',
+}).format(1234.56);  // '1.234,56 €'
+
+new Intl.NumberFormat('en-US').format(1234567);  // '1,234,567'
+\`\`\`
+
+## Useful Math Methods
+
+\`\`\`javascript
+Math.round(4.5)     // 5    (round half up)
+Math.floor(4.9)     // 4    (round down)
+Math.ceil(4.1)      // 5    (round up)
+Math.trunc(4.9)     // 4    (drop decimal — no rounding)
+Math.trunc(-4.9)    // -4   (vs Math.floor(-4.9) = -5)
+Math.abs(-5)        // 5
+Math.sign(-3)       // -1   (-1, 0, or 1)
+Math.max(1, 2, 3)   // 3
+Math.min(...arr)    // smallest in array
+Math.hypot(3, 4)    // 5    (sqrt of sum of squares)
+Math.random()       // [0, 1)  — NOT cryptographically secure!
+\`\`\`
+
+For secure randomness (tokens, IDs), use \`crypto.randomInt()\` / \`crypto.randomUUID()\` (Node) or \`crypto.getRandomValues()\` (browser) — never \`Math.random()\`.`,
+    },
+    {
+      id: 'js-type-checking',
+      title: 'Type Checking & Type Conversion in Depth',
+      content: `## The typeof Operator
+
+\`typeof\` returns a string describing the type. Reliable for primitives, limited for objects:
+
+\`\`\`javascript
+typeof 'hello'      // 'string'
+typeof 42           // 'number'
+typeof true         // 'boolean'
+typeof undefined    // 'undefined'
+typeof Symbol()     // 'symbol'
+typeof 10n          // 'bigint'
+typeof function(){} // 'function'  (functions are special)
+typeof null         // 'object'    ← historical bug
+typeof []           // 'object'    ← can't distinguish arrays
+typeof {}           // 'object'
+typeof new Date()   // 'object'    ← can't distinguish dates
+\`\`\`
+
+\`typeof\` is safe on undeclared variables (returns \`'undefined'\` instead of throwing) — useful for feature detection.
+
+## The Reliable Type Check: Object.prototype.toString
+
+To distinguish object subtypes (Array, Date, RegExp, etc.), use the toString tag:
+
+\`\`\`javascript
+const type = (v) => Object.prototype.toString.call(v).slice(8, -1);
+
+type([])           // 'Array'
+type({})           // 'Object'
+type(null)         // 'Null'
+type(undefined)    // 'Undefined'
+type(new Date())   // 'Date'
+type(/regex/)      // 'RegExp'
+type(new Map())    // 'Map'
+type(() => {})     // 'Function'
+type(42)           // 'Number'
+type('hi')         // 'String'
+\`\`\`
+
+This works because \`Object.prototype.toString\` reads the internal \`[[Class]]\`/\`Symbol.toStringTag\`.
+
+## Checking Specific Types
+
+\`\`\`javascript
+Array.isArray([])           // true   ← THE way to check arrays
+Array.isArray({})           // false
+
+Number.isInteger(42)        // true
+Number.isNaN(NaN)           // true
+Number.isFinite(Infinity)   // false
+
+value instanceof Date       // checks prototype chain
+value instanceof Error
+value instanceof MyClass
+
+typeof value === 'function' // function check
+
+value === null              // null check (typeof null is 'object'!)
+value == null               // true for BOTH null and undefined
+value === undefined         // undefined check
+\`\`\`
+
+## instanceof and Its Limits
+
+\`instanceof\` checks the prototype chain. It can fail across different execution contexts (e.g. iframes, worker threads) because each has its own \`Array\`, \`Object\`, etc:
+
+\`\`\`javascript
+// In the same context:
+[] instanceof Array     // true
+
+// Array from another iframe/realm:
+arrayFromIframe instanceof Array  // false! (different Array constructor)
+Array.isArray(arrayFromIframe)    // true  (works across realms)
+\`\`\`
+
+This is why \`Array.isArray()\` exists — it works across realms.
+
+## Truthy / Falsy Conversion
+
+The 8 falsy values: \`false\`, \`0\`, \`-0\`, \`0n\`, \`''\`, \`null\`, \`undefined\`, \`NaN\`. Everything else is truthy — including \`[]\`, \`{}\`, \`'0'\`, \`'false'\`, and all functions.
+
+\`\`\`javascript
+Boolean([])         // true   ← empty array is truthy!
+Boolean({})         // true   ← empty object is truthy!
+Boolean('0')        // true   ← non-empty string
+Boolean(' ')        // true   ← whitespace string
+!!'hello'           // true   (double-NOT to coerce to boolean)
+\`\`\`
+
+## == vs === (Abstract vs Strict Equality)
+
+\`===\` compares type and value with NO coercion. \`==\` applies coercion rules:
+
+\`\`\`javascript
+1 == '1'            // true   (string → number)
+0 == false          // true   (boolean → number)
+null == undefined   // true   (special case — only each other)
+null == 0           // false  (null only equals undefined/null)
+'' == 0             // true   (empty string → 0)
+NaN == NaN          // false  (NaN never equals anything)
+[] == ''            // true   ([] → '' → 0, '' → 0)
+[] == 0             // true
+[1] == 1            // true   ([1] → '1' → 1)
+\`\`\`
+
+**Rule: always use \`===\`** except one idiom: \`value == null\` to check for both \`null\` and \`undefined\` in one expression.
+
+## Object.is — SameValue Equality
+
+\`\`\`javascript
+Object.is(NaN, NaN)      // true   ← unlike === !
+Object.is(0, -0)         // false  ← unlike === !
+Object.is(1, 1)          // true
+// === gives: NaN === NaN is false, 0 === -0 is true
+\`\`\`
+
+\`Object.is\` is used internally by React for state comparison and \`Array.prototype.includes\` (SameValueZero, a slight variant where +0 and -0 are equal).`,
+    },
+    {
+      id: 'js-bitwise',
+      title: 'Bitwise Operators & Binary Manipulation',
+      content: `## How Bitwise Works
+
+Bitwise operators convert numbers to 32-bit signed integers, operate bit by bit, then convert back. Useful for flags, permissions, low-level protocols, and performance-critical code.
+
+\`\`\`javascript
+5  .toString(2)   // '101'
+3  .toString(2)   // '011'
+\`\`\`
+
+## The Operators
+
+\`\`\`javascript
+5 & 3    // 1   AND  (101 & 011 = 001)  — bit set in BOTH
+5 | 3    // 7   OR   (101 | 011 = 111)  — bit set in EITHER
+5 ^ 3    // 6   XOR  (101 ^ 011 = 110)  — bit set in ONE but not both
+~5       // -6  NOT  (inverts all bits: ~n === -(n+1))
+5 << 1   // 10  left shift  (multiply by 2^n)
+5 >> 1   // 2   right shift (divide by 2^n, sign-preserving)
+-5 >>> 1 // 2147483645  unsigned right shift (fills with 0)
+\`\`\`
+
+## Bit Flags (Permission Systems)
+
+A classic, efficient way to store multiple boolean options in one integer:
+
+\`\`\`javascript
+const Permissions = {
+  READ:    1 << 0,   // 0001 = 1
+  WRITE:   1 << 1,   // 0010 = 2
+  DELETE:  1 << 2,   // 0100 = 4
+  ADMIN:   1 << 3,   // 1000 = 8
+};
+
+// Combine flags with OR
+let userPerms = Permissions.READ | Permissions.WRITE;  // 0011 = 3
+
+// Check a flag with AND
+const canWrite = (userPerms & Permissions.WRITE) !== 0;  // true
+const canDelete = (userPerms & Permissions.DELETE) !== 0; // false
+
+// Add a flag with OR
+userPerms |= Permissions.DELETE;  // now 0111 = 7
+
+// Remove a flag with AND NOT
+userPerms &= ~Permissions.WRITE;  // removes WRITE bit
+
+// Toggle a flag with XOR
+userPerms ^= Permissions.ADMIN;
+\`\`\`
+
+This is how Unix file permissions (chmod 755), Discord permissions, and many database flag columns work.
+
+## Common Bitwise Tricks
+
+\`\`\`javascript
+// Check if even/odd
+n & 1            // 1 if odd, 0 if even
+
+// Swap without temp variable (XOR swap)
+a ^= b; b ^= a; a ^= b;
+
+// Fast multiply/divide by powers of 2
+n << 3           // n * 8
+n >> 2           // Math.floor(n / 4)
+
+// Floor a positive float (faster than Math.floor for positives)
+~~4.7            // 4   (double NOT truncates)
+4.7 | 0          // 4
+4.7 >> 0         // 4
+
+// Check if power of 2
+(n & (n - 1)) === 0   // true if n is a power of 2
+
+// Convert hex color to RGB
+const rgb = 0xFF5733;
+const r = (rgb >> 16) & 0xFF;  // 255
+const g = (rgb >> 8) & 0xFF;   // 87
+const b = rgb & 0xFF;          // 51
+\`\`\`
+
+## Caveats
+
+Bitwise operators only work on the lower 32 bits — numbers above 2^31 behave unexpectedly. For larger bit sets, use \`BigInt\` (which supports bitwise operators with arbitrary precision):
+
+\`\`\`javascript
+1n << 40n        // works with BigInt
+1 << 40          // 256 — WRONG, wraps around 32 bits
+\`\`\`
+
+In modern application code, bit flags are often replaced by \`Set\` or boolean object fields for readability — but bitwise remains essential for protocols, compression, hashing, and interview puzzles.`,
+    },
+    {
+      id: 'js-strict-mode',
+      title: 'Strict Mode & Common Language Pitfalls',
+      content: `## Enabling Strict Mode
+
+\`'use strict'\` opts into a restricted variant of JavaScript that catches common mistakes and disables error-prone features.
+
+\`\`\`javascript
+'use strict';           // at top of file — whole script/module
+function fn() {
+  'use strict';         // or per-function
+}
+\`\`\`
+
+**ES modules and class bodies are always strict** — no directive needed. Most modern code is strict by default.
+
+## What Strict Mode Changes
+
+### 1. No Accidental Globals
+
+\`\`\`javascript
+'use strict';
+function leak() {
+  x = 10;   // ReferenceError — without strict, this creates a global
+}
+\`\`\`
+
+### 2. Assignment Errors Throw
+
+\`\`\`javascript
+'use strict';
+const frozen = Object.freeze({ a: 1 });
+frozen.a = 2;      // TypeError (silent failure without strict)
+undefined = 5;     // TypeError
+NaN = 5;           // TypeError
+\`\`\`
+
+### 3. \`this\` Is undefined in Plain Calls
+
+\`\`\`javascript
+'use strict';
+function fn() { return this; }
+fn();    // undefined (not the global object)
+\`\`\`
+
+This prevents accidental global object mutation through unbound method calls.
+
+### 4. Other Restrictions
+
+- Duplicate parameter names throw: \`function(a, a) {}\` → SyntaxError
+- \`delete\` on variables throws
+- \`with\` statement is forbidden
+- Octal literals like \`010\` are forbidden (use \`0o10\`)
+- \`eval\` does not leak variables into the surrounding scope
+- Reserved words (\`implements\`, \`interface\`, \`private\`) cannot be used as identifiers
+
+## Common JavaScript Pitfalls
+
+### Floating-Point Comparison
+
+\`\`\`javascript
+0.1 + 0.2 === 0.3   // false! Use an epsilon tolerance.
+\`\`\`
+
+### typeof null
+
+\`\`\`javascript
+typeof null === 'object'   // true — historical bug. Check value === null.
+\`\`\`
+
+### Array Holes and Sparse Arrays
+
+\`\`\`javascript
+const arr = [1, , 3];      // hole at index 1
+arr.length                  // 3
+arr[1]                      // undefined
+arr.map(x => x * 2)         // [2, <hole>, 6] — skips holes!
+\`\`\`
+
+### NaN Is Not Equal to Itself
+
+\`\`\`javascript
+NaN === NaN          // false
+[NaN].includes(NaN)  // true  (SameValueZero)
+[NaN].indexOf(NaN)   // -1    (strict equality)
+\`\`\`
+
+### Mutating While Iterating
+
+\`\`\`javascript
+const arr = [1, 2, 3, 4];
+arr.forEach((x, i) => { if (x === 2) arr.splice(i, 1); });
+// Skips elements — never mutate an array during forEach
+\`\`\`
+
+### Reference vs Value
+
+\`\`\`javascript
+const a = { x: 1 };
+const b = a;          // same reference
+b.x = 2;
+a.x;                  // 2 — both point to the same object
+
+function reset(obj) { obj = {}; }  // reassigns local param, no effect on caller
+function clear(obj) { obj.x = 0; } // mutates the shared object
+\`\`\`
+
+### Default Parameter Evaluation
+
+\`\`\`javascript
+function append(item, arr = []) {  // fresh array each call (good)
+  arr.push(item);
+  return arr;
+}
+// vs the Python-style gotcha — JS evaluates defaults per call, so this is safe
+\`\`\`
+
+### Comparison Coercion
+
+\`\`\`javascript
+[] == ![]            // true!  ![] is false, [] == false → '' == 0 → 0 == 0
+'' == 0              // true
+'0' == 0             // true
+'0' == ''            // false
+null == 0            // false
+\`\`\`
+
+The lesson from all of these: **use \`===\`, use strict mode, treat objects as references, and never compare floats with \`===\`.**`,
+    },
+    {
+      id: 'js-timers-scheduling',
+      title: 'Timers, Scheduling & AbortController',
+      content: `## setTimeout and setInterval
+
+\`\`\`javascript
+const id = setTimeout(() => console.log('once'), 1000);
+clearTimeout(id);   // cancel before it fires
+
+const intId = setInterval(() => poll(), 5000);
+clearInterval(intId);  // stop repeating
+\`\`\`
+
+**setTimeout(fn, 0) is not really 0ms** — it queues a macrotask that runs after the current synchronous code AND all microtasks. The minimum delay is also clamped (~4ms for nested timers in browsers).
+
+\`\`\`javascript
+console.log('1');
+setTimeout(() => console.log('3'), 0);
+Promise.resolve().then(() => console.log('2'));  // microtask runs first
+console.log('1.5');
+// Output: 1, 1.5, 2, 3
+\`\`\`
+
+## queueMicrotask
+
+Schedule a microtask directly — runs after current code, before any timer:
+
+\`\`\`javascript
+queueMicrotask(() => console.log('runs before any setTimeout'));
+\`\`\`
+
+Use it when you need to defer work to "after this synchronous block" but before the next macrotask — e.g. batching DOM updates or state notifications.
+
+## setImmediate and process.nextTick (Node.js)
+
+\`\`\`javascript
+// process.nextTick — runs BEFORE the microtask queue, after current operation
+process.nextTick(() => console.log('nextTick'));
+
+// setImmediate — runs in the 'check' phase, after I/O callbacks
+setImmediate(() => console.log('immediate'));
+
+// Ordering:
+console.log('sync');
+setTimeout(() => console.log('timeout'), 0);
+setImmediate(() => console.log('immediate'));
+process.nextTick(() => console.log('nextTick'));
+Promise.resolve().then(() => console.log('promise'));
+// sync, nextTick, promise, then timeout/immediate (order varies)
+\`\`\`
+
+Overusing \`process.nextTick\` can starve the event loop (same risk as recursive microtasks).
+
+## Debounce and Throttle with Timers
+
+\`\`\`javascript
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
+function throttle(fn, ms) {
+  let last = 0;
+  return (...args) => {
+    const now = Date.now();
+    if (now - last >= ms) { last = now; fn(...args); }
+  };
+}
+\`\`\`
+
+## A Promise-Based delay
+
+\`\`\`javascript
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function retry(fn, attempts = 3) {
+  for (let i = 0; i < attempts; i++) {
+    try { return await fn(); }
+    catch (err) {
+      if (i === attempts - 1) throw err;
+      await delay(2 ** i * 1000);  // exponential backoff: 1s, 2s, 4s
+    }
+  }
+}
+\`\`\`
+
+## AbortController: Cancelling Async Work
+
+\`AbortController\` provides a standard way to cancel fetches, timers, and any abortable operation:
+
+\`\`\`javascript
+const controller = new AbortController();
+const { signal } = controller;
+
+// Pass the signal to fetch
+fetch('/api/data', { signal })
+  .then(res => res.json())
+  .catch(err => {
+    if (err.name === 'AbortError') console.log('Request cancelled');
+  });
+
+// Cancel it
+controller.abort();
+\`\`\`
+
+**Timeout pattern with AbortSignal.timeout (modern):**
+
+\`\`\`javascript
+// Built-in timeout signal (Node 17.3+, modern browsers)
+fetch('/api/slow', { signal: AbortSignal.timeout(5000) });
+
+// Combine multiple signals (Node 20+)
+const signal = AbortSignal.any([userSignal, AbortSignal.timeout(5000)]);
+\`\`\`
+
+**Custom abortable operation:**
+
+\`\`\`javascript
+function abortableTask(signal) {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(new DOMException('Aborted', 'AbortError'));
+    const id = setTimeout(resolve, 10000);
+    signal.addEventListener('abort', () => {
+      clearTimeout(id);
+      reject(new DOMException('Aborted', 'AbortError'));
+    });
+  });
+}
+\`\`\`
+
+AbortController is the standard cancellation primitive across \`fetch\`, Node streams, \`events.on\`, and database drivers — learn it well for backend work.`,
+    },
+    {
+      id: 'js-concurrency-control',
+      title: 'Concurrency Control: Promise Pools, Queues & Rate Limiting',
+      content: `## Why Concurrency Control Matters
+
+\`Promise.all\` runs everything at once. With 10,000 items, that means 10,000 simultaneous database connections or HTTP requests — overwhelming the server, hitting rate limits, or exhausting memory. Backend engineers need to **limit concurrency**.
+
+## Sequential Processing
+
+\`\`\`javascript
+// One at a time — slow but safe
+async function sequential(items, fn) {
+  const results = [];
+  for (const item of items) {
+    results.push(await fn(item));
+  }
+  return results;
+}
+\`\`\`
+
+## Batched Processing
+
+Process in fixed-size chunks:
+
+\`\`\`javascript
+async function inBatches(items, batchSize, fn) {
+  const results = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(fn));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
+await inBatches(users, 10, sendEmail);  // 10 emails at a time
+\`\`\`
+
+## Concurrency Pool (Sliding Window)
+
+A more efficient approach — always keep N tasks in flight, starting a new one as soon as one finishes:
+
+\`\`\`javascript
+async function pool(items, concurrency, fn) {
+  const results = [];
+  const executing = new Set();
+
+  for (const [index, item] of items.entries()) {
+    const promise = Promise.resolve(fn(item, index)).then(result => {
+      executing.delete(promise);
+      return result;
+    });
+    results.push(promise);
+    executing.add(promise);
+
+    if (executing.size >= concurrency) {
+      await Promise.race(executing);  // wait for ANY to finish
+    }
+  }
+  return Promise.all(results);
+}
+
+// Process 1000 URLs, max 5 concurrent requests
+await pool(urls, 5, url => fetch(url).then(r => r.json()));
+\`\`\`
+
+## Async Queue with Worker Pool
+
+\`\`\`javascript
+class AsyncQueue {
+  #queue = [];
+  #active = 0;
+
+  constructor(concurrency = 1) {
+    this.concurrency = concurrency;
+  }
+
+  push(task) {
+    return new Promise((resolve, reject) => {
+      this.#queue.push({ task, resolve, reject });
+      this.#next();
+    });
+  }
+
+  #next() {
+    if (this.#active >= this.concurrency || this.#queue.length === 0) return;
+    this.#active++;
+    const { task, resolve, reject } = this.#queue.shift();
+    Promise.resolve(task())
+      .then(resolve, reject)
+      .finally(() => {
+        this.#active--;
+        this.#next();  // start the next queued task
+      });
+  }
+}
+
+const queue = new AsyncQueue(3);  // max 3 concurrent
+urls.forEach(url => queue.push(() => fetch(url)));
+\`\`\`
+
+## Rate Limiting (Token Bucket)
+
+Limit operations per time window (e.g. API rate limits):
+
+\`\`\`javascript
+class RateLimiter {
+  #tokens;
+  #lastRefill = Date.now();
+
+  constructor(maxTokens, refillPerSec) {
+    this.maxTokens = maxTokens;
+    this.refillPerSec = refillPerSec;
+    this.#tokens = maxTokens;
+  }
+
+  async acquire() {
+    this.#refill();
+    while (this.#tokens < 1) {
+      await new Promise(r => setTimeout(r, 100));
+      this.#refill();
+    }
+    this.#tokens--;
+  }
+
+  #refill() {
+    const now = Date.now();
+    const elapsed = (now - this.#lastRefill) / 1000;
+    this.#tokens = Math.min(this.maxTokens, this.#tokens + elapsed * this.refillPerSec);
+    this.#lastRefill = now;
+  }
+}
+
+const limiter = new RateLimiter(10, 5);  // 10 burst, 5/sec sustained
+async function callApi(url) {
+  await limiter.acquire();
+  return fetch(url);
+}
+\`\`\`
+
+## Timeout Wrapper
+
+\`\`\`javascript
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(\`Timeout after \${ms}ms\`)), ms)
+    ),
+  ]);
+}
+
+await withTimeout(slowQuery(), 5000);  // rejects if query takes > 5s
+\`\`\`
+
+## Key Takeaways
+
+- **Promise.all** — unbounded concurrency; only safe for small, known sets
+- **Batching** — simple, but the whole batch waits for its slowest member
+- **Pool / sliding window** — best throughput with bounded concurrency
+- **Rate limiter** — respect external API quotas
+- Always add **timeouts** to external calls so one hung request cannot stall the system
+
+These patterns appear constantly in backend interviews — "how would you process a million records without overwhelming the database?" The answer is bounded concurrency.`,
+    },
   ],
   questions: [
     // Variables and Types
@@ -5058,6 +5836,266 @@ Use Node.js \`--inspect\` + Chrome DevTools heap snapshots to find what's retain
       correctIndex: 2,
       explanation:
         'Primitives and references live on the stack; objects live on the heap. `obj` is a variable holding a reference (memory address) on the stack. The actual `{ a: 1 }` object is allocated on the heap. This is why two variables can reference the same object.',
+    },
+    // Numbers & Precision
+    {
+      id: 'js-q-float-precision',
+      category: 'javascript',
+      subcategory: 'numbers',
+      difficulty: 'core',
+      question: 'Why does `0.1 + 0.2 === 0.3` evaluate to `false`?',
+      options: [
+        'It is a bug specific to JavaScript',
+        'JavaScript rounds all decimals down',
+        '0.1 and 0.2 cannot be represented exactly in IEEE 754 binary floating-point, so their sum is slightly off',
+        '=== does not work with decimals',
+      ],
+      correctIndex: 2,
+      explanation:
+        'Numbers are 64-bit IEEE 754 floats. Decimals like 0.1 have no exact binary representation, so `0.1 + 0.2` yields `0.30000000000000004`. This affects every language using IEEE 754. Compare with an epsilon tolerance, and use integer cents or a decimal library for money.',
+      interviewTip: 'For fintech: never store money as floats. Use integer cents or a decimal library.',
+    },
+    {
+      id: 'js-q-money-storage',
+      category: 'javascript',
+      subcategory: 'numbers',
+      difficulty: 'core',
+      question: 'What is the recommended way to store monetary values in a fintech backend?',
+      options: [
+        'As floating-point dollars (e.g. 10.99)',
+        'As integer minor units / cents (e.g. 1099), BigInt, or a decimal library',
+        'As strings only',
+        'As Number with toFixed(2) applied',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Floating-point cannot represent decimal money exactly, leading to rounding errors that accumulate. Store money as integer cents (1099 = €10.99) for exact integer arithmetic, use BigInt for very large values like crypto wei, or use a decimal library (decimal.js) for arbitrary precision.',
+    },
+    {
+      id: 'js-q-number-isnan',
+      category: 'javascript',
+      subcategory: 'numbers',
+      difficulty: 'core',
+      question: 'Why prefer `Number.isNaN(x)` over the global `isNaN(x)`?',
+      options: [
+        'Number.isNaN is faster',
+        'The global isNaN coerces its argument first, so isNaN("foo") is true; Number.isNaN does not coerce',
+        'They are identical',
+        'Number.isNaN works on strings only',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Global `isNaN` coerces to number first: `isNaN("foo")` is `true` because `Number("foo")` is `NaN`. `Number.isNaN` only returns true for the actual `NaN` value without coercion, making it the safe choice.',
+    },
+    {
+      id: 'js-q-parseint-radix',
+      category: 'javascript',
+      subcategory: 'numbers',
+      difficulty: 'foundation',
+      question: 'What does `parseInt("11", 2)` return?',
+      options: ['11', '2', '3', 'NaN'],
+      correctIndex: 2,
+      explanation:
+        'The second argument is the radix (base). `parseInt("11", 2)` parses "11" as binary: 1×2 + 1 = 3. Always specify the radix to avoid surprises — without it, strings starting with "0x" are treated as hex.',
+    },
+    // Type Checking
+    {
+      id: 'js-q-array-isarray',
+      category: 'javascript',
+      subcategory: 'type-checking',
+      difficulty: 'core',
+      question: 'What is the correct way to check if a value is an array?',
+      options: [
+        'typeof value === "array"',
+        'value instanceof Object',
+        'Array.isArray(value)',
+        'value.length !== undefined',
+      ],
+      correctIndex: 2,
+      explanation:
+        '`typeof []` returns "object", not "array". `Array.isArray()` is the reliable check and works even across different execution contexts (iframes, worker realms) where `instanceof Array` would fail because each realm has its own Array constructor.',
+    },
+    {
+      id: 'js-q-tostring-tag',
+      category: 'javascript',
+      subcategory: 'type-checking',
+      difficulty: 'expert',
+      question: 'What does `Object.prototype.toString.call(new Date())` return?',
+      options: ['"[object Object]"', '"[object Date]"', '"Date"', '"object"'],
+      correctIndex: 1,
+      explanation:
+        'This technique reads the internal type tag, returning "[object Date]" for dates, "[object Array]" for arrays, "[object Null]" for null, etc. Slicing out the tag (`.slice(8, -1)`) gives a reliable type string that distinguishes object subtypes — something typeof cannot do.',
+    },
+    {
+      id: 'js-q-object-is',
+      category: 'javascript',
+      subcategory: 'type-checking',
+      difficulty: 'expert',
+      question: 'How does `Object.is(NaN, NaN)` differ from `NaN === NaN`?',
+      options: [
+        'They both return false',
+        'Object.is(NaN, NaN) is true, while NaN === NaN is false',
+        'They both return true',
+        'Object.is throws on NaN',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`Object.is` uses SameValue equality: `Object.is(NaN, NaN)` is `true` and `Object.is(0, -0)` is `false`. Strict equality does the opposite: `NaN === NaN` is `false` and `0 === -0` is `true`. React uses Object.is-style comparison for state.',
+    },
+    {
+      id: 'js-q-loose-null',
+      category: 'javascript',
+      subcategory: 'type-checking',
+      difficulty: 'core',
+      question: 'What is the one accepted use of loose equality (`==`)?',
+      options: [
+        'Comparing numbers and strings',
+        'Checking `value == null` to match both null and undefined in one expression',
+        'Comparing arrays',
+        'There is never a good use',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`value == null` is `true` for both `null` and `undefined` (and nothing else), making it a concise null-ish check. This is the one widely-accepted `==` idiom. For everything else, use `===` to avoid coercion surprises.',
+    },
+    // Bitwise
+    {
+      id: 'js-q-bitwise-flags',
+      category: 'javascript',
+      subcategory: 'bitwise',
+      difficulty: 'core',
+      question: 'Given `let perms = READ | WRITE` (where READ=1, WRITE=2), how do you check if WRITE is set?',
+      options: [
+        '(perms | WRITE) !== 0',
+        '(perms & WRITE) !== 0',
+        'perms === WRITE',
+        'perms ^ WRITE',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Use AND (`&`) to test a flag: `(perms & WRITE) !== 0` is true only if the WRITE bit is set. OR (`|`) is used to combine/add flags, XOR (`^`) toggles, and AND NOT (`& ~`) removes. This is how Unix permissions and many flag systems work.',
+    },
+    {
+      id: 'js-q-bitwise-power2',
+      category: 'javascript',
+      subcategory: 'bitwise',
+      difficulty: 'expert',
+      question: 'What does the expression `(n & (n - 1)) === 0` test for (assuming n > 0)?',
+      options: [
+        'Whether n is even',
+        'Whether n is negative',
+        'Whether n is a power of 2',
+        'Whether n is prime',
+      ],
+      correctIndex: 2,
+      explanation:
+        'A power of 2 has exactly one bit set (e.g. 8 = 1000). Subtracting 1 flips that bit and sets all lower bits (7 = 0111). ANDing them gives 0 only for powers of 2. A classic bit-manipulation trick.',
+    },
+    // Strict Mode
+    {
+      id: 'js-q-strict-globals',
+      category: 'javascript',
+      subcategory: 'strict-mode',
+      difficulty: 'core',
+      question: 'In strict mode, what happens when you assign to an undeclared variable: `x = 10`?',
+      options: [
+        'It creates a global variable',
+        'It throws a ReferenceError',
+        'It is silently ignored',
+        'It creates a local variable',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Strict mode throws a ReferenceError for assignment to undeclared variables, catching a common bug. Without strict mode, `x = 10` would silently create a global variable, often leading to hard-to-trace issues. ES modules and class bodies are always strict.',
+    },
+    {
+      id: 'js-q-strict-this',
+      category: 'javascript',
+      subcategory: 'strict-mode',
+      difficulty: 'core',
+      question: 'In strict mode, what is `this` inside a plain function call `fn()`?',
+      options: ['The global object', 'undefined', 'An empty object', 'The function itself'],
+      correctIndex: 1,
+      explanation:
+        'In strict mode, `this` is `undefined` in a plain function call (not the global object as in sloppy mode). This prevents accidental modification of the global object through unbound method calls and surfaces bugs where `this` was expected to be an object.',
+    },
+    // Timers
+    {
+      id: 'js-q-settimeout-zero',
+      category: 'javascript',
+      subcategory: 'timers',
+      difficulty: 'core',
+      question: 'A `setTimeout(fn, 0)` and a `queueMicrotask(fn)` are both scheduled in the same synchronous block. Which runs first?',
+      options: [
+        'The setTimeout callback',
+        'The queueMicrotask callback',
+        'Whichever was scheduled first',
+        'They run simultaneously',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Microtasks (queueMicrotask, promise callbacks) run after the current synchronous code but before any macrotask (including setTimeout with 0 delay). The entire microtask queue drains before the next macrotask, so queueMicrotask always wins.',
+    },
+    {
+      id: 'js-q-abortcontroller',
+      category: 'javascript',
+      subcategory: 'timers',
+      difficulty: 'core',
+      question: 'What is AbortController used for?',
+      options: [
+        'Pausing the event loop',
+        'Cancelling async operations like fetch by signalling abort through an AbortSignal',
+        'Aborting the entire Node process',
+        'Catching unhandled rejections',
+      ],
+      correctIndex: 1,
+      explanation:
+        'AbortController provides a standard cancellation mechanism. You pass its `signal` to abortable operations (fetch, streams, timers), then call `controller.abort()` to cancel them. The operation rejects with an AbortError. `AbortSignal.timeout(ms)` creates an auto-aborting signal.',
+    },
+    // Concurrency
+    {
+      id: 'js-q-promise-all-concurrency',
+      category: 'javascript',
+      subcategory: 'concurrency',
+      difficulty: 'core',
+      question: 'You need to fetch 10,000 URLs without overwhelming the server. Why is `Promise.all(urls.map(fetch))` a bad choice?',
+      options: [
+        'Promise.all is deprecated',
+        'It fires all 10,000 requests simultaneously, exhausting connections and hitting rate limits',
+        'fetch cannot be used with map',
+        'It runs them sequentially, which is too slow',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`Promise.all` provides unbounded concurrency — all 10,000 requests start at once, overwhelming the server, hitting rate limits, and exhausting memory/sockets. Use a concurrency pool (sliding window) or batching to keep a bounded number of requests in flight.',
+      interviewTip: '"Process a million records without overwhelming the DB" → bounded concurrency pool.',
+    },
+    {
+      id: 'js-q-concurrency-pool',
+      category: 'javascript',
+      subcategory: 'concurrency',
+      difficulty: 'expert',
+      question: 'In a sliding-window concurrency pool, which Promise combinator do you await to start the next task as soon as ANY in-flight task finishes?',
+      options: ['Promise.all', 'Promise.race', 'Promise.allSettled', 'Promise.any'],
+      correctIndex: 1,
+      explanation:
+        '`Promise.race` settles as soon as the first of the in-flight promises settles, so awaiting it lets the pool start a new task the moment a slot frees up. This maintains exactly N concurrent tasks — better throughput than fixed batches, where the whole batch waits for its slowest member.',
+    },
+    {
+      id: 'js-q-timeout-wrapper',
+      category: 'javascript',
+      subcategory: 'concurrency',
+      difficulty: 'core',
+      question: 'How do you add a timeout to a promise that has no built-in timeout?',
+      options: [
+        'Use setTimeout inside the promise',
+        'Promise.race([promise, rejectAfterMs]) — whichever settles first wins',
+        'await the promise twice',
+        'Wrap it in Promise.all with a delay',
+      ],
+      correctIndex: 1,
+      explanation:
+        '`Promise.race([work, timeout])` where `timeout` is a promise that rejects after N ms. Whichever settles first wins: if the work finishes in time you get its result, otherwise the timeout rejection fires. Always add timeouts to external calls so one hung request cannot stall the system.',
     },
   ],
 };
