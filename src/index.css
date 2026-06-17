@@ -18,6 +18,16 @@
   --success: 16 185 129;
   --warning: 217 119 6;
   --danger: 220 38 38;
+
+  /* Syntax highlighting tokens (light theme) */
+  --hl-comment: #6b7280;
+  --hl-keyword: #7c3aed;
+  --hl-string: #15803d;
+  --hl-number: #c2410c;
+  --hl-function: #1d4ed8;
+  --hl-builtin: #b45309;
+  --hl-attr: #0e7490;
+  --hl-punct: #475569;
 }
 
 .dark {
@@ -32,6 +42,16 @@
   --success: 52 211 153;
   --warning: 245 158 11;
   --danger: 248 113 113;
+
+  /* Syntax highlighting tokens (dark theme) */
+  --hl-comment: #6b7a90;
+  --hl-keyword: #c792ea;
+  --hl-string: #c3e88d;
+  --hl-number: #f78c6c;
+  --hl-function: #82aaff;
+  --hl-builtin: #ffcb6b;
+  --hl-attr: #89ddff;
+  --hl-punct: #94a3b8;
 }
 
 * {
@@ -115,4 +135,70 @@ body {
 .prose-forge th,
 .prose-forge td {
   @apply border border-border px-2 py-1 text-left;
+}
+
+/*
+ * Syntax highlighting (rehype-highlight / highlight.js classes).
+ * Colors are driven by the --hl-* theme tokens so code respects dark/light mode.
+ */
+.prose-forge .hljs {
+  color: rgb(var(--text) / 0.9);
+  background: transparent;
+}
+.prose-forge .hljs-comment,
+.prose-forge .hljs-quote {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+.prose-forge .hljs-keyword,
+.prose-forge .hljs-selector-tag,
+.prose-forge .hljs-literal,
+.prose-forge .hljs-section,
+.prose-forge .hljs-doctag,
+.prose-forge .hljs-name {
+  color: var(--hl-keyword);
+}
+.prose-forge .hljs-string,
+.prose-forge .hljs-regexp,
+.prose-forge .hljs-addition,
+.prose-forge .hljs-meta-string {
+  color: var(--hl-string);
+}
+.prose-forge .hljs-number,
+.prose-forge .hljs-symbol,
+.prose-forge .hljs-bullet,
+.prose-forge .hljs-link {
+  color: var(--hl-number);
+}
+.prose-forge .hljs-title,
+.prose-forge .hljs-title.function_,
+.prose-forge .hljs-function .hljs-title {
+  color: var(--hl-function);
+}
+.prose-forge .hljs-built_in,
+.prose-forge .hljs-type,
+.prose-forge .hljs-class .hljs-title,
+.prose-forge .hljs-title.class_ {
+  color: var(--hl-builtin);
+}
+.prose-forge .hljs-attr,
+.prose-forge .hljs-attribute,
+.prose-forge .hljs-variable,
+.prose-forge .hljs-template-variable,
+.prose-forge .hljs-property,
+.prose-forge .hljs-params {
+  color: var(--hl-attr);
+}
+.prose-forge .hljs-punctuation,
+.prose-forge .hljs-operator {
+  color: var(--hl-punct);
+}
+.prose-forge .hljs-emphasis {
+  font-style: italic;
+}
+.prose-forge .hljs-strong {
+  font-weight: 600;
+}
+.prose-forge .hljs-deletion {
+  color: rgb(var(--danger));
 }

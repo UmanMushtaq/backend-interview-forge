@@ -1,115 +1,147 @@
 import { Link } from 'react-router-dom';
-import { Gauge, CheckCircle2, Code2, Flame, AlertTriangle, ArrowRight, Trophy } from 'lucide-react';
-import { useProgress } from '../hooks/useProgress';
+import { BookOpenCheck, Trophy, Flame, Timer, ArrowRight } from 'lucide-react';
+import { useProgressState } from '../hooks/useProgress';
 import { MetricCard } from '../components/MetricCard';
-import { ProgressBar } from '../components/ProgressBar';
-import { Heatmap } from '../components/Heatmap';
+import { computeStreaks } from '../lib/scoring';
+import { todayKey } from '../lib/storage';
+import { COURSES, courseConfigById } from '../data/courseConfig';
+import { moduleById } from '../data/learn';
+import {
+  overallChapterProgress,
+  coursesMastered,
+  continueTarget,
+  courseProgress,
+} from '../lib/courses';
+
+const STATUS_STYLES: Record<string, string> = {
+  mastered: 'bg-success/15 text-success',
+  completed: 'bg-primary/15 text-primary',
+  'in-progress': 'bg-amber-400/15 text-amber-400',
+  'not-started': 'bg-surface-2 text-muted',
+};
 
 export function Dashboard() {
-  const p = useProgress();
+  const state = useProgressState();
+
+  const overall = overallChapterProgress(state);
+  const mastered = coursesMastered(state);
+  const streak = computeStreaks(state.studyHistory);
+  const todayMinutes = state.studyHistory[todayKey()]?.minutesSpent ?? 0;
+
+  const target = continueTarget(state);
+  const targetCourse = target ? courseConfigById[target.courseId] : null;
+  const targetChapter = target
+    ? moduleById[target.courseId]?.lessons.find((l) => l.id === target.chapterId)
+    : null;
+  const started = overall.read > 0;
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Dashboard</h2>
-        <p className="text-sm text-muted">Your readiness across every backend interview topic.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+        <p className="text-sm text-muted">Your backend engineering learning path.</p>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <MetricCard icon={Gauge} label="Overall readiness" value={`${p.overallReadiness}%`} sub="weighted across categories" />
-        <MetricCard icon={CheckCircle2} label="Questions answered" value={p.questionsAnswered} accent="text-success" />
-        <MetricCard icon={Code2} label="Coding solved" value={`${p.codingSolved}/${p.codingTotal}`} accent="text-sky-400" />
-        <MetricCard icon={Flame} label="Study streak" value={`${p.streak.current}d`} accent="text-warning" sub={`best ${p.streak.best}d`} />
+        <MetricCard
+          icon={BookOpenCheck}
+          label="Chapters read"
+          value={overall.read}
+          sub={`of ${overall.total}`}
+          accent="text-primary"
+        />
+        <MetricCard
+          icon={Trophy}
+          label="Courses mastered"
+          value={mastered}
+          sub={`of ${COURSES.length}`}
+          accent="text-success"
+        />
+        <MetricCard
+          icon={Flame}
+          label="Day streak"
+          value={`${streak.current}d`}
+          sub={`best ${streak.best}d`}
+          accent="text-amber-400"
+        />
+        <MetricCard
+          icon={Timer}
+          label="Today's minutes"
+          value={todayMinutes}
+          sub="keep it going"
+          accent="text-sky-400"
+        />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6">
-          <section className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold">
-              <AlertTriangle className="h-4 w-4 text-danger" />
-              Weak areas
-            </h3>
-            {p.weakAreas.length === 0 ? (
-              p.questionsAnswered === 0 ? (
-                <p className="text-sm text-muted">Answer a few questions to see where to focus.</p>
-              ) : (
-                <p className="flex items-center gap-2 text-sm text-success">
-                  <Trophy className="h-4 w-4" />
-                  All started areas are strong.
-                </p>
-              )
-            ) : (
-              <ul className="space-y-2">
-                {p.weakAreas.map((w) => (
-                  <li key={w.meta.id}>
-                    <Link
-                      to={`/quiz/${w.meta.id}`}
-                      className="flex items-center justify-between text-sm transition hover:text-primary"
-                    >
-                      <span>{w.meta.label}</span>
-                      <span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-medium text-danger">
-                        {w.score}%
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="mb-3 font-semibold">Continue where you left off</h3>
-            {p.state.lastActivity ? (
-              <Link
-                to={p.state.lastActivity.path}
-                className="flex items-center justify-between rounded-lg bg-surface-2 p-3 transition hover:opacity-80"
-              >
-                <div>
-                  <div className="text-sm font-medium">{p.state.lastActivity.label}</div>
-                  <div className="text-xs text-muted">Resume</div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-primary" />
-              </Link>
-            ) : (
-              <p className="text-sm text-muted">
-                Nothing yet —{' '}
-                <Link to="/quiz" className="text-primary">
-                  start a quiz
-                </Link>
-                .
-              </p>
-            )}
-          </section>
-        </div>
-
-        <section className="rounded-xl border border-border bg-surface p-5 lg:col-span-2">
-          <h3 className="mb-4 font-semibold">Category breakdown</h3>
-          <div className="space-y-4">
-            {p.categories.map((c) => {
-              const Icon = c.meta.icon;
-              return (
-                <div key={c.meta.id}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2">
-                      <Icon className={`h-4 w-4 ${c.meta.accent}`} />
-                      {c.meta.label}
-                    </span>
-                    <span className="text-muted">
-                      {c.score}% · {Math.round(c.meta.weight * 100)}% weight
-                    </span>
-                  </div>
-                  <ProgressBar value={c.score} tone={c.score >= 60 ? 'success' : c.score > 0 ? 'warning' : 'primary'} />
-                </div>
-              );
-            })}
+      {/* Continue learning banner */}
+      {target && targetCourse && targetChapter && (
+        <Link
+          to={`/courses/${target.courseId}/${target.chapterId}`}
+          className="group flex items-center justify-between gap-4 rounded-xl border border-primary/30 bg-primary/5 p-5 transition hover:border-primary/50"
+        >
+          <div className="flex min-w-0 items-center gap-4">
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${targetCourse.tint}`}>
+              <targetCourse.icon className={`h-6 w-6 ${targetCourse.color}`} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-medium uppercase tracking-wider text-primary">
+                {started ? 'Continue learning' : 'Start learning'}
+              </div>
+              <div className="truncate font-semibold">{targetChapter.title}</div>
+              <div className="truncate text-sm text-muted">{targetCourse.title}</div>
+            </div>
           </div>
-        </section>
-      </div>
+          <ArrowRight className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-0.5" />
+        </Link>
+      )}
 
-      <section className="rounded-xl border border-border bg-surface p-5">
-        <h3 className="mb-4 font-semibold">Study activity (last 90 days)</h3>
-        <Heatmap cells={p.heatmap} />
-      </section>
+      {/* Course grid */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted">All courses</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {COURSES.map((course) => {
+            const Icon = course.icon;
+            const prog = courseProgress(course.id, state);
+            return (
+              <Link
+                key={course.id}
+                to={`/courses/${course.id}`}
+                className="group flex flex-col rounded-xl border border-border bg-surface p-5 transition hover:border-primary/40 hover:bg-surface-2"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${course.tint}`}>
+                    <Icon className={`h-6 w-6 ${course.color}`} />
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                      STATUS_STYLES[prog.status] ?? STATUS_STYLES['not-started']
+                    }`}
+                  >
+                    {prog.statusLabel}
+                  </span>
+                </div>
+                <h3 className="font-semibold">{course.title}</h3>
+                <p className="mt-1 line-clamp-2 flex-1 text-sm text-muted">{course.description}</p>
+                <div className="mt-4">
+                  <div className="mb-1.5 flex items-center justify-between text-xs text-muted">
+                    <span className="tabular-nums">
+                      {prog.read}/{prog.total} chapters
+                    </span>
+                    <span className="tabular-nums">{prog.percent}%</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${course.bar}`}
+                      style={{ width: `${prog.percent}%` }}
+                    />
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
