@@ -7,6 +7,7 @@ import { useProgressState } from '../hooks/useProgress';
 import { markLessonRead } from '../lib/storage';
 import { readSetFor, readingMinutes, keyTakeaway } from '../lib/courses';
 import { Markdown } from '../components/Markdown';
+import { ChapterQuiz } from '../components/ChapterQuiz';
 
 export function ChapterPage() {
   const { courseId = '', chapterId = '' } = useParams();
@@ -83,6 +84,15 @@ export function ChapterPage() {
               <p className="text-sm leading-relaxed text-text/90">{takeaway}</p>
             </div>
           )}
+
+          {/* AI chapter quiz */}
+          <ChapterQuiz
+            courseId={courseId}
+            chapterId={chapterId}
+            courseTitle={course.title}
+            chapterTitle={lesson.title}
+            chapterContent={lesson.content}
+          />
 
           {/* Prev / next chapter */}
           <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-5">
