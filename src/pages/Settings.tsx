@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
-import { Sun, Moon, Upload } from 'lucide-react';
+import { Sun, Moon, Upload, Loader2 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
 import { updateSettings, resetAll, importJSON } from '../lib/storage';
+import { testGeminiConnection } from '../lib/gemini';
 import { ConfirmButton } from '../components/Confirm';
 import type { TargetRole } from '../types';
 
@@ -17,6 +18,22 @@ export function Settings() {
   const { settings } = useProgressState();
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState('');
+  const [geminiStatus, setGeminiStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [geminiError, setGeminiError] = useState('');
+
+  async function testGemini() {
+    const key = settings.geminiApiKey ?? '';
+    if (!key) return;
+    setGeminiStatus('loading');
+    setGeminiError('');
+    try {
+      await testGeminiConnection(key);
+      setGeminiStatus('ok');
+    } catch (err) {
+      setGeminiError(err instanceof Error ? err.message : 'Connection failed');
+      setGeminiStatus('error');
+    }
+  }
 
   function onImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -69,12 +86,33 @@ export function Settings() {
         <input
           type="password"
           value={settings.geminiApiKey ?? ''}
-          onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
+          onChange={(e) => {
+            updateSettings({ geminiApiKey: e.target.value });
+            setGeminiStatus('idle');
+          }}
           placeholder="Paste your Gemini API key…"
           className="w-full rounded-lg border border-border bg-surface-2 p-2.5 text-sm outline-none focus:border-primary/50"
         />
+        <div className="mt-2 flex items-center gap-3">
+          <button
+            onClick={testGemini}
+            disabled={!settings.geminiApiKey || geminiStatus === 'loading'}
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs transition hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {geminiStatus === 'loading' ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : null}
+            Test connection
+          </button>
+          {geminiStatus === 'ok' && (
+            <span className="text-xs font-medium text-success">Connected ✓</span>
+          )}
+          {geminiStatus === 'error' && (
+            <span className="text-xs text-danger">{geminiError}</span>
+          )}
+        </div>
         <p className="mt-2 text-xs text-muted">
-          Get a free key at aistudio.google.com/apikey. AI features that use it are rolling out next.
+          Get a free key at aistudio.google.com/apikey.
         </p>
       </section>
 
