@@ -9,6 +9,8 @@ import {
   Radio,
   Network,
   FlaskConical,
+  GitMerge,
+  BrainCircuit,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -131,6 +133,26 @@ export const COURSES: CourseConfig[] = [
     color: 'text-emerald-400',
     bar: 'bg-emerald-400',
     tint: 'bg-emerald-400/10',
+  },
+  {
+    id: 'microservices',
+    title: 'Microservices',
+    description: 'Saga, CQRS, event sourcing, circuit breakers, and distributed system patterns.',
+    icon: GitMerge,
+    estimatedHours: 6,
+    color: 'text-pink-400',
+    bar: 'bg-pink-400',
+    tint: 'bg-pink-400/10',
+  },
+  {
+    id: 'dsa',
+    title: 'DSA Patterns',
+    description: 'Algorithmic patterns that appear in backend interviews at EU tech companies.',
+    icon: BrainCircuit,
+    estimatedHours: 5,
+    color: 'text-indigo-400',
+    bar: 'bg-indigo-400',
+    tint: 'bg-indigo-400/10',
   },
 ];
 
