@@ -1,10 +1,12 @@
-import { Download } from 'lucide-react';
-import { useProgress } from '../hooks/useProgress';
-import { allCodingProblems } from '../data/coding';
-import { exportJSON } from '../lib/storage';
-import { ReadinessGauge } from '../components/ReadinessGauge';
+import { Link, useNavigate } from 'react-router-dom';
+import { Download, BookOpenCheck, Trophy, Flame, AlertTriangle } from 'lucide-react';
+import { useProgressState } from '../hooks/useProgress';
+import { exportJSON, todayKey } from '../lib/storage';
+import { computeStreaks, buildHeatmap, type HeatCell } from '../lib/scoring';
 import { ProgressBar } from '../components/ProgressBar';
 import { Heatmap } from '../components/Heatmap';
+import { COURSES } from '../data/courseConfig';
+import { courseProgress, overallChapterProgress } from '../lib/courses';
 
 function downloadProgress() {
   const blob = new Blob([exportJSON()], { type: 'application/json' });
@@ -16,122 +18,232 @@ function downloadProgress() {
   URL.revokeObjectURL(url);
 }
 
-export function Progress() {
-  const p = useProgress();
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  // Coding stats by category.
-  const codingByCategory = new Map<string, { solved: number; total: number }>();
-  for (const prob of allCodingProblems) {
-    const c = codingByCategory.get(prob.category) ?? { solved: 0, total: 0 };
-    c.total += 1;
-    if (p.state.codingProgress[prob.id]?.solved) c.solved += 1;
-    codingByCategory.set(prob.category, c);
-  }
-  const attempts = Object.values(p.state.codingProgress).filter((c) => c.attempts > 0);
-  const avgAttempts = attempts.length
-    ? (attempts.reduce((a, c) => a + c.attempts, 0) / attempts.length).toFixed(1)
-    : '0';
+function chunkIntoWeeks(cells: HeatCell[]): HeatCell[][] {
+  const weeks: HeatCell[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+function monthLabels(weeks: HeatCell[][]): Array<{ text: string; col: number }> {
+  const labels: Array<{ text: string; col: number }> = [];
+  let lastMonth = -1;
+  weeks.forEach((week, wi) => {
+    if (!week[0]) return;
+    const m = new Date(week[0].date + 'T00:00:00').getMonth();
+    if (m !== lastMonth) {
+      labels.push({ text: MONTH_NAMES[m], col: wi });
+      lastMonth = m;
+    }
+  });
+  return labels;
+}
+
+const STATUS_ORDER: Record<string, number> = {
+  'in-progress': 0,
+  completed: 1,
+  'not-started': 2,
+  mastered: 3,
+};
+
+const STATUS_BADGE: Record<string, string> = {
+  mastered: 'bg-success/15 text-success',
+  completed: 'bg-primary/15 text-primary',
+  'in-progress': 'bg-amber-400/15 text-amber-400',
+  'not-started': 'bg-surface-2 text-muted',
+};
+
+export function Progress() {
+  const navigate = useNavigate();
+  const state = useProgressState();
+
+  const overall = overallChapterProgress(state);
+  const { current: currentStreak, best: longestStreak } = computeStreaks(state.studyHistory);
+  const coursesMasteredCount = COURSES.filter(
+    (c) => courseProgress(c.id, state).status === 'mastered',
+  ).length;
+
+  // Rows sorted: in-progress → not-started/completed → mastered
+  const rows = COURSES.map((course) => {
+    const prog = courseProgress(course.id, state);
+    const mp = state.moduleProgress[course.id];
+    return { course, prog, bestScore: mp?.bestScore ?? 0 };
+  }).sort((a, b) => (STATUS_ORDER[a.prog.status] ?? 2) - (STATUS_ORDER[b.prog.status] ?? 2));
+
+  // Weak spots: courses with a score attempt below 70%
+  const weakSpots = rows
+    .filter(({ bestScore }) => bestScore > 0 && bestScore < 70)
+    .sort((a, b) => a.bestScore - b.bestScore)
+    .slice(0, 3);
+
+  // Heatmap data
+  const heatCells = buildHeatmap(state.studyHistory, 90);
+  const weeks = chunkIntoWeeks(heatCells);
+  const labels = monthLabels(weeks);
+
+  // Active study days in last 90 days (any activity counts)
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89);
+  const ninetyDaysAgoKey = todayKey(ninetyDaysAgo);
+  const activeDays = Object.entries(state.studyHistory).filter(
+    ([key, entry]) =>
+      key >= ninetyDaysAgoKey &&
+      (entry.minutesSpent > 0 || entry.questionsAnswered > 0 || (entry.chaptersRead ?? 0) > 0),
+  ).length;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Progress report</h2>
-          <p className="text-sm text-muted">Where you stand and what to focus on next.</p>
+      <h2 className="text-xl font-semibold">Progress</h2>
+
+      {/* Section 1 — Summary stat cards */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <BookOpenCheck className="mb-3 h-5 w-5 text-primary" />
+          <div className="text-3xl font-bold text-primary">{overall.read}</div>
+          <div className="mt-1 text-sm font-medium text-text">Chapters read</div>
+          <div className="text-xs text-muted">of {overall.total} total</div>
         </div>
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <Trophy className="mb-3 h-5 w-5 text-success" />
+          <div className="text-3xl font-bold text-success">{coursesMasteredCount}</div>
+          <div className="mt-1 text-sm font-medium text-text">Courses mastered</div>
+          <div className="text-xs text-muted">of {COURSES.length} courses</div>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <Flame className="mb-3 h-5 w-5 text-amber-400" />
+          <div className="text-3xl font-bold text-amber-400">{currentStreak}</div>
+          <div className="mt-1 text-sm font-medium text-text">Current streak</div>
+          <div className="text-xs text-muted">days</div>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <Flame className="mb-3 h-5 w-5 text-amber-400/50" />
+          <div className="text-3xl font-bold text-amber-400/70">{longestStreak}</div>
+          <div className="mt-1 text-sm font-medium text-text">Longest streak</div>
+          <div className="text-xs text-muted">days ever</div>
+        </div>
+      </div>
+
+      {/* Section 2 — Per-course progress table */}
+      <section className="overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="border-b border-border px-5 py-4">
+          <h3 className="font-semibold">Course progress</h3>
+        </div>
+        <div className="divide-y divide-border">
+          {rows.map(({ course, prog, bestScore }) => {
+            const Icon = course.icon;
+            return (
+              <div
+                key={course.id}
+                onClick={() => navigate(`/courses/${course.id}`)}
+                className="flex cursor-pointer items-center gap-4 px-5 py-3 transition hover:bg-surface-2"
+              >
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${course.tint}`}
+                >
+                  <Icon className={`h-4 w-4 ${course.color}`} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate text-sm font-medium">{course.title}</span>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <span className="w-10 text-right text-xs tabular-nums text-muted">
+                        {prog.read}/{prog.total}
+                      </span>
+                      <span className="w-10 text-right text-xs tabular-nums text-muted">
+                        {bestScore > 0 ? `${bestScore}%` : '—'}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_BADGE[prog.status] ?? STATUS_BADGE['not-started']}`}
+                      >
+                        {prog.statusLabel}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-1.5">
+                    <ProgressBar value={prog.percent} tone="primary" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Section 3 — Study heatmap */}
+      <section className="rounded-xl border border-border bg-surface p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-semibold">Study history</h3>
+          <span className="text-sm text-muted">{activeDays} active study days in the last 90 days</span>
+        </div>
+        {/* Month labels aligned to week columns */}
+        <div className="mb-0.5 flex gap-1">
+          {weeks.map((_, wi) => {
+            const label = labels.find((l) => l.col === wi);
+            return (
+              <div key={wi} className="w-3 text-[10px] leading-none text-muted">
+                {label?.text ?? ''}
+              </div>
+            );
+          })}
+        </div>
+        <Heatmap cells={heatCells} />
+      </section>
+
+      {/* Section 4 — Weak spots */}
+      <section className="rounded-xl border border-border bg-surface p-5">
+        <h3 className="mb-4 font-semibold">Weak spots</h3>
+        {weakSpots.length === 0 ? (
+          <p className="text-sm text-muted">No weak spots yet — keep going.</p>
+        ) : (
+          <div className="space-y-3">
+            {weakSpots.map(({ course, bestScore }) => {
+              const Icon = course.icon;
+              return (
+                <div key={course.id} className="flex items-center gap-3">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${course.tint}`}
+                  >
+                    <Icon className={`h-4 w-4 ${course.color}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm font-medium">{course.title}</span>
+                    <span className="ml-2 text-sm text-warning">Best score: {bestScore}%</span>
+                  </div>
+                  <Link
+                    to={`/courses/${course.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-primary/40 hover:text-text"
+                  >
+                    Review
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Weak spots callout if none yet but user has started */}
+      {weakSpots.length === 0 && overall.read > 0 && (
+        <div className="flex items-start gap-3 rounded-xl border border-border bg-surface-2/50 px-5 py-4 text-sm text-muted">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted/60" />
+          <span>
+            Weak spots appear once you complete a chapter quiz and score below 70%. Start a quiz from
+            any chapter page.
+          </span>
+        </div>
+      )}
+
+      {/* Section 5 — Data export */}
+      <div className="flex justify-end">
         <button
           onClick={downloadProgress}
           className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-muted transition hover:text-text"
         >
-          <Download className="h-4 w-4" /> Export JSON
+          <Download className="h-4 w-4" /> Export progress JSON
         </button>
       </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="flex flex-col items-center justify-center rounded-xl border border-border bg-surface p-6">
-          <ReadinessGauge value={p.overallReadiness} />
-          <p className="mt-3 text-sm text-muted">Overall readiness</p>
-        </section>
-
-        <section className="rounded-xl border border-border bg-surface p-5 lg:col-span-2">
-          <h3 className="mb-4 font-semibold">Category breakdown</h3>
-          <div className="space-y-4">
-            {p.categories.map((c) => (
-              <div key={c.meta.id}>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span>{c.meta.label}</span>
-                  <span className="text-muted">
-                    {c.answered}/{c.total} answered · {c.accuracy}% accuracy
-                  </span>
-                </div>
-                <ProgressBar value={c.score} tone={c.score >= 60 ? 'success' : c.score > 0 ? 'warning' : 'primary'} />
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <StatCard label="Due for review" value={p.totalDueCount} tone="text-warning" />
-        <StatCard label="Mastered (4+ streak)" value={p.totalMastered} tone="text-success" />
-        <StatCard label="Struggling" value={p.totalStruggling} tone="text-danger" />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-xl border border-border bg-surface p-5">
-          <h3 className="mb-4 font-semibold">Coding by category</h3>
-          <div className="space-y-3">
-            {Array.from(codingByCategory.entries()).map(([cat, s]) => (
-              <div key={cat} className="flex items-center justify-between text-sm">
-                <span className="capitalize">{cat.replace(/-/g, ' ')}</span>
-                <span className="text-muted">
-                  {s.solved}/{s.total} solved
-                </span>
-              </div>
-            ))}
-            <div className="mt-2 border-t border-border pt-2 text-sm text-muted">
-              Average attempts per problem: <span className="font-medium text-text">{avgAttempts}</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-border bg-surface p-5">
-          <h3 className="mb-2 font-semibold">Focus on these</h3>
-          {p.weakAreas.length === 0 ? (
-            <p className="text-sm text-muted">No weak areas yet — keep going to surface them.</p>
-          ) : (
-            <ul className="space-y-2">
-              {p.weakAreas.slice(0, 5).map((w) => (
-                <li key={w.meta.id} className="flex items-center justify-between text-sm">
-                  <span>{w.meta.label}</span>
-                  <span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-medium text-danger">{w.score}%</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-
-      <section className="rounded-xl border border-border bg-surface p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-semibold">Study history</h3>
-          <div className="flex gap-4 text-sm text-muted">
-            <span>{p.streak.totalDays} active days</span>
-            <span>{p.streak.current}d streak</span>
-            <span>best {p.streak.best}d</span>
-          </div>
-        </div>
-        <Heatmap cells={p.heatmap} />
-      </section>
-    </div>
-  );
-}
-
-function StatCard({ label, value, tone }: { label: string; value: number; tone: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface p-5">
-      <div className={`text-3xl font-bold ${tone}`}>{value}</div>
-      <div className="mt-1 text-sm text-muted">{label}</div>
     </div>
   );
 }

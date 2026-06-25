@@ -83,7 +83,9 @@ export function Layout({ children }: { children: ReactNode }) {
   }, [activeCourseId]);
 
   const overall = overallChapterProgress(state);
-  const streak = computeStreaks(state.studyHistory).current;
+  const streakInfo = computeStreaks(state.studyHistory);
+  const streak = streakInfo.current;
+  const longestStreak = streakInfo.best;
 
   const breadcrumb = useMemo(() => {
     const seg = location.pathname.split('/').filter(Boolean);
@@ -262,16 +264,30 @@ export function Layout({ children }: { children: ReactNode }) {
                   style={{ width: `${overall.percent}%` }}
                 />
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted">
-                <Flame className="h-3.5 w-3.5 text-amber-400" />
-                <span className="font-medium text-text">{streak}</span>
-                <span>day streak</span>
+              <div
+                className={`flex items-center gap-1.5 text-xs ${streak > 0 ? 'text-amber-400' : 'text-muted'}`}
+                title={`Longest streak: ${longestStreak} days`}
+              >
+                <Flame className={`h-3.5 w-3.5 ${streak > 0 ? 'text-amber-400' : 'text-muted/40'}`} />
+                {streak === 0 ? (
+                  <span>No streak yet</span>
+                ) : streak === 1 ? (
+                  <span>1 day streak</span>
+                ) : (
+                  <>
+                    <span className="font-bold">{streak}</span>
+                    <span> day streak 🔥</span>
+                  </>
+                )}
               </div>
             </div>
           ) : (
-            <div className="mb-2 flex flex-col items-center gap-1 text-xs text-muted">
-              <Flame className="h-4 w-4 text-amber-400" />
-              <span className="font-medium text-text">{streak}</span>
+            <div
+              className="mb-2 flex flex-col items-center gap-1 text-xs"
+              title={`${streak > 0 ? `${streak} day streak` : 'No streak yet'} · Longest: ${longestStreak} days`}
+            >
+              <Flame className={`h-4 w-4 ${streak > 0 ? 'text-amber-400' : 'text-muted/40'}`} />
+              <span className={`font-bold ${streak > 0 ? 'text-amber-400' : 'text-muted'}`}>{streak}</span>
             </div>
           )}
           <button

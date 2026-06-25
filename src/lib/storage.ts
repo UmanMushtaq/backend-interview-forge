@@ -105,7 +105,7 @@ export function todayKey(date: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
-function bumpStudyToday(s: ProgressState, questions: number, minutes: number): ProgressState {
+function bumpStudyToday(s: ProgressState, questions: number, minutes: number, chapters = 0): ProgressState {
   const key = todayKey();
   const prev = s.studyHistory[key] ?? { minutesSpent: 0, questionsAnswered: 0 };
   return {
@@ -115,6 +115,7 @@ function bumpStudyToday(s: ProgressState, questions: number, minutes: number): P
       [key]: {
         minutesSpent: prev.minutesSpent + minutes,
         questionsAnswered: prev.questionsAnswered + questions,
+        chaptersRead: (prev.chaptersRead ?? 0) + chapters,
       },
     },
   };
@@ -244,7 +245,7 @@ export function markLessonRead(moduleId: string, lessonId: string): void {
   setState((s) => {
     const prev = s.moduleProgress[moduleId] ?? emptyModuleProgress();
     if (prev.lessonsRead.includes(lessonId)) return s;
-    return {
+    const withModule: ProgressState = {
       ...s,
       moduleProgress: {
         ...s.moduleProgress,
@@ -256,6 +257,7 @@ export function markLessonRead(moduleId: string, lessonId: string): void {
       },
       lastActivity: { label: 'Learn', path: `/learn/${moduleId}`, timestamp: Date.now() },
     };
+    return bumpStudyToday(withModule, 0, 0, 1);
   });
 }
 

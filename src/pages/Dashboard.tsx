@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpenCheck, Trophy, Flame, Timer, ArrowRight } from 'lucide-react';
+import { BookOpenCheck, Trophy, Flame, Timer, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
 import { MetricCard } from '../components/MetricCard';
 import { computeStreaks } from '../lib/scoring';
@@ -26,7 +26,15 @@ export function Dashboard() {
   const overall = overallChapterProgress(state);
   const mastered = coursesMastered(state);
   const streak = computeStreaks(state.studyHistory);
-  const todayMinutes = state.studyHistory[todayKey()]?.minutesSpent ?? 0;
+  const todayEntry = state.studyHistory[todayKey()];
+  const todayMinutes = todayEntry?.minutesSpent ?? 0;
+  const chaptersReadToday = todayEntry?.chaptersRead ?? 0;
+  const questionsAnsweredToday = todayEntry?.questionsAnswered ?? 0;
+
+  const studiedToday = todayMinutes > 0 || questionsAnsweredToday > 0 || chaptersReadToday > 0;
+
+  const goalProgress = Math.max(chaptersReadToday / 2, questionsAnsweredToday / 5);
+  const goalMet = goalProgress >= 1;
 
   const target = continueTarget(state);
   const targetCourse = target ? courseConfigById[target.courseId] : null;
@@ -73,6 +81,57 @@ export function Dashboard() {
           accent="text-sky-400"
         />
       </div>
+
+      {/* Study streak banner — hidden for brand-new users */}
+      {started && (
+        studiedToday ? (
+          <div className="flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-5 py-3">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+            <p className="text-sm">
+              Great work today.{' '}
+              <span className="font-semibold text-success">{streak.current} day streak</span>{' '}
+              and counting.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/10 px-5 py-3">
+            <div className="flex items-center gap-3">
+              <Flame className="h-5 w-5 shrink-0 text-warning" />
+              <p className="text-sm">You haven&apos;t studied today yet. Keep your streak alive.</p>
+            </div>
+            {target && (
+              <Link
+                to={`/courses/${target.courseId}/${target.chapterId}`}
+                className="shrink-0 rounded-lg bg-warning/20 px-3 py-1.5 text-xs font-semibold text-warning transition hover:bg-warning/30"
+              >
+                Start studying
+              </Link>
+            )}
+          </div>
+        )
+      )}
+
+      {/* Daily goal row */}
+      {started && (
+        <div className="rounded-xl border border-border bg-surface px-5 py-3">
+          <div className="mb-2 flex items-center justify-between text-sm">
+            <span className="font-medium">Daily goal</span>
+            {goalMet ? (
+              <span className="text-xs font-medium text-success">Daily goal complete ✓</span>
+            ) : (
+              <span className="text-xs text-muted">
+                Today: {chaptersReadToday} chapters read · {questionsAnsweredToday} questions answered
+              </span>
+            )}
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${goalMet ? 'bg-success' : 'bg-primary'}`}
+              style={{ width: `${Math.min(100, goalProgress * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Continue learning banner */}
       {target && targetCourse && targetChapter && (
