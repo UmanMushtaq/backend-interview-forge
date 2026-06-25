@@ -241,6 +241,23 @@ export function setInterviewConfidence(
   });
 }
 
+export function markLessonUnread(moduleId: string, lessonId: string): void {
+  setState((s) => {
+    const prev = s.moduleProgress[moduleId] ?? emptyModuleProgress();
+    if (!prev.lessonsRead.includes(lessonId)) return s;
+    const lessonsRead = prev.lessonsRead.filter((id) => id !== lessonId);
+    const status: ModuleStatus =
+      lessonsRead.length === 0 ? 'not-started' : prev.status === 'mastered' ? 'learning' : prev.status;
+    return {
+      ...s,
+      moduleProgress: {
+        ...s.moduleProgress,
+        [moduleId]: { ...prev, lessonsRead, status },
+      },
+    };
+  });
+}
+
 export function markLessonRead(moduleId: string, lessonId: string): void {
   setState((s) => {
     const prev = s.moduleProgress[moduleId] ?? emptyModuleProgress();

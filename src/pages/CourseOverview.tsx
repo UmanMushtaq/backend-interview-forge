@@ -3,6 +3,7 @@ import { Clock, BookOpen, ArrowRight, ArrowLeft, CheckCircle2, Circle, Trophy } 
 import { COURSES, courseConfigById } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
 import { useProgressState } from '../hooks/useProgress';
+import { markLessonRead, markLessonUnread } from '../lib/storage';
 import { courseProgress, readSetFor } from '../lib/courses';
 
 export function CourseOverview() {
@@ -99,13 +100,24 @@ export function CourseOverview() {
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-xs font-medium text-muted">
                   {i + 1}
                 </span>
-                {isRead ? (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-                ) : (
-                  <Circle className="h-5 w-5 shrink-0 text-muted/40" />
-                )}
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">{lesson.title}</span>
                 <span className="text-xs text-muted">{isRead ? 'Read' : 'Unread'}</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (isRead) markLessonUnread(courseId, lesson.id);
+                    else markLessonRead(courseId, lesson.id);
+                  }}
+                  title={isRead ? 'Mark as unread' : 'Mark as read'}
+                  className="shrink-0 rounded p-0.5 transition hover:opacity-70"
+                >
+                  {isRead ? (
+                    <CheckCircle2 className="h-5 w-5 text-success" />
+                  ) : (
+                    <Circle className="h-5 w-5 text-muted/40" />
+                  )}
+                </button>
                 <ArrowRight className="h-4 w-4 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-primary" />
               </Link>
             );

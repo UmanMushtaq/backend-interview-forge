@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Clock, CheckCircle2, Circle, Lightbulb, Check } from 'lucide-react';
 import { courseConfigById } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
 import { useProgressState } from '../hooks/useProgress';
-import { markLessonRead } from '../lib/storage';
+import { markLessonRead, markLessonUnread } from '../lib/storage';
 import { readSetFor, readingMinutes, keyTakeaway } from '../lib/courses';
 import { Markdown } from '../components/Markdown';
 import { ChapterQuiz } from '../components/ChapterQuiz';
@@ -18,11 +17,6 @@ export function ChapterPage() {
   const index = lessons.findIndex((l) => l.id === chapterId);
   const lesson = index >= 0 ? lessons[index] : undefined;
 
-  // Mark this chapter as read when it opens.
-  useEffect(() => {
-    if (mod && lesson) markLessonRead(courseId, chapterId);
-  }, [courseId, chapterId, mod, lesson]);
-
   if (!course || !mod || !lesson) {
     return (
       <div className="space-y-3">
@@ -35,6 +29,7 @@ export function ChapterPage() {
   }
 
   const read = readSetFor(courseId, state);
+  const isCurrentRead = read.has(chapterId);
   const total = lessons.length;
   const prev = index > 0 ? lessons[index - 1] : null;
   const next = index < total - 1 ? lessons[index + 1] : null;
@@ -59,6 +54,21 @@ export function ChapterPage() {
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" /> {minutes} min read
                 </span>
+                {isCurrentRead ? (
+                  <button
+                    onClick={() => markLessonUnread(courseId, chapterId)}
+                    className="flex items-center gap-1.5 rounded-lg border border-success/40 bg-success/10 px-3 py-1.5 text-xs text-success transition hover:bg-success/20"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Marked as read
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => markLessonRead(courseId, chapterId)}
+                    className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition hover:text-text"
+                  >
+                    <Circle className="h-3.5 w-3.5" /> Mark as read
+                  </button>
+                )}
               </span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
