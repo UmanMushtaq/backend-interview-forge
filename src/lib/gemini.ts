@@ -104,7 +104,7 @@ Generate exactly one realistic, specific interview question that would be asked 
 Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape:
 {
   "question": "<the interview question>",
-  "hints": ["<a nudge the interviewer might give if the candidate is stuck — not the full answer>", "<a second nudge>"]
+  "hints": ["<a nudge the interviewer might give if the candidate is stuck  -  not the full answer>", "<a second nudge>"]
 }`;
 
   const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
@@ -174,7 +174,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   "verdict": "<one sentence summary like 'Solid answer, but missed the key trade-off'>",
   "whatYouGotRight": ["<specific point the candidate got right>", "<another point>"],
   "whatWasMissing": ["<specific concept or depth that was missing>", "<another gap>"],
-  "modelAnswer": "<what a senior engineer would say in 3-5 sentences — concrete, precise, no fluff>"
+  "modelAnswer": "<what a senior engineer would say in 3-5 sentences  -  concrete, precise, no fluff>"
 }`;
 
   const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {

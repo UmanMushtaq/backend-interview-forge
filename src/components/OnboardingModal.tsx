@@ -3,7 +3,7 @@ import { updateSettings } from '../lib/storage';
 
 const ITEMS = [
   { icon: BookOpen, title: 'Quizzes', text: 'Spaced-repetition multiple choice across NestJS, Redis, Kafka, RabbitMQ, Postgres and design.' },
-  { icon: Code2, title: 'Coding', text: 'Implement DI containers, sagas, rate limiters and more — tests run in your browser.' },
+  { icon: Code2, title: 'Coding', text: 'Implement DI containers, sagas, rate limiters and more  -  tests run in your browser.' },
   { icon: Network, title: 'System design', text: 'Timed prompts with model answers and self-scoring across five dimensions.' },
   { icon: Database, title: 'SQL', text: 'Write queries against a fintech schema, then compare to the model answer.' },
   { icon: MessageSquare, title: 'Interview Q&A', text: 'Rehearse spoken answers and rate your confidence.' },
@@ -27,7 +27,7 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
           <div>
             <h2 className="text-lg font-semibold">Welcome to Backend Interview Forge</h2>
             <p className="mt-1 text-sm text-muted">
-              Everything runs locally in your browser — your progress is saved to this device.
+              Everything runs locally in your browser  -  your progress is saved to this device.
             </p>
           </div>
           <button onClick={finish} className="rounded-md p-1 text-muted hover:text-text" aria-label="Close">

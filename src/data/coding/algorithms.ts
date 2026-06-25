@@ -81,7 +81,7 @@ export const algorithms: CodingProblem[] = [
     ],
     hints: ['Recurse on objects and arrays; copy primitives directly.', 'Handle Date, Map, and Set before the generic object branch.'],
     interviewContext:
-      'Deep clone forces you to reason about reference vs value semantics and the prototype chain — and to ask whether structuredClone already exists in the runtime.',
+      'Deep clone forces you to reason about reference vs value semantics and the prototype chain  -  and to ask whether structuredClone already exists in the runtime.',
   },
   {
     id: 'algorithms-promiseall-001',

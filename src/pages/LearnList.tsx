@@ -26,7 +26,7 @@ export function LearnList() {
         </h2>
         <p className="text-sm text-muted">
           Study each topic, then prove it. Fail the test and you&rsquo;ll relearn and get fresh questions until you
-          master it — {mastered}/{LEARN_MODULES.length} mastered.
+          master it  -  {mastered}/{LEARN_MODULES.length} mastered.
         </p>
       </div>
 

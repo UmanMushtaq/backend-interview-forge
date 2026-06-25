@@ -158,7 +158,7 @@ export const COURSES: CourseConfig[] = [
   {
     id: 'nexuspay',
     title: 'NexusPay Deep Dive',
-    description: 'Own your flagship project. Every architectural decision, every flow, every trade-off — ready for interviews.',
+    description: 'Own your flagship project. Every architectural decision, every flow, every trade-off  -  ready for interviews.',
     icon: Landmark,
     estimatedHours: 4,
     color: 'text-violet-400',

@@ -165,7 +165,7 @@ export function ModulePage() {
     return (
       <div className="mx-auto max-w-3xl space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">{mod.title} — test</h2>
+          <h2 className="font-semibold">{mod.title}  -  test</h2>
           <span className="text-sm text-muted">
             {index + 1} / {quiz.length}
           </span>
@@ -234,7 +234,7 @@ export function ModulePage() {
       <p className="mt-2 text-sm text-muted">
         {passed
           ? `You mastered ${mod.title}! Pass mark is ${MODULE_PASS_THRESHOLD}%.`
-          : `Below the ${MODULE_PASS_THRESHOLD}% pass mark. Review the lessons and try again — you'll get a fresh set of questions.`}
+          : `Below the ${MODULE_PASS_THRESHOLD}% pass mark. Review the lessons and try again  -  you'll get a fresh set of questions.`}
       </p>
       <div className="mt-6 flex justify-center gap-3">
         {passed ? (

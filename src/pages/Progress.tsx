@@ -96,7 +96,7 @@ export function Progress() {
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Progress</h2>
 
-      {/* Section 1 — Summary stat cards */}
+      {/* Section 1  -  Summary stat cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="rounded-xl border border-border bg-surface p-5">
           <BookOpenCheck className="mb-3 h-5 w-5 text-primary" />
@@ -124,7 +124,7 @@ export function Progress() {
         </div>
       </div>
 
-      {/* Section 2 — Per-course progress table */}
+      {/* Section 2  -  Per-course progress table */}
       <section className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="border-b border-border px-5 py-4">
           <h3 className="font-semibold">Course progress</h3>
@@ -151,7 +151,7 @@ export function Progress() {
                         {prog.read}/{prog.total}
                       </span>
                       <span className="w-10 text-right text-xs tabular-nums text-muted">
-                        {bestScore > 0 ? `${bestScore}%` : '—'}
+                        {bestScore > 0 ? `${bestScore}%` : ' - '}
                       </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_BADGE[prog.status] ?? STATUS_BADGE['not-started']}`}
@@ -170,7 +170,7 @@ export function Progress() {
         </div>
       </section>
 
-      {/* Section 3 — Study heatmap */}
+      {/* Section 3  -  Study heatmap */}
       <section className="rounded-xl border border-border bg-surface p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-semibold">Study history</h3>
@@ -190,11 +190,11 @@ export function Progress() {
         <Heatmap cells={heatCells} />
       </section>
 
-      {/* Section 4 — Weak spots */}
+      {/* Section 4  -  Weak spots */}
       <section className="rounded-xl border border-border bg-surface p-5">
         <h3 className="mb-4 font-semibold">Weak spots</h3>
         {weakSpots.length === 0 ? (
-          <p className="text-sm text-muted">No weak spots yet — keep going.</p>
+          <p className="text-sm text-muted">No weak spots yet  -  keep going.</p>
         ) : (
           <div className="space-y-3">
             {weakSpots.map(({ course, bestScore }) => {
@@ -235,7 +235,7 @@ export function Progress() {
         </div>
       )}
 
-      {/* Section 5 — Data export */}
+      {/* Section 5  -  Data export */}
       <div className="flex justify-end">
         <button
           onClick={downloadProgress}

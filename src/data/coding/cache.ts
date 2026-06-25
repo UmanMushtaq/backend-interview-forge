@@ -56,7 +56,7 @@ export const cache: CodingProblem[] = [
         expectedOutput: true,
       },
     ],
-    hints: ['A JS Map preserves insertion order — exploit that.', 'On use, delete then re-set the key so it becomes newest; evict map.keys().next().value when over capacity.'],
+    hints: ['A JS Map preserves insertion order  -  exploit that.', 'On use, delete then re-set the key so it becomes newest; evict map.keys().next().value when over capacity.'],
     interviewContext:
       'LRU is the canonical cache eviction question. Using Map ordering for O(1) operations shows you know the language as well as the algorithm.',
   },

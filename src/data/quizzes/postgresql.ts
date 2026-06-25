@@ -11,11 +11,11 @@ export const postgresql: QuizQuestion[] = [
       'Dirty reads',
       'Non-repeatable reads',
       'Reading uncommitted data from other transactions',
-      'Nothing — it is fully serializable',
+      'Nothing  -  it is fully serializable',
     ],
     correctIndex: 1,
     explanation:
-      'READ COMMITTED (the Postgres default) prevents dirty reads, so you never see another transaction\'s uncommitted changes. However each statement sees a fresh snapshot, so re-reading the same row can return different values if another transaction committed in between — a non-repeatable read. To prevent that you need REPEATABLE READ, and SERIALIZABLE to also prevent phantoms and write skew.',
+      'READ COMMITTED (the Postgres default) prevents dirty reads, so you never see another transaction\'s uncommitted changes. However each statement sees a fresh snapshot, so re-reading the same row can return different values if another transaction committed in between  -  a non-repeatable read. To prevent that you need REPEATABLE READ, and SERIALIZABLE to also prevent phantoms and write skew.',
     interviewTip: 'Default is READ COMMITTED; jump to SERIALIZABLE only when write skew matters.',
   },
   {
@@ -25,14 +25,14 @@ export const postgresql: QuizQuestion[] = [
     difficulty: 'core',
     question: 'An ORM loads 100 orders then lazily loads each order\'s customer. What is the problem and fix?',
     options: [
-      'No problem — lazy loading is always optimal',
+      'No problem  -  lazy loading is always optimal',
       'N+1 queries; fix with a JOIN or an eager/batched relation load',
       'Too much memory; fix by adding an index',
       'A deadlock; fix by lowering the isolation level',
     ],
     correctIndex: 1,
     explanation:
-      'This is the classic N+1 problem: 1 query for the orders plus 1 query per order for its customer, so 101 round trips. The fix is to fetch the related rows in a single query (a JOIN, or the ORM\'s eager/relations loading, or a batched IN query). Watch your query logs in development — N+1 is invisible until you count the statements.',
+      'This is the classic N+1 problem: 1 query for the orders plus 1 query per order for its customer, so 101 round trips. The fix is to fetch the related rows in a single query (a JOIN, or the ORM\'s eager/relations loading, or a batched IN query). Watch your query logs in development  -  N+1 is invisible until you count the statements.',
     interviewTip: 'Always say you watch the SQL log to catch N+1 early.',
   },
   {
@@ -49,8 +49,8 @@ export const postgresql: QuizQuestion[] = [
     ],
     correctIndex: 2,
     explanation:
-      'Floating point cannot represent values like 0.10 exactly, so sums drift and reconciliations fail — unacceptable for money. Use numeric/decimal with an explicit precision and scale (or store integer minor units like cents). The trade-off is that numeric math is slower than float, but correctness wins for currency.',
-    interviewTip: 'Say numeric(precision, scale) or integer cents — never float for money.',
+      'Floating point cannot represent values like 0.10 exactly, so sums drift and reconciliations fail  -  unacceptable for money. Use numeric/decimal with an explicit precision and scale (or store integer minor units like cents). The trade-off is that numeric math is slower than float, but correctness wins for currency.',
+    interviewTip: 'Say numeric(precision, scale) or integer cents  -  never float for money.',
   },
   {
     id: 'pg-index-gin-001',
@@ -75,10 +75,10 @@ export const postgresql: QuizQuestion[] = [
     difficulty: 'foundation',
     question: 'What does the "D" in ACID stand for, and what does PostgreSQL do to guarantee it?',
     options: [
-      'Distribution — data is replicated to standby nodes',
-      'Durability — committed transactions survive crashes because changes are written to the WAL before the transaction confirms',
-      'Determinism — the same query always returns the same row order',
-      'Decoupling — tables are isolated in separate files',
+      'Distribution  -  data is replicated to standby nodes',
+      'Durability  -  committed transactions survive crashes because changes are written to the WAL before the transaction confirms',
+      'Determinism  -  the same query always returns the same row order',
+      'Decoupling  -  tables are isolated in separate files',
     ],
     correctIndex: 1,
     explanation:
@@ -115,7 +115,7 @@ export const postgresql: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Pessimistic locking (SELECT FOR UPDATE) acquires a row-level lock at read time, preventing concurrent modification until the transaction ends — good for high-contention scenarios. Optimistic locking adds a version counter to the row; each UPDATE checks the version and fails if another writer changed it, then the application retries — better for low-contention workloads where full blocking is wasteful. PostgreSQL supports both.',
+      'Pessimistic locking (SELECT FOR UPDATE) acquires a row-level lock at read time, preventing concurrent modification until the transaction ends  -  good for high-contention scenarios. Optimistic locking adds a version counter to the row; each UPDATE checks the version and fails if another writer changed it, then the application retries  -  better for low-contention workloads where full blocking is wasteful. PostgreSQL supports both.',
     interviewTip: 'In interview: pick optimistic by default, pessimistic when contention is consistently high.',
   },
   {
@@ -132,7 +132,7 @@ export const postgresql: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Plain EXPLAIN shows the planner\'s estimated cost and row counts without running the query. EXPLAIN ANALYZE actually executes the query and appends real timing (ms) and actual row counts to each node, letting you spot where estimates are wildly off. A huge gap between estimated and actual rows usually means stale statistics — run ANALYZE to fix it. Remember that EXPLAIN ANALYZE on a write query will actually mutate data, so wrap it in a transaction you roll back.',
+      'Plain EXPLAIN shows the planner\'s estimated cost and row counts without running the query. EXPLAIN ANALYZE actually executes the query and appends real timing (ms) and actual row counts to each node, letting you spot where estimates are wildly off. A huge gap between estimated and actual rows usually means stale statistics  -  run ANALYZE to fix it. Remember that EXPLAIN ANALYZE on a write query will actually mutate data, so wrap it in a transaction you roll back.',
     interviewTip: 'Look for Seq Scan on large tables and large estimate-vs-actual row gaps as the main red flags.',
   },
   {
@@ -145,7 +145,7 @@ export const postgresql: QuizQuestion[] = [
       'A full B-tree index on the status column',
       'A GIN index on all columns',
       'A partial index: CREATE INDEX ON tasks (id) WHERE status = \'pending\'',
-      'No index — a small result set is always a full scan',
+      'No index  -  a small result set is always a full scan',
     ],
     correctIndex: 2,
     explanation:
@@ -166,7 +166,7 @@ export const postgresql: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'MVCC keeps old row versions visible to concurrent transactions, so deleted or updated rows become "dead" rather than immediately reclaimed. VACUUM reclaims that space and updates visibility maps. Neglecting it causes table bloat and, crucially, transaction ID (XID) wraparound: PostgreSQL uses 32-bit XIDs and if the gap reaches ~2 billion without VACUUM, it will freeze the database to prevent data corruption. Autovacuum handles this automatically in most cases.',
-    interviewTip: 'Mention XID wraparound — it shows you understand MVCC deeply.',
+    interviewTip: 'Mention XID wraparound  -  it shows you understand MVCC deeply.',
   },
   {
     id: 'pg-window-001',
@@ -200,7 +200,7 @@ export const postgresql: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'PostgreSQL spawns a backend process for every connection, consuming roughly 5-10 MB of memory each. With hundreds of short-lived requests per second, connection setup overhead and memory pressure become serious bottlenecks. A pool keeps a small fixed number of connections open and queues requests, drastically reducing OS resources. PgBouncer sits in front of Postgres for transaction-mode pooling, which is the most efficient but restricts session-level features.',
-    interviewTip: 'Distinguish application-level pools (pg.Pool in node-postgres) from middleware pools (PgBouncer) — they solve the same problem at different layers.',
+    interviewTip: 'Distinguish application-level pools (pg.Pool in node-postgres) from middleware pools (PgBouncer)  -  they solve the same problem at different layers.',
   },
   {
     id: 'pg-migration-001',
@@ -217,7 +217,7 @@ export const postgresql: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'Treating migrations as code means every schema change has a history, can be reviewed, and can be replayed in CI, staging, or a fresh developer machine. Without version-controlled migrations it is easy for environments to drift, making "it works on my machine" bugs hard to diagnose. Tools like Flyway, Liquibase, and TypeORM migrations track which files have been applied via a migrations table.',
-    interviewTip: 'Mention that migration files should be immutable once merged — never edit an already-applied migration.',
+    interviewTip: 'Mention that migration files should be immutable once merged  -  never edit an already-applied migration.',
   },
   {
     id: 'pg-btree-001',
@@ -250,7 +250,7 @@ export const postgresql: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'SERIALIZABLE uses Serializable Snapshot Isolation (SSI), which detects that the two transactions\' read/write patterns would produce an outcome impossible in any serial execution. The second committer receives a serialization_failure error (SQLSTATE 40001) and must retry the entire transaction. This is safer than just using READ COMMITTED (lost update) or SELECT FOR UPDATE (explicit lock), but requires application retry logic.',
-    interviewTip: 'Serialization failures are expected in normal operation — design retry loops with exponential back-off.',
+    interviewTip: 'Serialization failures are expected in normal operation  -  design retry loops with exponential back-off.',
   },
   {
     id: 'pg-explain-002',
@@ -266,7 +266,7 @@ export const postgresql: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'The query planner builds its execution plan using statistics stored in pg_statistic (updated by ANALYZE or autovacuum). When the statistics are stale — for example after a large data load — the planner can badly misestimate row counts, choose a nested loop instead of a hash join, and run orders of magnitude slower. Running ANALYZE refreshes those statistics without locking the table. For extremely non-uniform distributions, consider increasing the statistics target with ALTER COLUMN ... SET STATISTICS.',
+      'The query planner builds its execution plan using statistics stored in pg_statistic (updated by ANALYZE or autovacuum). When the statistics are stale  -  for example after a large data load  -  the planner can badly misestimate row counts, choose a nested loop instead of a hash join, and run orders of magnitude slower. Running ANALYZE refreshes those statistics without locking the table. For extremely non-uniform distributions, consider increasing the statistics target with ALTER COLUMN ... SET STATISTICS.',
   },
   {
     id: 'pg-window-002',
@@ -299,6 +299,6 @@ export const postgresql: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'SELECT ... FOR UPDATE SKIP LOCKED atomically acquires a row lock and skips any rows currently locked by other transactions rather than waiting or erroring. This is the standard building block for work queues in PostgreSQL: multiple workers can each grab a batch of unlocked tasks without stepping on each other. FOR UPDATE NOWAIT is similar but raises an error on contention instead of skipping.',
-    interviewTip: 'SKIP LOCKED is the idiomatic Postgres job-queue primitive — mention it when asked about queue implementations.',
+    interviewTip: 'SKIP LOCKED is the idiomatic Postgres job-queue primitive  -  mention it when asked about queue implementations.',
   },
 ];

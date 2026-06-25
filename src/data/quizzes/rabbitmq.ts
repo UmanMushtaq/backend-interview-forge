@@ -27,7 +27,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'A DLQ is where messages go when they cannot be processed — they were nacked without requeue, hit a TTL, or blew past a retry limit. This keeps poison messages from blocking the main queue while preserving them so you can debug, fix, and replay. Pair it with a retry/back-off strategy so transient failures retry but permanent failures land in the DLQ.',
+      'A DLQ is where messages go when they cannot be processed  -  they were nacked without requeue, hit a TTL, or blew past a retry limit. This keeps poison messages from blocking the main queue while preserving them so you can debug, fix, and replay. Pair it with a retry/back-off strategy so transient failures retry but permanent failures land in the DLQ.',
     interviewTip: 'DLQ isolates poison messages so one bad payload cannot stall the queue.',
   },
   {
@@ -44,7 +44,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      '2PC holds locks and depends on a coordinator across all participants, so a slow or failed node blocks everyone — poor availability at scale. A Saga instead runs a sequence of local transactions and, if a later step fails, executes compensating transactions to undo the earlier ones. You give up strict isolation and accept eventual consistency in exchange for resilience and loose coupling.',
+      '2PC holds locks and depends on a coordinator across all participants, so a slow or failed node blocks everyone  -  poor availability at scale. A Saga instead runs a sequence of local transactions and, if a later step fails, executes compensating transactions to undo the earlier ones. You give up strict isolation and accept eventual consistency in exchange for resilience and loose coupling.',
     interviewTip: 'Say Saga = local transactions + compensations; 2PC = blocking locks + coordinator.',
   },
   {
@@ -107,7 +107,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'A headers exchange inspects AMQP message headers rather than the routing key, matching queues whose binding arguments satisfy the x-match rule — "all" requires every header to match, "any" requires at least one. This gives you rich, attribute-based routing without encoding metadata into the routing key string. The practical cost is heavier per-message inspection and a steeper mental model.',
+      'A headers exchange inspects AMQP message headers rather than the routing key, matching queues whose binding arguments satisfy the x-match rule  -  "all" requires every header to match, "any" requires at least one. This gives you rich, attribute-based routing without encoding metadata into the routing key string. The practical cost is heavier per-message inspection and a steeper mental model.',
     interviewTip: 'headers exchange = attribute routing without string-encoding in the key.',
   },
   {
@@ -141,7 +141,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'With auto-ack the broker marks a message delivered as soon as it is pushed to the consumer\'s network buffer. If the consumer crashes mid-processing, the message is gone — there is no way to redeliver it. Manual ack lets you send the acknowledgement only after the work is durably committed, giving you at-least-once semantics at the cost of slightly more complexity.',
+      'With auto-ack the broker marks a message delivered as soon as it is pushed to the consumer\'s network buffer. If the consumer crashes mid-processing, the message is gone  -  there is no way to redeliver it. Manual ack lets you send the acknowledgement only after the work is durably committed, giving you at-least-once semantics at the cost of slightly more complexity.',
     interviewTip: 'auto-ack = at-most-once; manual ack = at-least-once.',
   },
   {
@@ -158,7 +158,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'basicQos sets the prefetch count — the maximum number of unacknowledged messages a consumer may hold before it must ack some. With prefetch=1, the broker waits for an ack before pushing the next message, which prevents a slow or overloaded consumer from accumulating a backlog while fast consumers sit idle. For most workloads a higher value (e.g. 10–50) gives better throughput while still load-balancing fairly.',
+      'basicQos sets the prefetch count  -  the maximum number of unacknowledged messages a consumer may hold before it must ack some. With prefetch=1, the broker waits for an ack before pushing the next message, which prevents a slow or overloaded consumer from accumulating a backlog while fast consumers sit idle. For most workloads a higher value (e.g. 10–50) gives better throughput while still load-balancing fairly.',
     interviewTip: 'Prefetch = 1 ensures round-robin fair dispatch; higher values increase throughput.',
   },
   {
@@ -166,7 +166,7 @@ export const rabbitmq: QuizQuestion[] = [
     category: 'rabbitmq',
     subcategory: 'prefetch',
     difficulty: 'expert',
-    question: 'You have 4 consumer instances each with prefetch=100 but messages are piling up unevenly — one consumer is backlogged while others are idle. What is the most likely cause?',
+    question: 'You have 4 consumer instances each with prefetch=100 but messages are piling up unevenly  -  one consumer is backlogged while others are idle. What is the most likely cause?',
     options: [
       'The exchange type is wrong for this use case',
       'All messages share the same routing key so only one consumer receives them all',
@@ -192,7 +192,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'A basic publish call is fire-and-forget — you get no feedback if the broker dropped the message or the connection broke. With publisher confirms enabled, the broker sends a basic.ack (or basic.nack) back for each message, so the producer knows it must retry on nack or connection failure. This is the foundation of reliable publishing and is essential when paired with persistent messages and durable queues.',
+      'A basic publish call is fire-and-forget  -  you get no feedback if the broker dropped the message or the connection broke. With publisher confirms enabled, the broker sends a basic.ack (or basic.nack) back for each message, so the producer knows it must retry on nack or connection failure. This is the foundation of reliable publishing and is essential when paired with persistent messages and durable queues.',
     interviewTip: 'Publisher confirms + persistent messages + durable queues = reliable delivery.',
   },
   {
@@ -226,7 +226,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'In choreography-based Sagas there is no central coordinator — each service subscribes to domain events (e.g. OrderCreated) and, when it handles one, performs its local transaction and emits the next event (e.g. PaymentReserved). This keeps services decoupled but makes the overall saga flow implicit and harder to visualize. Orchestration-based Sagas use a dedicated coordinator that explicitly commands each step, giving better observability at the cost of tighter coupling to the orchestrator.',
+      'In choreography-based Sagas there is no central coordinator  -  each service subscribes to domain events (e.g. OrderCreated) and, when it handles one, performs its local transaction and emits the next event (e.g. PaymentReserved). This keeps services decoupled but makes the overall saga flow implicit and harder to visualize. Orchestration-based Sagas use a dedicated coordinator that explicitly commands each step, giving better observability at the cost of tighter coupling to the orchestrator.',
     interviewTip: 'Choreography = event-driven, implicit flow; Orchestration = explicit coordinator.',
   },
   {
@@ -243,7 +243,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'When a Saga step fails after earlier steps have committed, you cannot issue a single rollback because each step was a separate local transaction. Instead you execute compensating transactions — a refund for the payment service and an inventory release for the warehouse service — in reverse order. Compensating transactions must themselves be idempotent in case they fail and need retrying, and they represent undone business intent, not a silent technical rollback.',
+      'When a Saga step fails after earlier steps have committed, you cannot issue a single rollback because each step was a separate local transaction. Instead you execute compensating transactions  -  a refund for the payment service and an inventory release for the warehouse service  -  in reverse order. Compensating transactions must themselves be idempotent in case they fail and need retrying, and they represent undone business intent, not a silent technical rollback.',
     interviewTip: 'Design compensating transactions to be idempotent and explicitly model them as business events.',
   },
   {
@@ -260,7 +260,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'A command (e.g. PlaceOrder) is an instruction aimed at a specific handler — if it is rejected the sender cares and may need to handle the failure. An event (e.g. OrderPlaced) is a fact broadcast to anyone interested — the publisher does not know or care who reacts. This distinction drives topology choices: commands typically go to a single named queue (direct), while events fan out to multiple subscribers (fanout/topic).',
+      'A command (e.g. PlaceOrder) is an instruction aimed at a specific handler  -  if it is rejected the sender cares and may need to handle the failure. An event (e.g. OrderPlaced) is a fact broadcast to anyone interested  -  the publisher does not know or care who reacts. This distinction drives topology choices: commands typically go to a single named queue (direct), while events fan out to multiple subscribers (fanout/topic).',
     interviewTip: 'Commands are imperative and addressed; events are declarative and broadcast.',
   },
   {
@@ -277,7 +277,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'When a message exceeds its TTL it is classified as dead. If the queue has a dead-letter exchange (x-dead-letter-exchange) configured, the expired message is republished there — allowing it to land in a DLQ for inspection or delayed retry. If no DLX is configured the message is simply dropped. TTL combined with DLX is a common pattern for implementing delayed retry queues.',
+      'When a message exceeds its TTL it is classified as dead. If the queue has a dead-letter exchange (x-dead-letter-exchange) configured, the expired message is republished there  -  allowing it to land in a DLQ for inspection or delayed retry. If no DLX is configured the message is simply dropped. TTL combined with DLX is a common pattern for implementing delayed retry queues.',
     interviewTip: 'TTL + DLX = delayed retry: expire into DLQ, then re-publish after delay.',
   },
   {
@@ -311,7 +311,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 0,
     explanation:
-      'RabbitMQ appends an x-death header array to dead-lettered messages. Each entry records the queue name, the reason (rejected, expired, or maxlen), the exchange, routing keys, and a timestamp. This metadata is invaluable for debugging — you can see exactly how many times a message was cycled through retry queues and why it ultimately ended up in the DLQ without needing separate logging.',
+      'RabbitMQ appends an x-death header array to dead-lettered messages. Each entry records the queue name, the reason (rejected, expired, or maxlen), the exchange, routing keys, and a timestamp. This metadata is invaluable for debugging  -  you can see exactly how many times a message was cycled through retry queues and why it ultimately ended up in the DLQ without needing separate logging.',
     interviewTip: 'Read x-death to find out how many retries occurred and why the message died.',
   },
   {
@@ -328,7 +328,7 @@ export const rabbitmq: QuizQuestion[] = [
     ],
     correctIndex: 2,
     explanation:
-      'If no binding on a direct exchange matches the routing key, the broker has nowhere to send the message. By default it is silently dropped. If the producer set the mandatory flag, the broker sends a basic.return back to the producer instead of silently discarding it. This is why monitoring unroutable messages is important — silent drops are a common source of mysterious message loss.',
+      'If no binding on a direct exchange matches the routing key, the broker has nowhere to send the message. By default it is silently dropped. If the producer set the mandatory flag, the broker sends a basic.return back to the producer instead of silently discarding it. This is why monitoring unroutable messages is important  -  silent drops are a common source of mysterious message loss.',
     interviewTip: 'Set mandatory=true or configure an alternate-exchange to catch unroutable messages.',
   },
 ];

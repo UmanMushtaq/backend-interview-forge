@@ -15,7 +15,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 0,
     explanation:
-      'Partition tolerance is non-negotiable in a distributed system — networks fail — so the real choice during a partition is between Consistency and Availability. A CP system rejects or blocks requests it cannot make consistent; an AP system keeps serving but may return stale data and reconcile later. Most real systems pick per-operation: strong consistency for money movements, availability for feeds.',
+      'Partition tolerance is non-negotiable in a distributed system  -  networks fail  -  so the real choice during a partition is between Consistency and Availability. A CP system rejects or blocks requests it cannot make consistent; an AP system keeps serving but may return stale data and reconcile later. Most real systems pick per-operation: strong consistency for money movements, availability for feeds.',
     interviewTip: 'Frame CAP as a per-operation choice, not a whole-system label.',
   },
   {
@@ -32,7 +32,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'CQRS (Command Query Responsibility Segregation) splits the write path from the read path so each can use a model and store optimized for its job — for example a normalized write store and denormalized, fast read projections. This shines when read and write loads are very asymmetric. The cost is added complexity and usually eventual consistency between the command side and the query projections.',
+      'CQRS (Command Query Responsibility Segregation) splits the write path from the read path so each can use a model and store optimized for its job  -  for example a normalized write store and denormalized, fast read projections. This shines when read and write loads are very asymmetric. The cost is added complexity and usually eventual consistency between the command side and the query projections.',
     interviewTip: 'Only reach for CQRS when read/write needs genuinely diverge.',
   },
   {
@@ -49,7 +49,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'A circuit breaker tracks failures to a downstream dependency and, once a threshold is crossed, opens to fail fast instead of piling up slow calls and exhausting threads or connections — preventing one sick service from dragging down its callers. After a cooldown it goes half-open to test recovery before closing again. It is usually paired with timeouts, retries with back-off, and a fallback response.',
+      'A circuit breaker tracks failures to a downstream dependency and, once a threshold is crossed, opens to fail fast instead of piling up slow calls and exhausting threads or connections  -  preventing one sick service from dragging down its callers. After a cooldown it goes half-open to test recovery before closing again. It is usually paired with timeouts, retries with back-off, and a fallback response.',
     interviewTip: 'Closed -> Open (fail fast) -> Half-open (probe) -> Closed.',
   },
   {
@@ -66,7 +66,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Giving each service its own database prevents hidden coupling through shared tables, so teams can evolve schemas and deploy independently — a core goal of microservices. The trade-off is that you lose cross-service JOINs and single-database transactions, so you reach for API composition, data replication, and Sagas instead. If services constantly need each other\'s tables, that is a signal the boundaries are drawn wrong.',
+      'Giving each service its own database prevents hidden coupling through shared tables, so teams can evolve schemas and deploy independently  -  a core goal of microservices. The trade-off is that you lose cross-service JOINs and single-database transactions, so you reach for API composition, data replication, and Sagas instead. If services constantly need each other\'s tables, that is a signal the boundaries are drawn wrong.',
     interviewTip: 'Private data per service is what makes services independently deployable.',
   },
   {
@@ -83,7 +83,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 2,
     explanation:
-      'The Domain layer contains entities, value objects, aggregates, domain services, and domain events — it is the heart of the business logic and enforces invariants independently of infrastructure concerns like databases or HTTP. The Application layer orchestrates use cases by coordinating domain objects and calling infrastructure ports. The Infrastructure layer implements those ports with real technology (databases, message brokers, HTTP clients). Keeping business rules out of the Application and Infrastructure layers makes them testable without external dependencies.',
+      'The Domain layer contains entities, value objects, aggregates, domain services, and domain events  -  it is the heart of the business logic and enforces invariants independently of infrastructure concerns like databases or HTTP. The Application layer orchestrates use cases by coordinating domain objects and calling infrastructure ports. The Infrastructure layer implements those ports with real technology (databases, message brokers, HTTP clients). Keeping business rules out of the Application and Infrastructure layers makes them testable without external dependencies.',
     interviewTip: 'Domain layer has zero infrastructure dependencies; test it with pure unit tests.',
   },
   {
@@ -100,8 +100,8 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Hexagonal architecture (also called Ports and Adapters) isolates the application core behind technology-neutral interfaces called ports. Adapters implement those ports for specific technologies — a REST controller, a Kafka consumer, a PostgreSQL repository — and can be swapped without changing core logic. This makes the domain logic testable with in-memory adapters, portable across frameworks, and easy to evolve when infrastructure choices change.',
-    interviewTip: 'Core defines interfaces (ports); adapters implement them — dependency points inward.',
+      'Hexagonal architecture (also called Ports and Adapters) isolates the application core behind technology-neutral interfaces called ports. Adapters implement those ports for specific technologies  -  a REST controller, a Kafka consumer, a PostgreSQL repository  -  and can be swapped without changing core logic. This makes the domain logic testable with in-memory adapters, portable across frameworks, and easy to evolve when infrastructure choices change.',
+    interviewTip: 'Core defines interfaces (ports); adapters implement them  -  dependency points inward.',
   },
   {
     id: 'sd-event-sourcing-001',
@@ -134,7 +134,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Replaying every event from the beginning to load an aggregate becomes slow when event counts are large. A snapshot captures the aggregate state at a specific event sequence number, so subsequent loads only replay events after that position rather than the entire history. Snapshots are an optimization and do not replace the event log — you can always rebuild them by deleting the snapshot and replaying from event zero.',
+      'Replaying every event from the beginning to load an aggregate becomes slow when event counts are large. A snapshot captures the aggregate state at a specific event sequence number, so subsequent loads only replay events after that position rather than the entire history. Snapshots are an optimization and do not replace the event log  -  you can always rebuild them by deleting the snapshot and replaying from event zero.',
     interviewTip: 'Snapshots are a performance optimization; the event log remains the source of truth.',
   },
   {
@@ -151,7 +151,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Getting service boundaries wrong in microservices is expensive — you end up with chatty services, distributed monolith coupling, or cross-service transactions. In the early stages of a product the domain model is still being discovered, so a well-structured modular monolith lets you iterate on boundaries cheaply. Once traffic and team structure demands it, you can extract services along the boundaries you have already validated.',
+      'Getting service boundaries wrong in microservices is expensive  -  you end up with chatty services, distributed monolith coupling, or cross-service transactions. In the early stages of a product the domain model is still being discovered, so a well-structured modular monolith lets you iterate on boundaries cheaply. Once traffic and team structure demands it, you can extract services along the boundaries you have already validated.',
     interviewTip: 'Martin Fowler: "Don\'t start with microservices, start with a monolith and extract."',
   },
   {
@@ -168,7 +168,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Vertical scaling (scale up) means giving one machine more CPU, RAM, or disk. It is simple but has a hard ceiling and a single point of failure. Horizontal scaling (scale out) means adding more instances and distributing load across them with a load balancer. Horizontal scaling is generally preferred for stateless application tiers because it has no hard ceiling and improves availability through redundancy. Stateful services require more care — sticky sessions or shared state stores.',
+      'Vertical scaling (scale up) means giving one machine more CPU, RAM, or disk. It is simple but has a hard ceiling and a single point of failure. Horizontal scaling (scale out) means adding more instances and distributing load across them with a load balancer. Horizontal scaling is generally preferred for stateless application tiers because it has no hard ceiling and improves availability through redundancy. Stateful services require more care  -  sticky sessions or shared state stores.',
     interviewTip: 'Design stateless application tiers so horizontal scaling is as simple as adding instances.',
   },
   {
@@ -219,7 +219,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Saving to a database and publishing a message to a broker are two separate operations, and network failures can cause one to succeed while the other fails — resulting in lost or duplicate events. The Outbox pattern writes the outgoing message to an outbox table in the same local database transaction as the business state change. A separate relay process (polling or CDC via Debezium) reads the outbox and publishes to the broker, guaranteeing at-least-once delivery without a distributed transaction.',
+      'Saving to a database and publishing a message to a broker are two separate operations, and network failures can cause one to succeed while the other fails  -  resulting in lost or duplicate events. The Outbox pattern writes the outgoing message to an outbox table in the same local database transaction as the business state change. A separate relay process (polling or CDC via Debezium) reads the outbox and publishes to the broker, guaranteeing at-least-once delivery without a distributed transaction.',
     interviewTip: 'Outbox + CDC = atomic write + reliable publish without 2PC.',
   },
   {
@@ -236,7 +236,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Change Data Capture (tools like Debezium) tails the database write-ahead log (WAL or binlog) to detect inserts, updates, and deletes and stream them to a message broker in near real-time. When combined with the Outbox pattern, CDC eliminates the need for a polling loop — as soon as a row is written to the outbox table, the WAL change is captured and published. This gives lower latency, lower database load, and exactly the at-least-once guarantee the Outbox provides.',
+      'Change Data Capture (tools like Debezium) tails the database write-ahead log (WAL or binlog) to detect inserts, updates, and deletes and stream them to a message broker in near real-time. When combined with the Outbox pattern, CDC eliminates the need for a polling loop  -  as soon as a row is written to the outbox table, the WAL change is captured and published. This gives lower latency, lower database load, and exactly the at-least-once guarantee the Outbox provides.',
     interviewTip: 'Debezium + Outbox = event publishing without polling and without 2PC.',
   },
   {
@@ -253,7 +253,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'An API Gateway sits at the perimeter and handles concerns that all services share: authenticating requests (validating JWTs), enforcing rate limits, routing to downstream services, terminating TLS, and optionally aggregating multiple backend calls into one response for the client. This keeps individual services lean and avoids duplicating cross-cutting code. The risk is making the gateway too smart — business logic should live in services, not the gateway.',
+      'An API Gateway sits at the perimeter and handles concerns that all services share: authenticating requests (validating JWTs), enforcing rate limits, routing to downstream services, terminating TLS, and optionally aggregating multiple backend calls into one response for the client. This keeps individual services lean and avoids duplicating cross-cutting code. The risk is making the gateway too smart  -  business logic should live in services, not the gateway.',
     interviewTip: 'Gateway = thin infrastructure concerns at the edge; keep business logic in services.',
   },
   {
@@ -270,7 +270,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      '2PC requires a coordinator to drive all participants through a prepare phase (lock resources) and then a commit phase. If the coordinator or any participant becomes unavailable during the protocol, all participants are blocked holding locks — the blocking problem. In microservices with independent deployments and network unreliability, this blocking is unacceptable. The Saga pattern replaces ACID atomicity with eventual consistency and compensating transactions, accepting weaker isolation in exchange for availability and loose coupling.',
+      '2PC requires a coordinator to drive all participants through a prepare phase (lock resources) and then a commit phase. If the coordinator or any participant becomes unavailable during the protocol, all participants are blocked holding locks  -  the blocking problem. In microservices with independent deployments and network unreliability, this blocking is unacceptable. The Saga pattern replaces ACID atomicity with eventual consistency and compensating transactions, accepting weaker isolation in exchange for availability and loose coupling.',
     interviewTip: '2PC = blocking + coordinator SPOF; Saga = eventual consistency + compensating actions.',
   },
   {
@@ -287,7 +287,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'An API Gateway handles north-south traffic (clients to services). A service mesh (e.g. Istio, Linkerd) addresses east-west traffic between services by injecting a sidecar proxy alongside each service. The sidecars enforce mTLS for mutual authentication, collect distributed traces and metrics, implement retries with back-off, and provide circuit breaking — all without changing application code. This is powerful in large microservice environments but adds significant operational complexity.',
+      'An API Gateway handles north-south traffic (clients to services). A service mesh (e.g. Istio, Linkerd) addresses east-west traffic between services by injecting a sidecar proxy alongside each service. The sidecars enforce mTLS for mutual authentication, collect distributed traces and metrics, implement retries with back-off, and provide circuit breaking  -  all without changing application code. This is powerful in large microservice environments but adds significant operational complexity.',
     interviewTip: 'API Gateway = client-to-service (north-south); Service Mesh = service-to-service (east-west).',
   },
   {
@@ -304,7 +304,7 @@ export const systemDesign: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Eventual consistency (an AP property in CAP) means replicas may return stale reads in the short term but will converge to the latest value once propagation completes and no new writes occur. This is the consistency model for systems that prioritize availability and partition tolerance — DNS, shopping carts, social media feeds, and most CQRS read projections. The key engineering tasks are handling read-your-writes expectations and reconciling conflicts when they arise.',
+      'Eventual consistency (an AP property in CAP) means replicas may return stale reads in the short term but will converge to the latest value once propagation completes and no new writes occur. This is the consistency model for systems that prioritize availability and partition tolerance  -  DNS, shopping carts, social media feeds, and most CQRS read projections. The key engineering tasks are handling read-your-writes expectations and reconciling conflicts when they arise.',
     interviewTip: 'Eventual consistency: stale reads OK, all nodes converge if writes stop.',
   },
 ];

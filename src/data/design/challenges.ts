@@ -76,7 +76,7 @@ export const designChallenges: DesignChallenge[] = [
       scalingStrategy:
         'Partition queues per channel so a slow SMS vendor does not block email. Scale workers independently per channel based on queue depth. Use Redis for rate-limit tokens and dedupe checks. Templates are cached in memory with a version key so renders are cheap.',
       tradeoffs:
-        'A fully async pipeline maximizes throughput and isolation but makes synchronous "did it send?" answers impossible — callers get a status to poll or subscribe to. A shared queue would be simpler but couples channels together. Per-vendor adapters add code but make the system resilient to any single provider outage.',
+        'A fully async pipeline maximizes throughput and isolation but makes synchronous "did it send?" answers impossible  -  callers get a status to poll or subscribe to. A shared queue would be simpler but couples channels together. Per-vendor adapters add code but make the system resilient to any single provider outage.',
     },
     scoringDimensions: SCORING,
   },
@@ -111,7 +111,7 @@ export const designChallenges: DesignChallenge[] = [
       scalingStrategy:
         'Shard wallets by wallet_id across Postgres instances; most transactions touch a single wallet and stay local. Cache current balances in Redis with write-through on every ledger insert so reads never hit Postgres. WebSocket connections are load-balanced across stateless gateway nodes that share the Redis Pub/Sub channel. For high-value wallets with many concurrent readers, fan out to a read replica before serving history.',
       tradeoffs:
-        'Storing balance_after on every ledger row duplicates data but eliminates expensive full-history replays for current balance and arbitrary point-in-time lookups. Optimistic locking is preferred over row-level pessimistic locks because contention on a single wallet is low in practice and retries are cheap. Cross-shard P2P transfers require a saga with compensation, which introduces brief inconsistency windows — acceptable because both parties see a pending state before the transfer commits.',
+        'Storing balance_after on every ledger row duplicates data but eliminates expensive full-history replays for current balance and arbitrary point-in-time lookups. Optimistic locking is preferred over row-level pessimistic locks because contention on a single wallet is low in practice and retries are cheap. Cross-shard P2P transfers require a saga with compensation, which introduces brief inconsistency windows  -  acceptable because both parties see a pending state before the transfer commits.',
     },
     scoringDimensions: SCORING,
   },
@@ -147,7 +147,7 @@ export const designChallenges: DesignChallenge[] = [
       scalingStrategy:
         'Document storage is S3; the service never stores file bytes directly. Vendor adapters are stateless workers that can be scaled per vendor queue depth independently. The pipeline state is the database; if a worker crashes, the orchestrator can re-drive any incomplete check after a timeout. Redis caches current tier for hot-path gate checks so every API call does not query Postgres.',
       tradeoffs:
-        'Async vendor callbacks mean the user waits minutes rather than seconds, which requires a status-polling or push notification UX. Encrypting PII at the application layer (rather than relying solely on database encryption) provides defense in depth but adds operational complexity around key rotation. Storing result_json as JSONB is flexible across vendors but sacrifices strict schema validation — a JSON Schema check at ingest time compensates.',
+        'Async vendor callbacks mean the user waits minutes rather than seconds, which requires a status-polling or push notification UX. Encrypting PII at the application layer (rather than relying solely on database encryption) provides defense in depth but adds operational complexity around key rotation. Storing result_json as JSONB is flexible across vendors but sacrifices strict schema validation  -  a JSON Schema check at ingest time compensates.',
     },
     scoringDimensions: SCORING,
   },
@@ -183,7 +183,7 @@ export const designChallenges: DesignChallenge[] = [
       scalingStrategy:
         'The collector tier is stateless and horizontally scalable; Kafka absorbs burst by adding partitions. Flink scales by adding task slots per partition. ClickHouse is sharded by date; merges and compaction happen asynchronously without affecting ingest. S3 + Athena/Trino handles petabyte-scale historical queries without managing cluster capacity. Keep hot data (last 30 days) in ClickHouse; archive older data to S3 only.',
       tradeoffs:
-        'Lambda architecture duplicates logic (stream and batch paths must agree) but gives the best latency-cost tradeoff at scale. A pure streaming approach (Kappa) is simpler but reprocessing months of events on schema changes requires re-reading all Kafka history, which is slow. Avro with a schema registry enforces compatibility but requires a registry deployment — JSON without a registry is simpler but silently breaks downstream consumers on field renames.',
+        'Lambda architecture duplicates logic (stream and batch paths must agree) but gives the best latency-cost tradeoff at scale. A pure streaming approach (Kappa) is simpler but reprocessing months of events on schema changes requires re-reading all Kafka history, which is slow. Avro with a schema registry enforces compatibility but requires a registry deployment  -  JSON without a registry is simpler but silently breaks downstream consumers on field renames.',
     },
     scoringDimensions: SCORING,
   },
@@ -255,7 +255,7 @@ export const designChallenges: DesignChallenge[] = [
       scalingStrategy:
         'Redis is the single bottleneck; use Redis Cluster partitioned by key_id so no single shard holds all counters. Lua scripts keep the operation atomic without distributed locks. For the most aggressive callers (burst events), use a local token-bucket pre-filter in the gateway process to absorb noise before hitting Redis. The config cache eliminates per-request Postgres reads entirely.',
       tradeoffs:
-        'Centralized Redis gives exact global counts but adds a network hop and a Redis dependency. A purely local counter is faster but allows 200x over-limit during bursts (one per gateway node). The chosen hybrid (local pre-filter + Redis for enforcement) balances accuracy and latency. Fail-open on Redis outage keeps the API available but risks a brief quota bypass — acceptable because the window is short and audited. Fixed-window counters are simpler but create boundary spikes; sliding-window Redis scripts are slightly more expensive but eliminate the problem.',
+        'Centralized Redis gives exact global counts but adds a network hop and a Redis dependency. A purely local counter is faster but allows 200x over-limit during bursts (one per gateway node). The chosen hybrid (local pre-filter + Redis for enforcement) balances accuracy and latency. Fail-open on Redis outage keeps the API available but risks a brief quota bypass  -  acceptable because the window is short and audited. Fixed-window counters are simpler but create boundary spikes; sliding-window Redis scripts are slightly more expensive but eliminate the problem.',
     },
     scoringDimensions: SCORING,
   },
@@ -291,7 +291,7 @@ export const designChallenges: DesignChallenge[] = [
       scalingStrategy:
         'Partition broker topics by queue name so queues are isolated. Scale workers horizontally per queue; the SELECT FOR UPDATE SKIP LOCKED pattern in Postgres handles contention without explicit locking overhead. For very high enqueue rates (100k/s), buffer in Kafka first and batch-insert to Postgres asynchronously, trading some status freshness for throughput. Separate read replicas serve status queries so they never block the write path.',
       tradeoffs:
-        'Using Postgres as the job store alongside a broker gives strong durability and queryability but means two writes per enqueue (DB + broker) — a broker-only approach is faster but loses the rich status querying. At-least-once delivery means workers must be idempotent; enforcing this in the framework (by providing the job id as a deduplication key to the worker) pushes the burden to callers. Exponential back-off with jitter prevents thundering-herd retries but means a flapping downstream can pile up DLQ messages faster than reviewers can handle them — a circuit-breaker per queue is a useful addition.',
+        'Using Postgres as the job store alongside a broker gives strong durability and queryability but means two writes per enqueue (DB + broker)  -  a broker-only approach is faster but loses the rich status querying. At-least-once delivery means workers must be idempotent; enforcing this in the framework (by providing the job id as a deduplication key to the worker) pushes the burden to callers. Exponential back-off with jitter prevents thundering-herd retries but means a flapping downstream can pile up DLQ messages faster than reviewers can handle them  -  a circuit-breaker per queue is a useful addition.',
     },
     scoringDimensions: SCORING,
   },
@@ -325,9 +325,9 @@ export const designChallenges: DesignChallenge[] = [
       messageFlow:
         'Payment service calls EvaluateTransaction via gRPC with a 180ms deadline. The fraud service: (1) fetches feature vector from Redis (single HGETALL, under 2ms); (2) runs the in-memory rules engine against the vector; (3) concurrently calls the ML model inference service with the same features; (4) merges rule action and model score using a policy (highest severity wins); (5) returns decision and asynchronously publishes fraud.decision_made to Kafka. A Flink job consumes Kafka and updates the Redis feature vectors for future requests.',
       scalingStrategy:
-        'The fraud service is stateless and scales horizontally. The Redis feature store is sharded by user_id and replicated for read scalability. Feature updates from Flink are batched (every 5 seconds) to avoid thundering writes. The ML model is loaded in-process (ONNX runtime) on each fraud service instance to eliminate a network hop — model updates are distributed as versioned S3 objects and loaded by a file-watcher without restart. Rule config is cached in-memory and invalidated via Pub/Sub.',
+        'The fraud service is stateless and scales horizontally. The Redis feature store is sharded by user_id and replicated for read scalability. Feature updates from Flink are batched (every 5 seconds) to avoid thundering writes. The ML model is loaded in-process (ONNX runtime) on each fraud service instance to eliminate a network hop  -  model updates are distributed as versioned S3 objects and loaded by a file-watcher without restart. Rule config is cached in-memory and invalidated via Pub/Sub.',
       tradeoffs:
-        'Running the model in-process eliminates a network round-trip but means every service instance uses extra RAM and model updates require a rolling reload. A separate model inference service is easier to update but adds latency. Falling back to rules-only on ML timeout keeps the p99 latency within budget at the cost of a slightly less accurate score during ML degradation — this is safer than blocking the payment path. Pre-computing features in a streaming job rather than computing them on the fly makes scoring fast but means very recent events (< 5s) are not yet reflected in the feature vector, a known and acceptable gap.',
+        'Running the model in-process eliminates a network round-trip but means every service instance uses extra RAM and model updates require a rolling reload. A separate model inference service is easier to update but adds latency. Falling back to rules-only on ML timeout keeps the p99 latency within budget at the cost of a slightly less accurate score during ML degradation  -  this is safer than blocking the payment path. Pre-computing features in a streaming job rather than computing them on the fly makes scoring fast but means very recent events (< 5s) are not yet reflected in the feature vector, a known and acceptable gap.',
     },
     scoringDimensions: SCORING,
   },
@@ -363,7 +363,7 @@ export const designChallenges: DesignChallenge[] = [
       scalingStrategy:
         'Small tenants share connection pool and database shards; route by tenant_id mod N. Large enterprise tenants get their own Postgres cluster in their required region, referenced by db_pool_ref in the tenant registry. The application tier is region-aware: requests are routed to the cluster nearest the tenant\'s data residency region by a global load balancer. Feature flags and quota limits are cached in Redis per tenant to avoid per-request registry DB reads. Metering is write-heavy but append-only, so a separate write-optimized store (ClickHouse or TimescaleDB) handles aggregation without loading the transactional database.',
       tradeoffs:
-        'Shared-schema multi-tenancy is operationally simple and cost-effective for many small tenants but requires careful indexing (all major indexes must include tenant_id as the leading column) and careful RLS policy testing to avoid data leaks. Silo-per-tenant (dedicated DB) is safest for isolation but multiplies operational complexity and cost. The hybrid model balances both: shared for the long tail, dedicated for the few large or regulated tenants. Eventual consistency in the quota counters means a burst of concurrent requests can briefly exceed quota before enforcement kicks in — an accepted trade-off to keep the enforcement path off the critical request path.',
+        'Shared-schema multi-tenancy is operationally simple and cost-effective for many small tenants but requires careful indexing (all major indexes must include tenant_id as the leading column) and careful RLS policy testing to avoid data leaks. Silo-per-tenant (dedicated DB) is safest for isolation but multiplies operational complexity and cost. The hybrid model balances both: shared for the long tail, dedicated for the few large or regulated tenants. Eventual consistency in the quota counters means a burst of concurrent requests can briefly exceed quota before enforcement kicks in  -  an accepted trade-off to keep the enforcement path off the critical request path.',
     },
     scoringDimensions: SCORING,
   },

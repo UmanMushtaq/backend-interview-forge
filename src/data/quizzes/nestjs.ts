@@ -116,7 +116,7 @@ export const nestjs: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'useValue lets you register any JavaScript value — object, string, array, or even a function — under an injection token. useClass instantiates a class, useExisting aliases one token to another, and useFactory calls a function (optionally with injected deps). For static config objects, useValue is the cleanest option.',
+      'useValue lets you register any JavaScript value  -  object, string, array, or even a function  -  under an injection token. useClass instantiates a class, useExisting aliases one token to another, and useFactory calls a function (optionally with injected deps). For static config objects, useValue is the cleanest option.',
     interviewTip: 'String or Symbol tokens combined with useValue are great for environment configs that don\'t need a class.',
   },
   {
@@ -234,7 +234,7 @@ export const nestjs: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'createParamDecorator receives a factory (data, ctx) => value and returns a decorator you can use like @CurrentUser() in any handler. It cleanly encapsulates the logic of reading req.user, gives you a typed return value, and is easy to test. Injecting the raw Request object via @Req() works but couples your handler to the HTTP layer and makes unit testing harder.',
-    interviewTip: 'Custom param decorators are a first-class Nest feature — interviewers like to see you know they exist.',
+    interviewTip: 'Custom param decorators are a first-class Nest feature  -  interviewers like to see you know they exist.',
   },
   {
     id: 'nestjs-testing-001',

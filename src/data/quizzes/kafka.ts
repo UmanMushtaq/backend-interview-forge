@@ -15,7 +15,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Kafka guarantees order within a partition, not across the whole topic. Messages with the same key hash to the same partition, so per-key ordering holds — which is why you key by entity id (e.g. walletId) when order matters. If you need strict global ordering you must use a single partition, sacrificing parallelism.',
+      'Kafka guarantees order within a partition, not across the whole topic. Messages with the same key hash to the same partition, so per-key ordering holds  -  which is why you key by entity id (e.g. walletId) when order matters. If you need strict global ordering you must use a single partition, sacrificing parallelism.',
     interviewTip: 'Key by entity id to keep per-entity order while still scaling partitions.',
   },
   {
@@ -32,7 +32,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Within a consumer group, each partition is owned by exactly one consumer, which is how Kafka scales out work while preserving per-partition order. This means group parallelism is capped by the partition count — more consumers than partitions leaves some idle. Different groups, however, each get their own full copy of the stream, which is how you fan out to independent pipelines.',
+      'Within a consumer group, each partition is owned by exactly one consumer, which is how Kafka scales out work while preserving per-partition order. This means group parallelism is capped by the partition count  -  more consumers than partitions leaves some idle. Different groups, however, each get their own full copy of the stream, which is how you fan out to independent pipelines.',
     interviewTip: 'Max useful consumers in a group equals the number of partitions.',
   },
   {
@@ -66,7 +66,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'acks=all means the leader waits for every in-sync replica to persist the record before acknowledging, so a single broker failure will not lose the write — the strongest durability setting. The cost is higher latency and lower throughput compared to acks=1 or acks=0. For true exactly-once you additionally enable the idempotent producer and transactions; acks=all alone only protects against loss.',
+      'acks=all means the leader waits for every in-sync replica to persist the record before acknowledging, so a single broker failure will not lose the write  -  the strongest durability setting. The cost is higher latency and lower throughput compared to acks=1 or acks=0. For true exactly-once you additionally enable the idempotent producer and transactions; acks=all alone only protects against loss.',
   },
   {
     id: 'kafka-offset-001',
@@ -82,7 +82,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'An offset is a monotonically increasing integer assigned to each message within a partition. Consumers commit their current offset to the __consumer_offsets topic, so after a crash or restart they resume from where they left off. Because consumers own their offsets, multiple independent consumer groups can read the same partition at completely different positions — enabling replayability and fan-out without copying data.',
+      'An offset is a monotonically increasing integer assigned to each message within a partition. Consumers commit their current offset to the __consumer_offsets topic, so after a crash or restart they resume from where they left off. Because consumers own their offsets, multiple independent consumer groups can read the same partition at completely different positions  -  enabling replayability and fan-out without copying data.',
     interviewTip: 'Offset ownership by the consumer is what makes replay and fan-out to many groups possible.',
   },
   {
@@ -116,7 +116,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Log compaction removes older records for a given key, keeping only the latest value — similar to a key-value store changelog. A message with a null value (tombstone) signals that the key should be deleted entirely. Compacted topics are ideal for materializing state: a consumer bootstrapping from offset 0 gets the current value of every key without processing the full history. Time-based retention and compaction can coexist on the same topic.',
+      'Log compaction removes older records for a given key, keeping only the latest value  -  similar to a key-value store changelog. A message with a null value (tombstone) signals that the key should be deleted entirely. Compacted topics are ideal for materializing state: a consumer bootstrapping from offset 0 gets the current value of every key without processing the full history. Time-based retention and compaction can coexist on the same topic.',
     interviewTip: 'Compacted topic = changelog/snapshot; deletion marker = null-value tombstone.',
   },
   {
@@ -134,7 +134,7 @@ export const kafka: QuizQuestion[] = [
     correctIndex: 0,
     explanation:
       'retention.ms sets how long (in milliseconds) Kafka keeps messages before they are eligible for deletion, and retention.bytes caps the total size of the partition log. When either limit is exceeded, the oldest log segments are deleted. These settings let you balance storage cost against the replay window: a longer retention costs more disk but allows consumers further behind to still catch up.',
-    interviewTip: 'Size and time retention are independent — whichever limit is hit first triggers cleanup.',
+    interviewTip: 'Size and time retention are independent  -  whichever limit is hit first triggers cleanup.',
   },
   {
     id: 'kafka-idempotent-producer-001',
@@ -150,7 +150,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'When a producer retries a send after a network timeout, it may not know whether the original request was received, so without idempotence a duplicate record could appear. With enable.idempotence=true, Kafka assigns each producer a unique producer ID and tracks sequence numbers per partition — if the broker receives a duplicate sequence it silently discards it. This gives you exactly-once produce semantics per partition with no application code changes.',
+      'When a producer retries a send after a network timeout, it may not know whether the original request was received, so without idempotence a duplicate record could appear. With enable.idempotence=true, Kafka assigns each producer a unique producer ID and tracks sequence numbers per partition  -  if the broker receives a duplicate sequence it silently discards it. This gives you exactly-once produce semantics per partition with no application code changes.',
     interviewTip: 'Idempotent producer = safe retries; add transactions for cross-partition exactly-once.',
   },
   {
@@ -184,7 +184,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'A rebalance is triggered when the group membership changes: a consumer joins (scale-out), leaves gracefully, or is presumed dead because it missed its heartbeat deadline within session.timeout.ms. During a rebalance, all consumption in the group pauses while partitions are reassigned — a stop-the-world event that hurts throughput and can cause duplicate processing if offsets were not committed before the reassignment. Incremental cooperative rebalancing (introduced in Kafka 2.4) reduces this impact by only moving the affected partitions.',
+      'A rebalance is triggered when the group membership changes: a consumer joins (scale-out), leaves gracefully, or is presumed dead because it missed its heartbeat deadline within session.timeout.ms. During a rebalance, all consumption in the group pauses while partitions are reassigned  -  a stop-the-world event that hurts throughput and can cause duplicate processing if offsets were not committed before the reassignment. Incremental cooperative rebalancing (introduced in Kafka 2.4) reduces this impact by only moving the affected partitions.',
     interviewTip: 'Tune session.timeout.ms and heartbeat.interval.ms, and use cooperative rebalancing to reduce pauses.',
   },
   {
@@ -201,7 +201,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Kafka\'s default partitioner hashes the message key to deterministically select a partition, so messages sharing the same key always go to the same partition and are consumed in order by one consumer in the group. Using userId as the key keeps per-user ordering while still allowing the topic to scale across many partitions — you get both order and parallelism. A single-partition topic achieves global ordering but kills horizontal scale.',
+      'Kafka\'s default partitioner hashes the message key to deterministically select a partition, so messages sharing the same key always go to the same partition and are consumed in order by one consumer in the group. Using userId as the key keeps per-user ordering while still allowing the topic to scale across many partitions  -  you get both order and parallelism. A single-partition topic achieves global ordering but kills horizontal scale.',
     interviewTip: 'Key = partitioning unit = ordering boundary; choose keys that match your ordering requirement.',
   },
   {
@@ -218,7 +218,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Kafka allows adding partitions but not removing them because removal would require redistributing existing records and could break the deterministic key-to-partition mapping that consumers rely on for ordering. If you genuinely need fewer partitions you must create a new topic, migrate producers, and drain the old one. This makes partition count an important up-front capacity decision — over-provisioning partitions is generally safer than under-provisioning.',
+      'Kafka allows adding partitions but not removing them because removal would require redistributing existing records and could break the deterministic key-to-partition mapping that consumers rely on for ordering. If you genuinely need fewer partitions you must create a new topic, migrate producers, and drain the old one. This makes partition count an important up-front capacity decision  -  over-provisioning partitions is generally safer than under-provisioning.',
     interviewTip: 'Plan partition count carefully; adding is fine, removing is impossible without migration.',
   },
   {
@@ -236,7 +236,7 @@ export const kafka: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'Consumer lag is the count of messages that have been produced but not yet consumed and committed by a consumer group for a given partition. A growing lag means consumers cannot keep up with the produce rate and is one of the primary alerting metrics for Kafka-based systems. You reduce lag by adding consumers (up to the partition count), optimizing processing logic, or increasing partition count to allow more parallel consumers.',
-    interviewTip: 'Alert on consumer lag growth rate, not just absolute value — a stable lag may be acceptable.',
+    interviewTip: 'Alert on consumer lag growth rate, not just absolute value  -  a stable lag may be acceptable.',
   },
   {
     id: 'kafka-acks-zero-001',
@@ -252,7 +252,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'acks=0 means the producer does not wait for any acknowledgement — it is true fire-and-forget. Messages can be lost if the broker is unavailable or crashes. This is acceptable for high-frequency, low-value data like click-stream telemetry or sensor metrics where losing a small fraction of events is tolerable and the throughput benefit (no round-trip wait) is significant. Never use acks=0 for data where loss would cause business problems.',
+      'acks=0 means the producer does not wait for any acknowledgement  -  it is true fire-and-forget. Messages can be lost if the broker is unavailable or crashes. This is acceptable for high-frequency, low-value data like click-stream telemetry or sensor metrics where losing a small fraction of events is tolerable and the throughput benefit (no round-trip wait) is significant. Never use acks=0 for data where loss would cause business problems.',
     interviewTip: 'acks=0 for best-effort telemetry, acks=1 for balanced, acks=all for critical data.',
   },
   {
@@ -303,7 +303,7 @@ export const kafka: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'In a distributed event-driven system, producers and consumers of the same topic may be deployed independently. A Schema Registry (e.g. Confluent Schema Registry) stores versioned schemas (Avro, Protobuf, or JSON Schema) and enforces compatibility rules (backward, forward, full) when a new schema version is registered. This prevents a producer from publishing a schema change that silently breaks deserializing consumers — especially important with many teams sharing a topic.',
+      'In a distributed event-driven system, producers and consumers of the same topic may be deployed independently. A Schema Registry (e.g. Confluent Schema Registry) stores versioned schemas (Avro, Protobuf, or JSON Schema) and enforces compatibility rules (backward, forward, full) when a new schema version is registered. This prevents a producer from publishing a schema change that silently breaks deserializing consumers  -  especially important with many teams sharing a topic.',
     interviewTip: 'Schema Registry is the contract layer between producers and consumers; backward compatibility is the safest default.',
   },
 ];

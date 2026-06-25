@@ -3,7 +3,7 @@ import type { LearnModule } from '../../types';
 export const javascript: LearnModule = {
   id: 'javascript',
   title: 'JavaScript',
-  blurb: 'A complete JavaScript curriculum — from primitives to async patterns — at the depth senior backend interviews demand.',
+  blurb: 'A complete JavaScript curriculum  -  from primitives to async patterns  -  at the depth senior backend interviews demand.',
   lessons: [
     {
       id: 'js-variables-types',
@@ -12,20 +12,20 @@ export const javascript: LearnModule = {
 
 JavaScript has three ways to declare variables. Understanding the differences is fundamental.
 
-**var** — function-scoped, hoisted and initialised to \`undefined\`, can be re-declared.
+**var**  -  function-scoped, hoisted and initialised to \`undefined\`, can be re-declared.
 
-**let** — block-scoped, hoisted but stays in the Temporal Dead Zone (TDZ) until its declaration line, cannot be re-declared in the same scope.
+**let**  -  block-scoped, hoisted but stays in the Temporal Dead Zone (TDZ) until its declaration line, cannot be re-declared in the same scope.
 
-**const** — same block-scoping as \`let\`, but the binding cannot be reassigned. Note: the value itself is not immutable — you can still mutate the contents of a \`const\` object or array.
+**const**  -  same block-scoping as \`let\`, but the binding cannot be reassigned. Note: the value itself is not immutable  -  you can still mutate the contents of a \`const\` object or array.
 
 \`\`\`javascript
 const user = { name: 'Alice' };
-user.name = 'Bob';     // fine — mutating the object
-user = {};             // TypeError — rebinding const
+user.name = 'Bob';     // fine  -  mutating the object
+user = {};             // TypeError  -  rebinding const
 
 let arr = [1, 2];
 arr.push(3);           // fine
-arr = [];              // fine — let can be reassigned
+arr = [];              // fine  -  let can be reassigned
 \`\`\`
 
 ## The Seven Primitive Types
@@ -47,7 +47,7 @@ typeof function(){}   // 'function'
 
 **Number** is a 64-bit float. It cannot safely represent integers larger than \`Number.MAX_SAFE_INTEGER\` (2^53 − 1). Use **BigInt** for arbitrary-precision integers.
 
-**Symbol** creates a globally unique identifier. Used to add properties to objects without risk of name collision — especially useful when extending third-party objects.
+**Symbol** creates a globally unique identifier. Used to add properties to objects without risk of name collision  -  especially useful when extending third-party objects.
 
 ## Type Coercion
 
@@ -68,8 +68,8 @@ NaN == NaN         // false (NaN never equals anything)
 **String conversion** happens when you use \`+\` with a string operand:
 
 \`\`\`javascript
-'5' + 3     // '53' — number is coerced to string
-'5' - 3     // 2   — string is coerced to number (- has no string meaning)
+'5' + 3     // '53'  -  number is coerced to string
+'5' - 3     // 2    -  string is coerced to number (- has no string meaning)
 \`\`\`
 
 **Explicit conversion**:
@@ -78,14 +78,14 @@ NaN == NaN         // false (NaN never equals anything)
 Number('42')      // 42
 Number('')        // 0
 Number('abc')     // NaN
-parseInt('42px')  // 42  — stops at first non-digit
+parseInt('42px')  // 42   -  stops at first non-digit
 String(42)        // '42'
 Boolean(0)        // false
 Boolean('')       // false
 Boolean(null)     // false
 Boolean(undefined)// false
 Boolean(NaN)      // false
-Boolean({})       // true  — empty object is truthy!
+Boolean({})       // true   -  empty object is truthy!
 \`\`\`
 
 **Falsy values** (the only 8): \`false\`, \`0\`, \`-0\`, \`0n\`, \`''\` (empty string), \`null\`, \`undefined\`, \`NaN\`. Everything else is truthy.`,
@@ -114,8 +114,8 @@ Increment/decrement: \`++x\` (pre-increment, returns new value), \`x++\` (post-i
 \`>\`, \`<\`, \`>=\`, \`<=\`: comparison with coercion for non-numbers.
 
 \`\`\`javascript
-'10' > '9'     // false — string comparison, '1' < '9'
-10 > 9         // true  — numeric comparison
+'10' > '9'     // false  -  string comparison, '1' < '9'
+10 > 9         // true   -  numeric comparison
 \`\`\`
 
 ## Logical Operators and Short-Circuit Evaluation
@@ -134,15 +134,15 @@ This is used extensively for conditional execution and default values.
 
 ## Nullish Coalescing (??) and Optional Chaining (?.)
 
-**\`??\`** (nullish coalescing) — like \`||\` but only falls back when the left side is \`null\` or \`undefined\` (not for 0, '', or false):
+**\`??\`** (nullish coalescing)  -  like \`||\` but only falls back when the left side is \`null\` or \`undefined\` (not for 0, '', or false):
 
 \`\`\`javascript
-const count = 0 || 10    // 10  — treats 0 as falsy (wrong!)
-const count = 0 ?? 10    // 0   — only null/undefined triggers fallback
+const count = 0 || 10    // 10   -  treats 0 as falsy (wrong!)
+const count = 0 ?? 10    // 0    -  only null/undefined triggers fallback
 const name = user.name ?? 'Anonymous'
 \`\`\`
 
-**\`?.\`** (optional chaining) — safely accesses nested properties without throwing if an intermediate value is null/undefined:
+**\`?.\`** (optional chaining)  -  safely accesses nested properties without throwing if an intermediate value is null/undefined:
 
 \`\`\`javascript
 const street = user?.address?.street    // undefined if user or address is null
@@ -162,7 +162,7 @@ x ??= 'default'   // x = x ?? 'default'  (assign if null/undefined)
 
 ## The Comma Operator and Ternary
 
-The ternary \`condition ? valueIfTrue : valueIfFalse\` is an expression (returns a value), not a statement — useful inline.
+The ternary \`condition ? valueIfTrue : valueIfFalse\` is an expression (returns a value), not a statement  -  useful inline.
 
 \`\`\`javascript
 const label = score >= 70 ? 'Pass' : 'Fail';
@@ -174,9 +174,9 @@ const role = isAdmin ? 'admin' : isPaid ? 'paid' : 'free';  // chaining
       title: 'Control Flow, Loops & Iteration',
       content: `## Conditionals
 
-**if / else if / else** — standard branching. The condition is coerced to boolean.
+**if / else if / else**  -  standard branching. The condition is coerced to boolean.
 
-**switch / case** — uses strict equality (\`===\`) to match. Always use \`break\` to prevent fall-through (intentional fall-through should be commented):
+**switch / case**  -  uses strict equality (\`===\`) to match. Always use \`break\` to prevent fall-through (intentional fall-through should be commented):
 
 \`\`\`javascript
 switch (status) {
@@ -194,13 +194,13 @@ switch (status) {
 
 ## Loops
 
-**for** — classic counter loop:
+**for**  -  classic counter loop:
 
 \`\`\`javascript
 for (let i = 0; i < arr.length; i++) { /* ... */ }
 \`\`\`
 
-**while** — runs while condition is true:
+**while**  -  runs while condition is true:
 
 \`\`\`javascript
 while (queue.length > 0) {
@@ -208,7 +208,7 @@ while (queue.length > 0) {
 }
 \`\`\`
 
-**do…while** — runs at least once:
+**do…while**  -  runs at least once:
 
 \`\`\`javascript
 do {
@@ -216,7 +216,7 @@ do {
 } while (!isValid(input));
 \`\`\`
 
-**for…of** — iterates over **values** of any iterable (arrays, strings, Maps, Sets, generators):
+**for…of**  -  iterates over **values** of any iterable (arrays, strings, Maps, Sets, generators):
 
 \`\`\`javascript
 for (const item of items) { /* ... */ }
@@ -224,7 +224,7 @@ for (const char of 'hello') { /* ... */ }
 for (const [key, val] of map) { /* ... */ }
 \`\`\`
 
-**for…in** — iterates over **enumerable property keys** of an object (including inherited ones — use \`hasOwnProperty\` or \`Object.keys()\` to be safe). Avoid for arrays.
+**for…in**  -  iterates over **enumerable property keys** of an object (including inherited ones  -  use \`hasOwnProperty\` or \`Object.keys()\` to be safe). Avoid for arrays.
 
 \`\`\`javascript
 for (const key in obj) {
@@ -253,7 +253,7 @@ Any value can be used as a condition. The 8 falsy values: \`false\`, \`0\`, \`-0
 \`\`\`javascript
 if ([]) console.log('truthy');   // prints! empty array is truthy
 if ({}) console.log('truthy');   // prints! empty object is truthy
-if ([].length) console.log('has items');  // does NOT print — length 0 is falsy
+if ([].length) console.log('has items');  // does NOT print  -  length 0 is falsy
 \`\`\``,
     },
     {
@@ -261,16 +261,16 @@ if ([].length) console.log('has items');  // does NOT print — length 0 is fals
       title: 'Functions: Declarations, Expressions, Arrow & IIFE',
       content: `## Function Declarations vs Expressions
 
-**Function declaration** — hoisted entirely, callable before its source line:
+**Function declaration**  -  hoisted entirely, callable before its source line:
 
 \`\`\`javascript
-greet('Alice');  // works — declaration is hoisted
+greet('Alice');  // works  -  declaration is hoisted
 function greet(name) {
   return 'Hello, ' + name;
 }
 \`\`\`
 
-**Function expression** — not hoisted (the variable is hoisted but not the function):
+**Function expression**  -  not hoisted (the variable is hoisted but not the function):
 
 \`\`\`javascript
 const greet = function(name) { return 'Hello, ' + name; };
@@ -298,9 +298,9 @@ const getUser = () => ({ name: 'Alice' });  // wrap object in () for implicit re
 Arrow functions cannot be constructors (\`new Arrow()\` throws), and they do not have their own \`arguments\` object.
 
 When to use arrows vs regular functions:
-- **Callbacks and short expressions** — prefer arrows (lexical \`this\`)
-- **Object methods** — use regular functions (need their own \`this\`)
-- **Constructors / prototype methods** — must use regular functions
+- **Callbacks and short expressions**  -  prefer arrows (lexical \`this\`)
+- **Object methods**  -  use regular functions (need their own \`this\`)
+- **Constructors / prototype methods**  -  must use regular functions
 
 ## Default Parameters
 
@@ -310,7 +310,7 @@ function createUser(name, role = 'viewer', active = true) {
 }
 createUser('Bob');             // { name: 'Bob', role: 'viewer', active: true }
 createUser('Bob', undefined);  // undefined triggers the default
-createUser('Bob', null);       // null does NOT trigger — null is explicit
+createUser('Bob', null);       // null does NOT trigger  -  null is explicit
 \`\`\`
 
 Default parameters can reference earlier parameters:
@@ -334,7 +334,7 @@ Rest must be the last parameter. \`arguments\` is not available in arrow functio
 
 ## IIFE (Immediately Invoked Function Expression)
 
-A function that runs immediately — used to create a private scope:
+A function that runs immediately  -  used to create a private scope:
 
 \`\`\`javascript
 const counter = (function () {
@@ -376,7 +376,7 @@ Higher-order functions are the basis of middleware patterns, decorators, and fun
       title: 'Closures, Scope Chain & Lexical Environment',
       content: `## What Is a Closure?
 
-A **closure** is a function that remembers the variables from the scope where it was defined, even after that outer scope has returned. Every function in JavaScript is a closure — it captures references to all variables in its enclosing scopes.
+A **closure** is a function that remembers the variables from the scope where it was defined, even after that outer scope has returned. Every function in JavaScript is a closure  -  it captures references to all variables in its enclosing scopes.
 
 \`\`\`javascript
 function makeCounter(start = 0) {
@@ -391,10 +391,10 @@ function makeCounter(start = 0) {
 const c = makeCounter(10);
 c.increment();
 c.increment();
-c.value();    // 12 — count persists across calls
+c.value();    // 12  -  count persists across calls
 \`\`\`
 
-The \`count\` variable is private — there is no way to access it except through the returned methods.
+The \`count\` variable is private  -  there is no way to access it except through the returned methods.
 
 ## The Scope Chain
 
@@ -403,7 +403,7 @@ When a function looks up a variable, it searches:
 2. Each enclosing function's scope (in order)
 3. The global scope
 
-This chain is **lexical** — determined by where the function is written, not where it is called.
+This chain is **lexical**  -  determined by where the function is written, not where it is called.
 
 \`\`\`javascript
 const x = 'global';
@@ -411,7 +411,7 @@ const x = 'global';
 function outer() {
   const x = 'outer';
   function inner() {
-    console.log(x);  // 'outer' — found in outer scope before global
+    console.log(x);  // 'outer'  -  found in outer scope before global
   }
   inner();
 }
@@ -420,12 +420,12 @@ function outer() {
 ## The Classic Loop Trap
 
 \`\`\`javascript
-// BROKEN — var shares one binding across all iterations
+// BROKEN  -  var shares one binding across all iterations
 for (var i = 0; i < 3; i++) {
   setTimeout(() => console.log(i), 100);  // prints: 3, 3, 3
 }
 
-// FIXED with let — each iteration gets its own block-scoped i
+// FIXED with let  -  each iteration gets its own block-scoped i
 for (let i = 0; i < 3; i++) {
   setTimeout(() => console.log(i), 100);  // prints: 0, 1, 2
 }
@@ -440,7 +440,7 @@ for (var i = 0; i < 3; i++) {
 
 ## Practical Uses of Closures
 
-**Memoization** — cache expensive results:
+**Memoization**  -  cache expensive results:
 
 \`\`\`javascript
 function memoize(fn) {
@@ -492,7 +492,7 @@ Closures keep the entire outer scope alive. A large closure capturing a big obje
       title: 'Hoisting, Temporal Dead Zone & Variable Declarations',
       content: `## What Is Hoisting?
 
-During the compilation phase, JavaScript scans the code and registers all declarations before executing any code. This is called **hoisting**. Only **declarations** are hoisted — not initialisations.
+During the compilation phase, JavaScript scans the code and registers all declarations before executing any code. This is called **hoisting**. Only **declarations** are hoisted  -  not initialisations.
 
 ## var Hoisting
 
@@ -517,13 +517,13 @@ function example() {
   if (true) {
     var leaked = 'oops';
   }
-  console.log(leaked);  // 'oops' — leaked out of the if block
+  console.log(leaked);  // 'oops'  -  leaked out of the if block
 }
 \`\`\`
 
 ## Function Declaration Hoisting
 
-Function **declarations** are hoisted entirely — both the name and the body:
+Function **declarations** are hoisted entirely  -  both the name and the body:
 
 \`\`\`javascript
 sayHello();           // works!
@@ -541,7 +541,7 @@ var sayHello = function() { console.log('Hello'); };
 
 ## let and const: The Temporal Dead Zone (TDZ)
 
-\`let\` and \`const\` ARE hoisted (the engine knows they exist), but they are placed in the **Temporal Dead Zone** — a special state where any access throws a \`ReferenceError\`:
+\`let\` and \`const\` ARE hoisted (the engine knows they exist), but they are placed in the **Temporal Dead Zone**  -  a special state where any access throws a \`ReferenceError\`:
 
 \`\`\`javascript
 console.log(y);  // ReferenceError: Cannot access 'y' before initialization
@@ -559,7 +559,7 @@ The TDZ starts at the beginning of the block and ends when the declaration line 
 }
 \`\`\`
 
-**Why the TDZ exists**: It was added intentionally to catch programming errors. If \`let\` silently returned \`undefined\` like \`var\`, bugs from using variables too early would be silent — hard to diagnose. The TDZ makes the error loud and immediate.
+**Why the TDZ exists**: It was added intentionally to catch programming errors. If \`let\` silently returned \`undefined\` like \`var\`, bugs from using variables too early would be silent  -  hard to diagnose. The TDZ makes the error loud and immediate.
 
 ## Class Hoisting
 
@@ -585,7 +585,7 @@ class Foo {}
       title: 'The this Keyword: Context, Binding & Arrow Functions',
       content: `## How this Is Determined
 
-\`this\` is not fixed at definition time — it depends on **how the function is called**. There are four call patterns:
+\`this\` is not fixed at definition time  -  it depends on **how the function is called**. There are four call patterns:
 
 ### 1. Method Call
 
@@ -596,14 +596,14 @@ const user = {
   name: 'Alice',
   greet() { return 'Hello, ' + this.name; },
 };
-user.greet();  // 'Hello, Alice' — this = user
+user.greet();  // 'Hello, Alice'  -  this = user
 \`\`\`
 
-**Losing \`this\`** — extracting a method loses its context:
+**Losing \`this\`**  -  extracting a method loses its context:
 
 \`\`\`javascript
 const fn = user.greet;
-fn();  // 'Hello, undefined' — this is global/undefined in strict mode
+fn();  // 'Hello, undefined'  -  this is global/undefined in strict mode
 \`\`\`
 
 ### 2. Plain Function Call
@@ -631,14 +631,14 @@ const p = new Person('Bob');  // this = {} → returned as p
 \`\`\`javascript
 function greet(greeting) { return greeting + ', ' + this.name; }
 greet.call({ name: 'Alice' }, 'Hello');    // 'Hello, Alice'
-greet.apply({ name: 'Alice' }, ['Hello']); // same — array of args
+greet.apply({ name: 'Alice' }, ['Hello']); // same  -  array of args
 \`\`\`
 
 \`bind\` creates a **new function** permanently bound to a \`this\`:
 
 \`\`\`javascript
 const boundGreet = greet.bind({ name: 'Bob' });
-boundGreet('Hi');  // 'Hi, Bob' — this is permanently set
+boundGreet('Hi');  // 'Hi, Bob'  -  this is permanently set
 \`\`\`
 
 ## Arrow Functions Have No Own this
@@ -656,7 +656,7 @@ class Timer {
 
 // If you used a regular function:
 setInterval(function() {
-  this.ticks++;  // 'this' is undefined or global — bug!
+  this.ticks++;  // 'this' is undefined or global  -  bug!
 }, 1000);
 \`\`\`
 
@@ -673,7 +673,7 @@ class Button {
 }
 const btn = new Button('Submit');
 btn.click();                // 'Submit'
-setTimeout(btn.click, 100); // undefined — this lost
+setTimeout(btn.click, 100); // undefined  -  this lost
 
 // Fix 1: bind in constructor
 this.click = this.click.bind(this);
@@ -697,13 +697,13 @@ const animal = {
 const dog = Object.create(animal);  // dog's prototype is animal
 dog.bark = function() { return 'woof'; };
 
-dog.bark();     // 'woof' — own property
-dog.breathe();  // 'breathing' — found on prototype
+dog.bark();     // 'woof'  -  own property
+dog.breathe();  // 'breathing'  -  found on prototype
 \`\`\`
 
 ## The Prototype Chain
 
-Every plain object's chain ends at \`Object.prototype\`, which provides methods like \`toString\`, \`hasOwnProperty\`, etc. \`Object.prototype\`'s prototype is \`null\` — the end of the chain.
+Every plain object's chain ends at \`Object.prototype\`, which provides methods like \`toString\`, \`hasOwnProperty\`, etc. \`Object.prototype\`'s prototype is \`null\`  -  the end of the chain.
 
 \`\`\`javascript
 // dog → animal → Object.prototype → null
@@ -732,8 +732,8 @@ Dog.prototype.constructor = Dog;  // fix constructor reference
 Dog.prototype.bark = function() { return 'woof'; };
 
 const d = new Dog('Rex');
-d.speak();  // 'Rex makes a sound' — inherited
-d.bark();   // 'woof' — own prototype method
+d.speak();  // 'Rex makes a sound'  -  inherited
+d.bark();   // 'woof'  -  own prototype method
 \`\`\`
 
 ## hasOwnProperty and Object.hasOwn
@@ -742,10 +742,10 @@ To check if a property exists directly on an object (not inherited):
 
 \`\`\`javascript
 const obj = { a: 1 };
-'a' in obj                     // true — checks chain too
-obj.hasOwnProperty('a')        // true — own only
-Object.hasOwn(obj, 'a')        // true — modern, safer version
-Object.hasOwn(obj, 'toString') // false — inherited from Object.prototype
+'a' in obj                     // true  -  checks chain too
+obj.hasOwnProperty('a')        // true  -  own only
+Object.hasOwn(obj, 'a')        // true  -  modern, safer version
+Object.hasOwn(obj, 'toString') // false  -  inherited from Object.prototype
 \`\`\`
 
 ## Shadowing Properties
@@ -757,14 +757,14 @@ const proto = { x: 1 };
 const child = Object.create(proto);
 child.x = 99;            // creates own property, shadows proto.x
 child.x;                 // 99
-proto.x;                 // 1 — prototype unchanged
+proto.x;                 // 1  -  prototype unchanged
 \`\`\`
 
 ## Object.create vs Object.assign
 
-\`Object.create(proto)\` — creates a new object with \`proto\` as its \`[[Prototype]]\`.
+\`Object.create(proto)\`  -  creates a new object with \`proto\` as its \`[[Prototype]]\`.
 
-\`Object.assign(target, source)\` — shallow-copies own enumerable properties; does NOT affect the prototype chain.
+\`Object.assign(target, source)\`  -  shallow-copies own enumerable properties; does NOT affect the prototype chain.
 
 ## instanceof
 
@@ -773,7 +773,7 @@ proto.x;                 // 1 — prototype unchanged
 \`\`\`javascript
 d instanceof Dog     // true
 d instanceof Animal  // true (Animal.prototype is in the chain)
-d instanceof Object  // true (always — all objects inherit from Object.prototype)
+d instanceof Object  // true (always  -  all objects inherit from Object.prototype)
 \`\`\``,
     },
     {
@@ -793,7 +793,7 @@ class Animal {
     return \`\${this.name} makes a sound\`;
   }
 
-  static create(name) {     // static method — on Animal itself, not instances
+  static create(name) {     // static method  -  on Animal itself, not instances
     return new Animal(name);
   }
 }
@@ -802,7 +802,7 @@ const a = Animal.create('Cat');
 a.speak();  // 'Cat makes a sound'
 \`\`\`
 
-Methods defined in the class body go on the prototype — they are shared across all instances. Properties assigned in the constructor are own properties — each instance gets its own copy.
+Methods defined in the class body go on the prototype  -  they are shared across all instances. Properties assigned in the constructor are own properties  -  each instance gets its own copy.
 
 ## Inheritance with extends and super
 
@@ -868,7 +868,7 @@ class BankAccount {
 const acc = new BankAccount();
 acc.deposit(100);
 acc.balance;     // 100
-acc.#balance;    // SyntaxError — cannot access outside class
+acc.#balance;    // SyntaxError  -  cannot access outside class
 \`\`\`
 
 ## Class Fields
@@ -884,7 +884,7 @@ class User {
     this.name = name;
   }
 
-  // Arrow function as class field — useful for callbacks (captures this)
+  // Arrow function as class field  -  useful for callbacks (captures this)
   greet = () => \`Hello, \${this.name}\`;
 }
 \`\`\`
@@ -910,12 +910,12 @@ MathHelper.PI;         // 3.14159
 
 JavaScript has several built-in error types:
 
-- **SyntaxError** — invalid code (parse time, cannot be caught at runtime in the same script)
-- **ReferenceError** — accessing a variable that does not exist
-- **TypeError** — wrong type (calling non-function, property access on null/undefined)
-- **RangeError** — value out of allowed range (invalid array length, stack overflow)
-- **URIError** — invalid URI encoding
-- **EvalError** — (rarely used in modern JS)
+- **SyntaxError**  -  invalid code (parse time, cannot be caught at runtime in the same script)
+- **ReferenceError**  -  accessing a variable that does not exist
+- **TypeError**  -  wrong type (calling non-function, property access on null/undefined)
+- **RangeError**  -  value out of allowed range (invalid array length, stack overflow)
+- **URIError**  -  invalid URI encoding
+- **EvalError**  -  (rarely used in modern JS)
 
 \`\`\`javascript
 null.property;          // TypeError
@@ -933,7 +933,7 @@ try {
   if (error instanceof SyntaxError) {
     console.error('Invalid JSON:', error.message);
   } else {
-    throw error;  // re-throw unexpected errors — don't swallow them
+    throw error;  // re-throw unexpected errors  -  don't swallow them
   }
 } finally {
   cleanup();  // always runs, even if catch throws
@@ -1002,10 +1002,10 @@ async function loadUser(id) {
 **Never swallow errors silently:**
 
 \`\`\`javascript
-// BAD — hides bugs
+// BAD  -  hides bugs
 try { riskyOp(); } catch (e) {}
 
-// GOOD — at least log
+// GOOD  -  at least log
 try { riskyOp(); } catch (e) { logger.warn(e); }
 \`\`\`
 
@@ -1025,14 +1025,14 @@ process.on('unhandledRejection', (reason, promise) => {
       title: 'The Event Loop: Call Stack, Microtasks & Macrotasks',
       content: `## The JavaScript Runtime Model
 
-JavaScript is **single-threaded** — one call stack, one piece of code running at a time. Yet it handles thousands of async operations. The event loop is how.
+JavaScript is **single-threaded**  -  one call stack, one piece of code running at a time. Yet it handles thousands of async operations. The event loop is how.
 
 The components:
-- **Call Stack** — LIFO stack of executing function frames
-- **Heap** — unstructured memory where objects are allocated
-- **Web APIs / Node APIs** — timer, I/O, fetch — run outside the JS thread
-- **Macrotask Queue** (callback queue) — completed I/O, setTimeout, setInterval
-- **Microtask Queue** — Promise callbacks (\`.then\`), \`queueMicrotask\`, MutationObserver
+- **Call Stack**  -  LIFO stack of executing function frames
+- **Heap**  -  unstructured memory where objects are allocated
+- **Web APIs / Node APIs**  -  timer, I/O, fetch  -  run outside the JS thread
+- **Macrotask Queue** (callback queue)  -  completed I/O, setTimeout, setInterval
+- **Microtask Queue**  -  Promise callbacks (\`.then\`), \`queueMicrotask\`, MutationObserver
 
 ## The Event Loop Algorithm
 
@@ -1046,22 +1046,22 @@ After each task (macrotask) the loop:
 This means Promise callbacks run before the next setTimeout, even a \`setTimeout(fn, 0)\`:
 
 \`\`\`javascript
-console.log('1 — sync');
+console.log('1  -  sync');
 
-setTimeout(() => console.log('4 — macrotask'), 0);
+setTimeout(() => console.log('4  -  macrotask'), 0);
 
 Promise.resolve()
-  .then(() => console.log('2 — microtask'))
-  .then(() => console.log('3 — microtask'));
+  .then(() => console.log('2  -  microtask'))
+  .then(() => console.log('3  -  microtask'));
 
 console.log('still sync');
 
 // Output order:
-// 1 — sync
+// 1  -  sync
 // still sync
-// 2 — microtask
-// 3 — microtask
-// 4 — macrotask
+// 2  -  microtask
+// 3  -  microtask
+// 4  -  macrotask
 \`\`\`
 
 ## Microtask Starvation
@@ -1091,7 +1091,7 @@ process.nextTick(() => console.log('nextTick'));
 // Typical output:
 // nextTick
 // promise
-// timer  (or immediate — depends on libuv scheduling)
+// timer  (or immediate  -  depends on libuv scheduling)
 \`\`\`
 
 \`process.nextTick\` fires after the current operation, before I/O callbacks. Overusing it causes the same starvation risk as infinite microtasks.
@@ -1106,7 +1106,7 @@ For CPU-heavy work in Node:
 - Break work into async chunks using \`setImmediate\` or \`queueMicrotask\`
 
 \`\`\`javascript
-// Chunked processing — yields control between batches
+// Chunked processing  -  yields control between batches
 async function processInChunks(items, batchSize = 1000) {
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
@@ -1122,16 +1122,16 @@ async function processInChunks(items, batchSize = 1000) {
       content: `## Promise Fundamentals
 
 A **Promise** represents an eventual value. It is always in one of three states:
-- **Pending** — initial state, neither fulfilled nor rejected
-- **Fulfilled** — the operation succeeded, the promise has a value
-- **Rejected** — the operation failed, the promise has a reason
+- **Pending**  -  initial state, neither fulfilled nor rejected
+- **Fulfilled**  -  the operation succeeded, the promise has a value
+- **Rejected**  -  the operation failed, the promise has a reason
 
 State is **one-way**: pending → fulfilled or pending → rejected. Once settled, it never changes.
 
 \`\`\`javascript
 const p = new Promise((resolve, reject) => {
-  // resolve(value)  — fulfil the promise
-  // reject(reason)  — reject the promise
+  // resolve(value)   -  fulfil the promise
+  // reject(reason)   -  reject the promise
   setTimeout(() => resolve(42), 1000);
 });
 
@@ -1157,14 +1157,14 @@ If a \`.then\` handler returns a value, the next \`.then\` receives that value. 
 ## Common Mistake: Nested Promises
 
 \`\`\`javascript
-// BAD — creates "promise hell"
+// BAD  -  creates "promise hell"
 fetchUser(id).then(user => {
   fetchPosts(user.id).then(posts => {  // nested, not chained
     render(posts);
   });
 });
 
-// GOOD — flat chain
+// GOOD  -  flat chain
 fetchUser(id)
   .then(user => fetchPosts(user.id))
   .then(posts => render(posts));
@@ -1172,7 +1172,7 @@ fetchUser(id)
 
 ## Promise Combinators
 
-**Promise.all(iterable)** — fulfils when ALL resolve, rejects immediately if ANY rejects:
+**Promise.all(iterable)**  -  fulfils when ALL resolve, rejects immediately if ANY rejects:
 
 \`\`\`javascript
 const [user, posts, comments] = await Promise.all([
@@ -1180,10 +1180,10 @@ const [user, posts, comments] = await Promise.all([
   fetchPosts(id),
   fetchComments(id),
 ]);
-// All three run concurrently — much faster than sequential
+// All three run concurrently  -  much faster than sequential
 \`\`\`
 
-**Promise.allSettled(iterable)** — waits for ALL to settle, never short-circuits:
+**Promise.allSettled(iterable)**  -  waits for ALL to settle, never short-circuits:
 
 \`\`\`javascript
 const results = await Promise.allSettled([p1, p2, p3]);
@@ -1193,7 +1193,7 @@ results.forEach(result => {
 });
 \`\`\`
 
-**Promise.race(iterable)** — resolves or rejects with the **first** settled promise:
+**Promise.race(iterable)**  -  resolves or rejects with the **first** settled promise:
 
 \`\`\`javascript
 const result = await Promise.race([
@@ -1202,7 +1202,7 @@ const result = await Promise.race([
 ]);
 \`\`\`
 
-**Promise.any(iterable)** — fulfils with the first that **fulfils**; rejects only if ALL reject (with an AggregateError):
+**Promise.any(iterable)**  -  fulfils with the first that **fulfils**; rejects only if ALL reject (with an AggregateError):
 
 \`\`\`javascript
 const fastest = await Promise.any([mirror1, mirror2, mirror3]);
@@ -1237,7 +1237,7 @@ If the async function throws, the returned Promise rejects with that error.
 
 ## await
 
-\`await\` pauses the async function until the Promise settles. It can only be used inside \`async\` functions (or at the top level of ES modules — "top-level await"):
+\`await\` pauses the async function until the Promise settles. It can only be used inside \`async\` functions (or at the top level of ES modules  -  "top-level await"):
 
 \`\`\`javascript
 async function loadDashboard(userId) {
@@ -1247,7 +1247,7 @@ async function loadDashboard(userId) {
 }
 \`\`\`
 
-This looks synchronous but is non-blocking — while awaiting, the event loop processes other tasks.
+This looks synchronous but is non-blocking  -  while awaiting, the event loop processes other tasks.
 
 ## Error Handling
 
@@ -1268,17 +1268,17 @@ async function saveUser(data) {
 }
 \`\`\`
 
-**Avoid mixing** \`try/catch\` and \`.catch()\` on the same expression — you'll handle the error twice or miss it.
+**Avoid mixing** \`try/catch\` and \`.catch()\` on the same expression  -  you'll handle the error twice or miss it.
 
 ## Sequential vs Parallel Execution
 
 \`\`\`javascript
-// Sequential — each waits for the previous (total: 3 seconds)
+// Sequential  -  each waits for the previous (total: 3 seconds)
 const a = await delay(1000);
 const b = await delay(1000);
 const c = await delay(1000);
 
-// Parallel — all run at once (total: ~1 second)
+// Parallel  -  all run at once (total: ~1 second)
 const [a, b, c] = await Promise.all([
   delay(1000),
   delay(1000),
@@ -1289,11 +1289,11 @@ const [a, b, c] = await Promise.all([
 Start the promises **before** awaiting them:
 
 \`\`\`javascript
-// WRONG — sequential despite intent
+// WRONG  -  sequential despite intent
 const a = await fetchA();  // starts and waits
 const b = await fetchB();  // then starts and waits
 
-// RIGHT — parallel
+// RIGHT  -  parallel
 const pA = fetchA();  // starts immediately
 const pB = fetchB();  // starts immediately
 const [a, b] = await Promise.all([pA, pB]);  // await both
@@ -1320,10 +1320,10 @@ for await (const page of paginate('/api/users')) {
 
 ## Common Mistakes
 
-**Forgetting await** — the promise is not awaited, assertions run before the result:
+**Forgetting await**  -  the promise is not awaited, assertions run before the result:
 
 \`\`\`javascript
-const user = fetchUser(1);  // forgot await — user is a Promise, not a user object
+const user = fetchUser(1);  // forgot await  -  user is a Promise, not a user object
 if (user.name) { /* ... */ }  // undefined
 \`\`\`
 
@@ -1333,14 +1333,14 @@ if (user.name) { /* ... */ }  // undefined
 return await value;  // redundant if value is not a promise
 \`\`\`
 
-Exception: \`return await\` inside a \`try/catch\` IS meaningful — without \`await\`, a thrown promise from \`value\` would not be caught by the surrounding catch.`,
+Exception: \`return await\` inside a \`try/catch\` IS meaningful  -  without \`await\`, a thrown promise from \`value\` would not be caught by the surrounding catch.`,
     },
     {
       id: 'js-es6-features',
       title: 'ES6+ Modern JavaScript: Destructuring, Spread, Symbols & More',
       content: `## Destructuring
 
-**Array destructuring** — extracts values by position:
+**Array destructuring**  -  extracts values by position:
 
 \`\`\`javascript
 const [first, second, ...rest] = [1, 2, 3, 4, 5];
@@ -1353,7 +1353,7 @@ const [x = 0, y = 0] = [10];  // defaults
 // x = 10, y = 0
 \`\`\`
 
-**Object destructuring** — extracts by property name:
+**Object destructuring**  -  extracts by property name:
 
 \`\`\`javascript
 const { name, age, role = 'viewer' } = user;  // with default
@@ -1370,7 +1370,7 @@ function process({ name, options: { timeout = 5000 } = {} }) { /* ... */ }
 
 ## Spread Operator
 
-**Spread in arrays** — expands an iterable into individual elements:
+**Spread in arrays**  -  expands an iterable into individual elements:
 
 \`\`\`javascript
 const merged = [...arr1, ...arr2, extraItem];
@@ -1378,7 +1378,7 @@ const copy = [...original];  // shallow copy
 Math.max(...numbers);        // spread as arguments
 \`\`\`
 
-**Spread in objects** — shallow-merges objects:
+**Spread in objects**  -  shallow-merges objects:
 
 \`\`\`javascript
 const updated = { ...user, name: 'NewName' };   // override specific field
@@ -1399,7 +1399,7 @@ const multiline = \`
 \`;
 \`\`\`
 
-**Tagged templates** — a function processes the template:
+**Tagged templates**  -  a function processes the template:
 
 \`\`\`javascript
 function sql(strings, ...values) {
@@ -1417,8 +1417,8 @@ Creates a guaranteed-unique identifier. Used for "well-known symbols" and extend
 const id = Symbol('id');
 const user = { [id]: 123, name: 'Alice' };
 user[id];           // 123
-user['id'];         // undefined — string 'id' and Symbol are different
-Object.keys(user);  // ['name'] — symbols are non-enumerable
+user['id'];         // undefined  -  string 'id' and Symbol are different
+Object.keys(user);  // ['name']  -  symbols are non-enumerable
 \`\`\`
 
 Well-known symbols customise language behaviour:
@@ -1464,7 +1464,7 @@ config.debug &&= verbose;    // set only if truthy
 \`\`\`javascript
 const name = 'Alice';
 const age = 30;
-const user = { name, age };         // shorthand — same as { name: name, age: age }
+const user = { name, age };         // shorthand  -  same as { name: name, age: age }
 
 const key = 'dynamic';
 const obj = { [key]: 'value' };     // computed property name
@@ -1486,21 +1486,21 @@ Understanding which methods mutate the original array matters for functional pro
 
 ## Transformation
 
-**map** — transform each element, returns new array of same length:
+**map**  -  transform each element, returns new array of same length:
 
 \`\`\`javascript
 const doubled = [1, 2, 3].map(n => n * 2);        // [2, 4, 6]
 const names = users.map(u => u.name);               // extract field
 \`\`\`
 
-**filter** — keep elements matching a predicate:
+**filter**  -  keep elements matching a predicate:
 
 \`\`\`javascript
 const active = users.filter(u => u.active);
 const evens = [1,2,3,4].filter(n => n % 2 === 0);  // [2, 4]
 \`\`\`
 
-**flatMap** — map + flatten one level (more efficient than \`.map().flat()\`):
+**flatMap**  -  map + flatten one level (more efficient than \`.map().flat()\`):
 
 \`\`\`javascript
 const words = sentences.flatMap(s => s.split(' '));
@@ -1508,7 +1508,7 @@ const words = sentences.flatMap(s => s.split(' '));
 
 ## Reduction
 
-**reduce** — fold array into single value:
+**reduce**  -  fold array into single value:
 
 \`\`\`javascript
 const sum = [1, 2, 3, 4].reduce((acc, n) => acc + n, 0);  // 10
@@ -1526,7 +1526,7 @@ const counts = words.reduce((acc, word) => {
 }, {});
 \`\`\`
 
-**reduceRight** — same as reduce but iterates right to left.
+**reduceRight**  -  same as reduce but iterates right to left.
 
 ## Searching
 
@@ -1544,12 +1544,12 @@ const pos   = [1,2,3].indexOf(2);                    // 1 (uses ===, NaN issue)
 \`\`\`javascript
 const arr = [1, 2, 3, 4, 5];
 
-// splice — MUTATES: (start, deleteCount, ...items)
+// splice  -  MUTATES: (start, deleteCount, ...items)
 arr.splice(1, 2);         // removes [2,3], arr is now [1,4,5]
 arr.splice(1, 0, 'a', 'b'); // inserts at index 1
 
-// slice — NON-MUTATING: (start, end) [end exclusive]
-arr.slice(1, 3);          // [2, 3] — original unchanged
+// slice  -  NON-MUTATING: (start, end) [end exclusive]
+arr.slice(1, 3);          // [2, 3]  -  original unchanged
 arr.slice(-2);            // last 2 elements
 arr.slice();              // shallow copy of entire array
 \`\`\`
@@ -1559,9 +1559,9 @@ arr.slice();              // shallow copy of entire array
 **Mutates** and sorts in place. Default sort converts to strings (wrong for numbers):
 
 \`\`\`javascript
-[10, 9, 2, 1].sort();              // [1, 10, 2, 9] — lexicographic!
-[10, 9, 2, 1].sort((a, b) => a - b); // [1, 2, 9, 10] — numeric ascending
-[10, 9, 2, 1].sort((a, b) => b - a); // [10, 9, 2, 1] — descending
+[10, 9, 2, 1].sort();              // [1, 10, 2, 9]  -  lexicographic!
+[10, 9, 2, 1].sort((a, b) => a - b); // [1, 2, 9, 10]  -  numeric ascending
+[10, 9, 2, 1].sort((a, b) => b - a); // [10, 9, 2, 1]  -  descending
 
 // Sort objects
 users.sort((a, b) => a.name.localeCompare(b.name));
@@ -1572,9 +1572,9 @@ For immutable sort, spread first: \`[...arr].sort(...)\`
 ## Flattening
 
 \`\`\`javascript
-[1, [2, [3, [4]]]].flat();    // [1, 2, [3, [4]]] — one level
+[1, [2, [3, [4]]]].flat();    // [1, 2, [3, [4]]]  -  one level
 [1, [2, [3, [4]]]].flat(2);   // [1, 2, 3, [4]]
-[1, [2, [3]]].flat(Infinity); // [1, 2, 3] — all levels
+[1, [2, [3]]].flat(Infinity); // [1, 2, 3]  -  all levels
 \`\`\`
 
 ## Array.from and Array.of
@@ -1582,7 +1582,7 @@ For immutable sort, spread first: \`[...arr].sort(...)\`
 \`\`\`javascript
 Array.from('hello');              // ['h','e','l','l','o']
 Array.from({ length: 5 }, (_, i) => i);  // [0, 1, 2, 3, 4]
-Array.from(new Set([1, 2, 2, 3])); // [1, 2, 3] — deduplicate
+Array.from(new Set([1, 2, 2, 3])); // [1, 2, 3]  -  deduplicate
 
 Array.of(7);    // [7]  (compare: new Array(7) creates 7 empty slots)
 \`\`\``,
@@ -1595,7 +1595,7 @@ Array.of(7);    // [7]  (compare: new Array(7) creates 7 empty slots)
 \`\`\`javascript
 const obj = { a: 1, b: 2, c: 3 };
 
-Object.keys(obj);    // ['a', 'b', 'c'] — own enumerable keys
+Object.keys(obj);    // ['a', 'b', 'c']  -  own enumerable keys
 Object.values(obj);  // [1, 2, 3]
 Object.entries(obj); // [['a',1], ['b',2], ['c',3]]
 
@@ -1620,7 +1620,7 @@ const config = { ...defaults, ...userConfig };
 
 ## Object.freeze and Object.seal
 
-**freeze** — prevents adding, removing, or changing properties (shallow):
+**freeze**  -  prevents adding, removing, or changing properties (shallow):
 
 \`\`\`javascript
 const point = Object.freeze({ x: 1, y: 2 });
@@ -1631,7 +1631,7 @@ const config = Object.freeze({ db: { host: 'localhost' } });
 config.db.host = 'prod';  // works! freeze is shallow
 \`\`\`
 
-**seal** — prevents adding/removing, but allows changing existing properties.
+**seal**  -  prevents adding/removing, but allows changing existing properties.
 
 ## Property Descriptors
 
@@ -1654,7 +1654,7 @@ This is how built-in properties like \`Array.prototype.length\` are non-enumerab
 ## Shallow vs Deep Clone
 
 \`\`\`javascript
-// Shallow copy — nested objects still share reference
+// Shallow copy  -  nested objects still share reference
 const shallow = { ...obj };
 const shallow2 = Object.assign({}, obj);
 
@@ -1677,10 +1677,10 @@ car.make = 'Toyota';
 car.model = 'Corolla';
 car.describe();  // 'Toyota Corolla'
 
-// Object.create(null) — object with NO prototype (pure hash map)
+// Object.create(null)  -  object with NO prototype (pure hash map)
 const map = Object.create(null);
 map.key = 'value';
-// No inherited toString, hasOwnProperty, etc. — safe as a dictionary
+// No inherited toString, hasOwnProperty, etc.  -  safe as a dictionary
 \`\`\``,
     },
     {
@@ -1727,7 +1727,7 @@ A collection of **unique values** (any type). Uses SameValueZero equality (like 
 
 \`\`\`javascript
 const set = new Set([1, 2, 2, 3, 3, 3]);
-set;            // Set {1, 2, 3} — duplicates removed
+set;            // Set {1, 2, 3}  -  duplicates removed
 set.size;       // 3
 set.add(4);
 set.has(2);     // true
@@ -1744,7 +1744,7 @@ const difference = new Set([...setA].filter(x => !setB.has(x)));
 
 ## WeakMap
 
-Like Map but **keys must be objects** and they are **weakly referenced** — if no other reference to the key object exists, it can be garbage-collected and the entry is removed automatically.
+Like Map but **keys must be objects** and they are **weakly referenced**  -  if no other reference to the key object exists, it can be garbage-collected and the entry is removed automatically.
 
 \`\`\`javascript
 const cache = new WeakMap();
@@ -1775,7 +1775,7 @@ function visit(node) {
   visited.add(node);
   node.children.forEach(visit);
 }
-// nodes are GC'd when the tree is released — no leak
+// nodes are GC'd when the tree is released  -  no leak
 \`\`\``,
     },
     {
@@ -1783,7 +1783,7 @@ function visit(node) {
       title: 'Generators, Iterators & the Iteration Protocol',
       content: `## The Iteration Protocol
 
-An object is **iterable** if it has a \`[Symbol.iterator]()\` method that returns an **iterator** — an object with a \`next()\` method that returns \`{ value, done }\`.
+An object is **iterable** if it has a \`[Symbol.iterator]()\` method that returns an **iterator**  -  an object with a \`next()\` method that returns \`{ value, done }\`.
 
 \`\`\`javascript
 // Custom iterable
@@ -1854,7 +1854,7 @@ function* concat(...iterables) {
 
 ## Passing Values into Generators
 
-\`next(value)\` sends a value back into the generator — the \`yield\` expression evaluates to that value:
+\`next(value)\` sends a value back into the generator  -  the \`yield\` expression evaluates to that value:
 
 \`\`\`javascript
 function* accumulator() {
@@ -1865,14 +1865,14 @@ function* accumulator() {
   }
 }
 const acc = accumulator();
-acc.next();    // { value: 0, done: false } — prime the generator
+acc.next();    // { value: 0, done: false }  -  prime the generator
 acc.next(10);  // { value: 10, done: false }
 acc.next(20);  // { value: 30, done: false }
 \`\`\`
 
 ## Practical Uses
 
-**Infinite sequences** — generate IDs, pagination cursors, Fibonacci:
+**Infinite sequences**  -  generate IDs, pagination cursors, Fibonacci:
 
 \`\`\`javascript
 function* fibonacci() {
@@ -1906,9 +1906,9 @@ for await (const user of fetchAllPages('/api/users')) {
       title: 'Modules: ES Modules vs CommonJS & Dynamic Imports',
       content: `## ES Modules (ESM)
 
-The standard module system for JavaScript. Files are isolated — no global leakage.
+The standard module system for JavaScript. Files are isolated  -  no global leakage.
 
-**Named exports** — export specific bindings by name:
+**Named exports**  -  export specific bindings by name:
 
 \`\`\`javascript
 // math.js
@@ -1922,7 +1922,7 @@ import { add as sum } from './math.js';   // rename
 import * as Math from './math.js';        // namespace import
 \`\`\`
 
-**Default export** — one default per module:
+**Default export**  -  one default per module:
 
 \`\`\`javascript
 // router.js
@@ -1932,7 +1932,7 @@ export default class Router { /* ... */ }
 import Router from './router.js';  // any name works for default
 \`\`\`
 
-**Re-exporting** — barrel file pattern:
+**Re-exporting**  -  barrel file pattern:
 
 \`\`\`javascript
 // index.js
@@ -1943,9 +1943,9 @@ export * from './utils.js';
 
 ## ESM Characteristics
 
-- **Static** — imports are resolved at parse time, before code runs. Enables tree-shaking.
-- **Async** — modules are loaded asynchronously in browsers.
-- **Live bindings** — exported names are live references, not copies. If the exporter updates a value, importers see the update.
+- **Static**  -  imports are resolved at parse time, before code runs. Enables tree-shaking.
+- **Async**  -  modules are loaded asynchronously in browsers.
+- **Live bindings**  -  exported names are live references, not copies. If the exporter updates a value, importers see the update.
 - \`import\` declarations are **hoisted** to the top of the module.
 - Modules run in **strict mode** by default.
 - \`this\` at the top level is \`undefined\` (not \`window\`/\`global\`).
@@ -1962,14 +1962,14 @@ module.exports.extraFn = function() { /* ... */ };
 
 // Or:
 exports.doStuff = function() { /* ... */ };
-// Note: do NOT do exports = { ... } — breaks the reference
+// Note: do NOT do exports = { ... }  -  breaks the reference
 \`\`\`
 
 **CJS characteristics:**
-- **Dynamic** — \`require\` runs at runtime, can be conditional
-- **Synchronous** — blocks while loading (fine for Node.js startup, bad in browsers)
-- Exports are **copies** at call time — changes to the original are not reflected
-- Module is cached after first load — \`require\` is a cache lookup for subsequent calls
+- **Dynamic**  -  \`require\` runs at runtime, can be conditional
+- **Synchronous**  -  blocks while loading (fine for Node.js startup, bad in browsers)
+- Exports are **copies** at call time  -  changes to the original are not reflected
+- Module is cached after first load  -  \`require\` is a cache lookup for subsequent calls
 
 ## ESM vs CJS Key Differences
 
@@ -1984,7 +1984,7 @@ exports.doStuff = function() { /* ... */ };
 
 ## Dynamic import()
 
-Import a module lazily at runtime — returns a Promise:
+Import a module lazily at runtime  -  returns a Promise:
 
 \`\`\`javascript
 // Code splitting / lazy loading
@@ -2010,7 +2010,7 @@ app.get('/report', async (req, res) => {
 // ESM can import CJS:
 import cjsModule from './legacy.cjs';
 
-// CJS cannot require() ESM synchronously — use dynamic import:
+// CJS cannot require() ESM synchronously  -  use dynamic import:
 const { helper } = await import('./esm-module.js');
 \`\`\``,
     },
@@ -2039,7 +2039,7 @@ Use debounce for: search-as-you-type, resize handlers, form validation on input.
 
 ## Throttle
 
-Limits how often a function can fire — at most once per interval:
+Limits how often a function can fire  -  at most once per interval:
 
 \`\`\`javascript
 function throttle(fn, interval) {
@@ -2146,19 +2146,19 @@ function setup() {
 }
 \`\`\`
 
-**WeakMap/WeakSet for object-keyed caches** — as shown earlier, they prevent this class of leak automatically.`,
+**WeakMap/WeakSet for object-keyed caches**  -  as shown earlier, they prevent this class of leak automatically.`,
     },
     {
       id: 'js-string-methods',
       title: 'String Methods: Complete Reference',
       content: `## Strings Are Immutable
 
-Every string method returns a **new string** — the original is never modified.
+Every string method returns a **new string**  -  the original is never modified.
 
 \`\`\`javascript
 const s = 'hello';
 s.toUpperCase();  // 'HELLO'
-console.log(s);   // 'hello' — unchanged
+console.log(s);   // 'hello'  -  unchanged
 \`\`\`
 
 ## Searching
@@ -2189,7 +2189,7 @@ str.charCodeAt(0);      // 72  (UTF-16 code unit)
 str.codePointAt(0);     // 72  (full Unicode code point, handles emoji)
 \`\`\`
 
-Prefer \`slice\` over \`substring\` — it handles negatives and is more predictable.
+Prefer \`slice\` over \`substring\`  -  it handles negatives and is more predictable.
 
 ## Transforming
 
@@ -2233,7 +2233,7 @@ Prefer \`slice\` over \`substring\` — it handles negatives and is more predict
 const name = 'Alice';
 \`Hello, \${name}!\`  // 'Hello, Alice!'
 
-// String.raw — raw string without processing escape sequences
+// String.raw  -  raw string without processing escape sequences
 String.raw\`Line1\nLine2\`  // 'Line1\\nLine2' (backslash-n literally)
 // Useful for regex patterns and Windows paths
 \`\`\`
@@ -2242,8 +2242,8 @@ String.raw\`Line1\nLine2\`  // 'Line1\\nLine2' (backslash-n literally)
 
 \`\`\`javascript
 'café'.normalize('NFC');   // canonical composed form
-'\\u{1F600}'.length;        // 2 — emoji is two UTF-16 code units
-[...'\\u{1F600}'].length;   // 1 — spread uses code points
+'\\u{1F600}'.length;        // 2  -  emoji is two UTF-16 code units
+[...'\\u{1F600}'].length;   // 1  -  spread uses code points
 \`\`\`
 
 ## String.fromCharCode and fromCodePoint
@@ -2259,8 +2259,8 @@ String.fromCodePoint(128512);                  // '😀'
       content: `## Creating Regular Expressions
 
 \`\`\`javascript
-const re1 = /pattern/flags;          // literal — compiled at parse time
-const re2 = new RegExp('pattern', 'flags');  // constructor — dynamic patterns
+const re1 = /pattern/flags;          // literal  -  compiled at parse time
+const re2 = new RegExp('pattern', 'flags');  // constructor  -  dynamic patterns
 
 const dynamic = 'hello';
 const re3 = new RegExp(\`^\${dynamic}\`, 'i');  // built from variable
@@ -2270,14 +2270,14 @@ const re3 = new RegExp(\`^\${dynamic}\`, 'i');  // built from variable
 
 | Flag | Meaning |
 |------|---------|
-| \`g\` | Global — find all matches, not just first |
+| \`g\` | Global  -  find all matches, not just first |
 | \`i\` | Case-insensitive |
-| \`m\` | Multiline — \`^\`/\`$\` match start/end of each line |
-| \`s\` | DotAll — \`.\` matches newlines too (ES2018) |
-| \`u\` | Unicode mode — enables \`\\p{}\` properties, treats surrogates correctly |
-| \`v\` | Unicode sets — superset of \`u\`, enables set operations in classes (ES2024) |
-| \`d\` | Indices — adds \`indices\` property to matches (ES2022) |
-| \`y\` | Sticky — match only at \`lastIndex\` position |
+| \`m\` | Multiline  -  \`^\`/\`$\` match start/end of each line |
+| \`s\` | DotAll  -  \`.\` matches newlines too (ES2018) |
+| \`u\` | Unicode mode  -  enables \`\\p{}\` properties, treats surrogates correctly |
+| \`v\` | Unicode sets  -  superset of \`u\`, enables set operations in classes (ES2024) |
+| \`d\` | Indices  -  adds \`indices\` property to matches (ES2022) |
+| \`y\` | Sticky  -  match only at \`lastIndex\` position |
 
 ## Character Classes
 
@@ -2311,8 +2311,8 @@ const re3 = new RegExp(\`^\${dynamic}\`, 'i');  // built from variable
 **Greedy vs Lazy**: by default quantifiers are greedy (match as much as possible). Add \`?\` to make lazy:
 
 \`\`\`javascript
-'<b>bold</b>'.match(/<.+>/)[0];   // '<b>bold</b>'  — greedy
-'<b>bold</b>'.match(/<.+?>/)[0];  // '<b>'           — lazy
+'<b>bold</b>'.match(/<.+>/)[0];   // '<b>bold</b>'   -  greedy
+'<b>bold</b>'.match(/<.+?>/)[0];  // '<b>'            -  lazy
 \`\`\`
 
 ## Anchors
@@ -2327,15 +2327,15 @@ const re3 = new RegExp(\`^\${dynamic}\`, 'i');  // built from variable
 ## Groups and Captures
 
 \`\`\`javascript
-// Capturing group — remembered for back-references and result
+// Capturing group  -  remembered for back-references and result
 /([a-z]+)\\s([a-z]+)/
 
 const m = 'hello world'.match(/([a-z]+)\\s([a-z]+)/);
-m[0]  // 'hello world' — full match
-m[1]  // 'hello'       — group 1
-m[2]  // 'world'       — group 2
+m[0]  // 'hello world'  -  full match
+m[1]  // 'hello'        -  group 1
+m[2]  // 'world'        -  group 2
 
-// Non-capturing group — groups without capturing
+// Non-capturing group  -  groups without capturing
 /(?:[a-z]+)\\s(?:[a-z]+)/
 
 // Named capturing groups (ES2018)
@@ -2371,7 +2371,7 @@ Assert what comes before/after without including it in the match:
 'hello world'.replace(/\\w+/g, s => s.toUpperCase()); // 'HELLO WORLD'
 'one1two2three'.split(/\\d/);            // ['one', 'two', 'three']
 
-// matchAll — iterate all matches with groups
+// matchAll  -  iterate all matches with groups
 const str = 'cat bat sat';
 for (const match of str.matchAll(/([cbst])at/g)) {
   console.log(match[0], match[1]);  // 'cat','c'  'bat','b'  'sat','s'
@@ -2395,17 +2395,17 @@ for (const match of str.matchAll(/([cbst])at/g)) {
 An **execution context** is the environment in which JavaScript code is evaluated and executed. Every time a function is called, a new execution context is created for it.
 
 There are three types:
-- **Global Execution Context (GEC)** — created when the script starts; represents the global scope
-- **Function Execution Context (FEC)** — created for each function call
-- **Eval Execution Context** — for code run inside \`eval()\` (avoid in production)
+- **Global Execution Context (GEC)**  -  created when the script starts; represents the global scope
+- **Function Execution Context (FEC)**  -  created for each function call
+- **Eval Execution Context**  -  for code run inside \`eval()\` (avoid in production)
 
 ## Phases of an Execution Context
 
 Each context has two phases:
 
 ### Creation Phase
-1. **Variable Environment** is set up — \`var\` declarations are hoisted and initialised to \`undefined\`; \`let\`/\`const\` go into the TDZ
-2. **Scope chain** is established — references to outer environments
+1. **Variable Environment** is set up  -  \`var\` declarations are hoisted and initialised to \`undefined\`; \`let\`/\`const\` go into the TDZ
+2. **Scope chain** is established  -  references to outer environments
 3. **\`this\`** binding is determined
 
 ### Execution Phase
@@ -2468,7 +2468,7 @@ function outer() {
   const x = 'outer';
   function inner() {
     // inner's scope chain: inner → outer → global
-    console.log(x);  // 'outer' — found in outer before reaching global
+    console.log(x);  // 'outer'  -  found in outer before reaching global
   }
   inner();
 }
@@ -2479,7 +2479,7 @@ This is why closures work: the inner function's lexical environment keeps a refe
 
 ## Dynamic vs Lexical Scope
 
-JavaScript uses **lexical (static) scope** — the scope of a variable is determined by where it is written in the source code, not where it is called from.
+JavaScript uses **lexical (static) scope**  -  the scope of a variable is determined by where it is written in the source code, not where it is called from.
 
 \`\`\`javascript
 const x = 'global';
@@ -2487,17 +2487,17 @@ function getX() { return x; }
 
 function outer() {
   const x = 'outer';
-  return getX();  // returns 'global' — getX sees its definition scope, not caller's scope
+  return getX();  // returns 'global'  -  getX sees its definition scope, not caller's scope
 }
 outer();  // 'global'
 \`\`\`
 
-If JavaScript used dynamic scope, \`getX\` would return \`'outer'\`. It does not — always remember: scope is where you **write** the function.`,
+If JavaScript used dynamic scope, \`getX\` would return \`'outer'\`. It does not  -  always remember: scope is where you **write** the function.`,
     },
     {
       id: 'js-es2016-es2017',
       title: 'ES2016 (ES7) & ES2017 (ES8): New Features',
-      content: `## ES2016 (ES7) — Two Key Additions
+      content: `## ES2016 (ES7)  -  Two Key Additions
 
 ### Array.prototype.includes()
 
@@ -2524,11 +2524,11 @@ let x = 2;
 x **= 3;      // x = 8  (assignment form)
 \`\`\`
 
-## ES2017 (ES8) — Major Features
+## ES2017 (ES8)  -  Major Features
 
 ### async/await
 
-The most impactful ES2017 addition — already covered in depth in the async/await lesson.
+The most impactful ES2017 addition  -  already covered in depth in the async/await lesson.
 
 ### Object.entries() and Object.values()
 
@@ -2568,7 +2568,7 @@ rows.forEach(([name, score]) => {
 
 ### Object.getOwnPropertyDescriptors()
 
-Returns descriptors for ALL own properties — useful for exact object cloning including getters/setters:
+Returns descriptors for ALL own properties  -  useful for exact object cloning including getters/setters:
 
 \`\`\`javascript
 const source = {
@@ -2609,7 +2609,7 @@ For true multi-threaded JavaScript using \`Worker\`s:
 const sab = new SharedArrayBuffer(4);  // 4 bytes shared with workers
 const arr = new Int32Array(sab);
 
-// In worker thread — atomic operations prevent race conditions:
+// In worker thread  -  atomic operations prevent race conditions:
 Atomics.add(arr, 0, 1);     // atomically increment
 Atomics.load(arr, 0);       // atomically read
 Atomics.store(arr, 0, 42);  // atomically write
@@ -2624,7 +2624,7 @@ Atomics.notify(arr, 0, 1);  // wake 1 waiting thread
 
 ### Promise.prototype.finally()
 
-Runs a callback when the promise settles (either way) — without changing the value:
+Runs a callback when the promise settles (either way)  -  without changing the value:
 
 \`\`\`javascript
 fetch('/api/data')
@@ -2636,7 +2636,7 @@ fetch('/api/data')
 // (unless it throws, which replaces the current rejection)
 Promise.resolve(42)
   .finally(() => console.log('done'))  // logs 'done'
-  .then(v => console.log(v));          // logs 42 — value passes through
+  .then(v => console.log(v));          // logs 42  -  value passes through
 \`\`\`
 
 ### Object Rest and Spread
@@ -2660,7 +2660,7 @@ function omit({ password, ...safeUser }) {
 
 ### Async Iteration (for await...of)
 
-Iterate over async data sources — Promises, async generators, streams:
+Iterate over async data sources  -  Promises, async generators, streams:
 
 \`\`\`javascript
 async function processStream(readableStream) {
@@ -2692,15 +2692,15 @@ groups.month  // '01'
 ### RegExp Lookbehind Assertions
 
 \`\`\`javascript
-/(?<=\\$)\\d+/.exec('$100');   // '100' — only after $
-/(?<!\\$)\\d+/.exec('€100');   // '100' — only NOT after $
+/(?<=\\$)\\d+/.exec('$100');   // '100'  -  only after $
+/(?<!\\$)\\d+/.exec('€100');   // '100'  -  only NOT after $
 \`\`\`
 
 ### RegExp dotAll flag (s)
 
 \`\`\`javascript
-/hello.world/.test('hello\\nworld');   // false — . doesn't match newline
-/hello.world/s.test('hello\\nworld');  // true — s flag makes . match anything
+/hello.world/.test('hello\\nworld');   // false  -  . doesn't match newline
+/hello.world/s.test('hello\\nworld');  // true  -  s flag makes . match anything
 \`\`\`
 
 ---
@@ -2771,7 +2771,7 @@ sym.description;  // 'my description'  ← ES2019
 
 ### Array.prototype.sort Stability Guaranteed
 
-Before ES2019, \`.sort()\` was not guaranteed to be stable (equal elements might reorder). ES2019 requires a **stable sort** — equal elements preserve their original relative order. All modern engines already did this; now it is spec-required.`,
+Before ES2019, \`.sort()\` was not guaranteed to be stable (equal elements might reorder). ES2019 requires a **stable sort**  -  equal elements preserve their original relative order. All modern engines already did this; now it is spec-required.`,
     },
     {
       id: 'js-es2020-es2021',
@@ -2799,14 +2799,14 @@ Use cases: cryptography, financial calculations, database IDs (PostgreSQL BIGINT
 
 ### Optional Chaining (?.)
 
-Safe property access — already covered but note it also works for:
+Safe property access  -  already covered but note it also works for:
 
 \`\`\`javascript
 obj?.prop               // property
 obj?.[expr]             // computed property
 arr?.[0]                // array index
-fn?.()                  // function call — if fn is null/undefined, returns undefined
-obj?.method?.()         // method call — safe even if method is absent
+fn?.()                  // function call  -  if fn is null/undefined, returns undefined
+obj?.method?.()         // method call  -  safe even if method is absent
 \`\`\`
 
 ### Nullish Coalescing (??)
@@ -2814,9 +2814,9 @@ obj?.method?.()         // method call — safe even if method is absent
 Already covered; key distinction from \`||\`:
 
 \`\`\`javascript
-0 || 'default'     // 'default'  — treats 0 as falsy
-0 ?? 'default'     // 0          — only null/undefined trigger fallback
-'' ?? 'fallback'   // ''         — empty string is not null/undefined
+0 || 'default'     // 'default'   -  treats 0 as falsy
+0 ?? 'default'     // 0           -  only null/undefined trigger fallback
+'' ?? 'fallback'   // ''          -  empty string is not null/undefined
 false ?? true      // false
 \`\`\`
 
@@ -2833,7 +2833,7 @@ results.forEach(result => {
   if (result.status === 'fulfilled') console.log(result.value);
   else console.error(result.reason);
 });
-// Never rejects — you always get all results
+// Never rejects  -  you always get all results
 \`\`\`
 
 ### globalThis
@@ -2864,7 +2864,7 @@ matches[1][1]  // '2'
 ### Dynamic import() and import.meta
 
 \`\`\`javascript
-// import.meta — module metadata in ESM
+// import.meta  -  module metadata in ESM
 console.log(import.meta.url);  // file URL of current module
 // In Node: file:///path/to/module.js
 \`\`\`
@@ -2876,9 +2876,9 @@ console.log(import.meta.url);  // file URL of current module
 ### String.prototype.replaceAll()
 
 \`\`\`javascript
-'aabbcc'.replace('b', 'x');     // 'axbcc'  — only first match
-'aabbcc'.replaceAll('b', 'x');  // 'aaxxcc' — all matches
-'aabbcc'.replace(/b/g, 'x');    // 'aaxxcc' — same with regex /g
+'aabbcc'.replace('b', 'x');     // 'axbcc'   -  only first match
+'aabbcc'.replaceAll('b', 'x');  // 'aaxxcc'  -  all matches
+'aabbcc'.replace(/b/g, 'x');    // 'aaxxcc'  -  same with regex /g
 
 // With a function
 'hello world'.replaceAll(/\\w+/g, s => s.toUpperCase());  // 'HELLO WORLD'
@@ -2925,13 +2925,13 @@ const million = 1_000_000;
 const hex = 0xFF_FF_FF;
 const binary = 0b1111_0000;
 const float = 3.141_592_653;
-// Purely visual — ignored by the engine
+// Purely visual  -  ignored by the engine
 \`\`\`
 
 ### WeakRef and FinalizationRegistry
 
 \`\`\`javascript
-// WeakRef — weak reference to an object (doesn't prevent GC)
+// WeakRef  -  weak reference to an object (doesn't prevent GC)
 let obj = { data: 'heavy' };
 const ref = new WeakRef(obj);
 
@@ -2939,7 +2939,7 @@ const ref = new WeakRef(obj);
 const val = ref.deref();  // undefined if GC'd, otherwise the object
 if (val) use(val);
 
-// FinalizationRegistry — callback when an object is GC'd
+// FinalizationRegistry  -  callback when an object is GC'd
 const registry = new FinalizationRegistry((heldValue) => {
   console.log(\`\${heldValue} was collected\`);
 });
@@ -2954,7 +2954,7 @@ registry.register(obj, 'my object');
 
 ### Array.prototype.at()
 
-Negative indexing — cleaner than \`arr[arr.length - 1]\`:
+Negative indexing  -  cleaner than \`arr[arr.length - 1]\`:
 
 \`\`\`javascript
 const arr = [1, 2, 3, 4, 5];
@@ -2971,20 +2971,20 @@ Safer replacement for \`Object.prototype.hasOwnProperty.call()\`:
 
 \`\`\`javascript
 const obj = { a: 1 };
-obj.hasOwnProperty('a');        // true — but can be overridden if obj.hasOwnProperty = ...
-Object.hasOwn(obj, 'a');        // true — safe, always uses the built-in
+obj.hasOwnProperty('a');        // true  -  but can be overridden if obj.hasOwnProperty = ...
+Object.hasOwn(obj, 'a');        // true  -  safe, always uses the built-in
 
 // Edge case where hasOwnProperty breaks:
 const bare = Object.create(null);  // no prototype, no hasOwnProperty method
 bare.x = 1;
 // bare.hasOwnProperty('x')  // TypeError!
-Object.hasOwn(bare, 'x');          // true — works correctly
+Object.hasOwn(bare, 'x');          // true  -  works correctly
 \`\`\`
 
 ### Top-Level await (in ES Modules)
 
 \`\`\`javascript
-// config.js (ES module — .mjs or "type":"module" in package.json)
+// config.js (ES module  -  .mjs or "type":"module" in package.json)
 const config = await fetch('/config.json').then(r => r.json());
 export { config };
 
@@ -3031,8 +3031,8 @@ class Config {
 \`\`\`javascript
 const re = /(?<word>\\w+)/d;
 const m = re.exec('hello world');
-m.indices[0]         // [0, 5] — full match start/end
-m.indices.groups.word // [0, 5] — named group start/end
+m.indices[0]         // [0, 5]  -  full match start/end
+m.indices.groups.word // [0, 5]  -  named group start/end
 \`\`\`
 
 ---
@@ -3041,18 +3041,18 @@ m.indices.groups.word // [0, 5] — named group start/end
 
 ### Non-Mutating Array Methods
 
-New methods that return a **new array** instead of mutating — safe for functional/immutable patterns:
+New methods that return a **new array** instead of mutating  -  safe for functional/immutable patterns:
 
 \`\`\`javascript
 const arr = [3, 1, 2];
 
-arr.toSorted();                     // [1, 2, 3] — new array
+arr.toSorted();                     // [1, 2, 3]  -  new array
 arr.toSorted((a, b) => b - a);     // [3, 2, 1]
-arr.toReversed();                   // [2, 1, 3] — new array
-arr.toSpliced(1, 1, 9, 8);        // [3, 9, 8, 2] — new array
-arr.with(0, 99);                   // [99, 1, 2] — replace at index
+arr.toReversed();                   // [2, 1, 3]  -  new array
+arr.toSpliced(1, 1, 9, 8);        // [3, 9, 8, 2]  -  new array
+arr.with(0, 99);                   // [99, 1, 2]  -  replace at index
 
-console.log(arr);  // [3, 1, 2] — still unchanged
+console.log(arr);  // [3, 1, 2]  -  still unchanged
 \`\`\`
 
 ### Array.findLast() and findLastIndex()
@@ -3118,7 +3118,7 @@ a.isDisjointFrom(b);       // false  (share 3,4)
       title: 'Proxy & Reflect: Intercepting Object Operations',
       content: `## What Is a Proxy?
 
-A \`Proxy\` wraps an object and intercepts fundamental operations — property reads, writes, function calls — via **trap** functions defined in a handler object.
+A \`Proxy\` wraps an object and intercepts fundamental operations  -  property reads, writes, function calls  -  via **trap** functions defined in a handler object.
 
 \`\`\`javascript
 const target = { name: 'Alice', age: 30 };
@@ -3146,7 +3146,7 @@ proxy.age = 31;     // logs 'Writing: age = 31'
 | \`set(target, prop, value, receiver)\` | \`proxy.prop = value\` |
 | \`has(target, prop)\` | \`prop in proxy\` |
 | \`deleteProperty(target, prop)\` | \`delete proxy.prop\` |
-| \`apply(target, thisArg, args)\` | \`proxy()\` — target must be a function |
+| \`apply(target, thisArg, args)\` | \`proxy()\`  -  target must be a function |
 | \`construct(target, args)\` | \`new proxy()\` |
 | \`ownKeys(target)\` | \`Object.keys(proxy)\`, \`for...in\` |
 | \`getPrototypeOf(target)\` | \`Object.getPrototypeOf(proxy)\` |
@@ -3217,7 +3217,7 @@ function createSpy() {
 
 ## Reflect API
 
-\`Reflect\` provides the same operations as Proxy traps as standalone functions — the "default behaviour". Always use Reflect inside Proxy traps to correctly forward operations (handles edge cases with \`this\` and \`receiver\`):
+\`Reflect\` provides the same operations as Proxy traps as standalone functions  -  the "default behaviour". Always use Reflect inside Proxy traps to correctly forward operations (handles edge cases with \`this\` and \`receiver\`):
 
 \`\`\`javascript
 Reflect.get(target, prop, receiver)      // obj.prop
@@ -3235,7 +3235,7 @@ Reflect.construct(Cls, args)             // new Cls(...args)
 const { proxy, revoke } = Proxy.revocable(target, handler);
 proxy.name;    // works
 revoke();
-proxy.name;    // TypeError — proxy is revoked
+proxy.name;    // TypeError  -  proxy is revoked
 \`\`\`
 
 Useful for capability-based security: grant access via proxy, revoke it when done.`,
@@ -3248,34 +3248,34 @@ Useful for capability-based security: grant access via proxy, revoke it when don
 Functional programming (FP) treats computation as the evaluation of mathematical functions and avoids changing state and mutable data.
 
 **Key ideas:**
-1. **Pure functions** — same input always gives same output, no side effects
-2. **Immutability** — don't mutate data; return new values
-3. **First-class functions** — functions as values
-4. **Function composition** — build complex behaviour from simple functions
-5. **Declarative style** — describe WHAT, not HOW
+1. **Pure functions**  -  same input always gives same output, no side effects
+2. **Immutability**  -  don't mutate data; return new values
+3. **First-class functions**  -  functions as values
+4. **Function composition**  -  build complex behaviour from simple functions
+5. **Declarative style**  -  describe WHAT, not HOW
 
 ## Pure Functions
 
 \`\`\`javascript
-// PURE — no side effects, deterministic
+// PURE  -  no side effects, deterministic
 function add(a, b) { return a + b; }
 function formatUser(user) { return { ...user, fullName: user.first + ' ' + user.last }; }
 
-// IMPURE — modifies external state
+// IMPURE  -  modifies external state
 let total = 0;
 function addToTotal(n) { total += n; }  // side effect!
 
-// IMPURE — depends on external state
+// IMPURE  -  depends on external state
 function getTime() { return new Date(); }  // different result each call
 \`\`\`
 
 ## Immutability
 
 \`\`\`javascript
-// Mutable — modifies in place
+// Mutable  -  modifies in place
 function addItem(arr, item) { arr.push(item); return arr; }  // bad
 
-// Immutable — returns new array
+// Immutable  -  returns new array
 function addItem(arr, item) { return [...arr, item]; }  // good
 
 // Immutable object update
@@ -3349,7 +3349,7 @@ double(10);  // 20
 
 ## Practical Patterns
 
-**Point-free style** — define functions by composition rather than explicit arguments:
+**Point-free style**  -  define functions by composition rather than explicit arguments:
 
 \`\`\`javascript
 const getActiveNames = pipe(
@@ -3363,14 +3363,14 @@ function getActiveNames(users) {
 }
 \`\`\`
 
-**Transducers** — compose transformations efficiently (avoids multiple array passes):
+**Transducers**  -  compose transformations efficiently (avoids multiple array passes):
 
 \`\`\`javascript
 // Normal: creates intermediate arrays
 data.filter(isValid).map(transform).reduce(combine, []);
 
 // With transducers: single pass, no intermediate allocations
-// (advanced — uses Ramda or custom implementation)
+// (advanced  -  uses Ramda or custom implementation)
 \`\`\`
 
 ## When to Use FP vs OOP
@@ -3379,7 +3379,7 @@ data.filter(isValid).map(transform).reduce(combine, []);
 
 **OOP shines for**: modelling entities with state and behaviour (User, Order, Connection), complex lifecycle management, frameworks and UI components.
 
-Most real JavaScript code combines both — use FP for data pipelines and pure utilities, OOP for stateful entities.`,
+Most real JavaScript code combines both  -  use FP for data pipelines and pure utilities, OOP for stateful entities.`,
     },
     {
       id: 'js-design-patterns',
@@ -3405,7 +3405,7 @@ class Database {
     return Database.#instance ?? new Database(url);
   }
 }
-// With ES modules, the module cache IS the singleton — just export an instance:
+// With ES modules, the module cache IS the singleton  -  just export an instance:
 export const db = new Database(process.env.DB_URL);
 \`\`\`
 
@@ -3557,7 +3557,7 @@ class Sorter {
 
 ### Command
 
-Encapsulate actions as objects — enables undo, queuing, logging:
+Encapsulate actions as objects  -  enables undo, queuing, logging:
 
 \`\`\`javascript
 class CommandHistory {
@@ -3585,8 +3585,8 @@ const addItem = {
       content: `## What Is Recursion?
 
 A function that calls itself. Every recursive solution needs:
-1. **Base case** — condition that stops recursion
-2. **Recursive case** — function calls itself with a smaller/simpler input
+1. **Base case**  -  condition that stops recursion
+2. **Recursive case**  -  function calls itself with a smaller/simpler input
 
 \`\`\`javascript
 function factorial(n) {
@@ -3611,15 +3611,15 @@ sum(100000);  // RangeError: Maximum call stack size exceeded
 
 ## Tail Call Optimization (TCO)
 
-A **tail call** is a function call as the last operation — the current frame can be replaced instead of stacked. ES2015 specified TCO, but only Safari implements it fully. In Node.js, use iteration for deep recursion.
+A **tail call** is a function call as the last operation  -  the current frame can be replaced instead of stacked. ES2015 specified TCO, but only Safari implements it fully. In Node.js, use iteration for deep recursion.
 
 \`\`\`javascript
-// NOT tail-recursive — must keep frame to multiply after recursive call returns
+// NOT tail-recursive  -  must keep frame to multiply after recursive call returns
 function factorial(n) {
   return n <= 1 ? 1 : n * factorial(n - 1);  // * happens after return
 }
 
-// Tail-recursive — accumulator carries state
+// Tail-recursive  -  accumulator carries state
 function factorial(n, acc = 1) {
   return n <= 1 ? acc : factorial(n - 1, n * acc);  // call is the last operation
 }
@@ -3644,7 +3644,7 @@ function memoize(fn) {
 const fib = memoize(function(n) {
   return n <= 1 ? n : fib(n - 1) + fib(n - 2);
 });
-fib(40);  // instant — without memoization: 2^40 calls
+fib(40);  // instant  -  without memoization: 2^40 calls
 \`\`\`
 
 ## Tree Traversal
@@ -3717,10 +3717,10 @@ function dfsIterative(root, visit) {
 new Date()                    // current moment
 new Date('2024-01-15')        // from ISO string (UTC midnight)
 new Date('2024-01-15T10:30:00Z')  // UTC explicit
-new Date(2024, 0, 15)         // year, month (0-indexed!), day — LOCAL time
+new Date(2024, 0, 15)         // year, month (0-indexed!), day  -  LOCAL time
 new Date(1705312200000)       // from Unix timestamp (milliseconds)
 
-Date.now()                    // Unix timestamp ms — no object creation
+Date.now()                    // Unix timestamp ms  -  no object creation
 \`\`\`
 
 **Month is 0-indexed**: January = 0, December = 11. This is a famous footgun.
@@ -3737,7 +3737,7 @@ d.getDay()            // 1  (day of week: 0=Sunday, 6=Saturday)
 d.getHours()          // 10  (local) vs d.getUTCHours()
 d.getMinutes()        // 30
 d.getTime()           // Unix timestamp ms
-d.toISOString()       // '2024-01-15T10:30:00.000Z'  — always UTC
+d.toISOString()       // '2024-01-15T10:30:00.000Z'   -  always UTC
 d.toLocaleDateString('en-GB')  // '15/01/2024'  (locale-aware)
 d.toLocaleDateString('fr-FR')  // '15/01/2024'
 \`\`\`
@@ -3755,7 +3755,7 @@ const diffMs = date2 - date1;    // dates subtract to milliseconds
 const diffDays = diffMs / (1000 * 60 * 60 * 24);
 \`\`\`
 
-For production date handling, use **Temporal** (Stage 3 proposal) or a library like **date-fns** or **Day.js** — native Date has many pitfalls.
+For production date handling, use **Temporal** (Stage 3 proposal) or a library like **date-fns** or **Day.js**  -  native Date has many pitfalls.
 
 ## Intl.DateTimeFormat
 
@@ -3774,16 +3774,16 @@ new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
 JSON.stringify(value)               // compact
 JSON.stringify(value, null, 2)      // pretty-print with 2-space indent
 
-// Replacer function — control what's included
+// Replacer function  -  control what's included
 JSON.stringify(obj, (key, value) => {
   if (key === 'password') return undefined;  // exclude sensitive fields
   return value;
 });
 
-// Replacer array — whitelist keys
+// Replacer array  -  whitelist keys
 JSON.stringify(user, ['name', 'email']);
 
-// toJSON method — custom serialisation
+// toJSON method  -  custom serialisation
 class Money {
   constructor(amount, currency) { this.amount = amount; this.currency = currency; }
   toJSON() { return \`\${this.amount} \${this.currency}\`; }
@@ -3796,8 +3796,8 @@ JSON.stringify(new Money(100, 'EUR'));  // '"100 EUR"'
 - Functions → omitted
 - Symbols → omitted
 - \`NaN\` and \`Infinity\` → \`null\`
-- \`Date\` objects → ISO string (loses the Date type — parsed as string)
-- \`Map\`, \`Set\`, \`RegExp\` → \`{}\` (empty object — data lost!)
+- \`Date\` objects → ISO string (loses the Date type  -  parsed as string)
+- \`Map\`, \`Set\`, \`RegExp\` → \`{}\` (empty object  -  data lost!)
 - Circular references → throws \`TypeError\`
 
 ## JSON.parse
@@ -3805,7 +3805,7 @@ JSON.stringify(new Money(100, 'EUR'));  // '"100 EUR"'
 \`\`\`javascript
 JSON.parse('{"name":"Alice","age":30}');  // { name: 'Alice', age: 30 }
 
-// Reviver — transform values while parsing
+// Reviver  -  transform values while parsing
 const data = JSON.parse(text, (key, value) => {
   if (key === 'date') return new Date(value);  // restore Date objects
   return value;
@@ -3837,38 +3837,38 @@ function safeStringify(obj) {
       title: 'Memory Management, Garbage Collection & Leak Prevention',
       content: `## Stack vs Heap
 
-**Stack** — fixed-size, fast, automatically managed. Holds:
+**Stack**  -  fixed-size, fast, automatically managed. Holds:
 - Primitive values (number, boolean, string, etc.)
 - References (pointers) to objects
 - Function call frames (local variables, return address)
 
-**Heap** — dynamic, large, managed by the GC. Holds:
+**Heap**  -  dynamic, large, managed by the GC. Holds:
 - All objects, arrays, functions, closures
 
 \`\`\`javascript
 let x = 42;           // 42 is on the stack
 let obj = { a: 1 };   // reference (pointer) on stack, { a: 1 } on heap
-let copy = obj;       // copy of the reference — both point to same object on heap
+let copy = obj;       // copy of the reference  -  both point to same object on heap
 \`\`\`
 
 ## Garbage Collection
 
-JavaScript uses **automatic garbage collection** — you don't \`free()\` memory manually. The GC reclaims memory for objects that are no longer reachable.
+JavaScript uses **automatic garbage collection**  -  you don't \`free()\` memory manually. The GC reclaims memory for objects that are no longer reachable.
 
 ### Mark-and-Sweep (V8's primary algorithm)
 
-1. **Mark** — starting from "roots" (global variables, call stack, registers), recursively mark every object that can be reached
-2. **Sweep** — collect all unmarked objects (unreachable = garbage)
+1. **Mark**  -  starting from "roots" (global variables, call stack, registers), recursively mark every object that can be reached
+2. **Sweep**  -  collect all unmarked objects (unreachable = garbage)
 
 \`\`\`javascript
 let user = { name: 'Alice' };   // object on heap, reachable via 'user'
-user = null;                     // reference dropped — object now unreachable
+user = null;                     // reference dropped  -  object now unreachable
 // GC will collect { name: 'Alice' } on next cycle
 \`\`\`
 
 ### Generational GC
 
-V8 divides the heap into **young generation** (most objects — short-lived) and **old generation** (survivors). Young-gen GC runs frequently and is fast; old-gen is slower but less frequent. Most objects die young (allocated, used briefly, collected).
+V8 divides the heap into **young generation** (most objects  -  short-lived) and **old generation** (survivors). Young-gen GC runs frequently and is fast; old-gen is slower but less frequent. Most objects die young (allocated, used briefly, collected).
 
 ## Common Memory Leaks
 
@@ -3876,7 +3876,7 @@ V8 divides the heap into **young generation** (most objects — short-lived) and
 
 \`\`\`javascript
 function leaked() {
-  leakedVar = 'oops';  // no let/const/var — becomes global!
+  leakedVar = 'oops';  // no let/const/var  -  becomes global!
 }
 \`\`\`
 
@@ -3968,7 +3968,7 @@ Use Node.js \`--inspect\` + Chrome DevTools heap snapshots to find what's retain
       title: 'Numbers, Math & Floating-Point Precision',
       content: `## The Number Type
 
-JavaScript has a single \`number\` type: a 64-bit IEEE 754 double-precision float. There is no separate integer type — every number is a float under the hood.
+JavaScript has a single \`number\` type: a 64-bit IEEE 754 double-precision float. There is no separate integer type  -  every number is a float under the hood.
 
 \`\`\`javascript
 typeof 42        // 'number'
@@ -3987,9 +3987,9 @@ Because numbers are binary floats, decimal fractions cannot always be represente
 0.3 - 0.2            // 0.09999999999999998
 \`\`\`
 
-This is **not a JavaScript bug** — it is how IEEE 754 works in every language (Java, Python, C all have it). The number 0.1 has no exact binary representation, just as 1/3 has no exact decimal representation.
+This is **not a JavaScript bug**  -  it is how IEEE 754 works in every language (Java, Python, C all have it). The number 0.1 has no exact binary representation, just as 1/3 has no exact decimal representation.
 
-**Comparing floats safely** — use an epsilon tolerance:
+**Comparing floats safely**  -  use an epsilon tolerance:
 
 \`\`\`javascript
 function almostEqual(a, b, epsilon = Number.EPSILON) {
@@ -4021,12 +4021,12 @@ new Decimal(0.1).plus(0.2).toString();  // '0.3' exactly
 \`\`\`javascript
 Infinity            // result of 1 / 0
 -Infinity           // result of -1 / 0
-NaN                 // 'Not a Number' — result of invalid math (0/0, parseInt('x'))
+NaN                 // 'Not a Number'  -  result of invalid math (0/0, parseInt('x'))
 
 Number.isNaN(NaN)        // true  (use this, not global isNaN)
 Number.isFinite(42)      // true
 Number.isInteger(42.0)   // true
-Number.isSafeInteger(2 ** 53)  // false — beyond safe integer range
+Number.isSafeInteger(2 ** 53)  // false  -  beyond safe integer range
 \`\`\`
 
 \`NaN\` is the only value not equal to itself. Always check with \`Number.isNaN()\`, not \`=== NaN\` (which is always false). The global \`isNaN()\` coerces its argument (\`isNaN('foo')\` is \`true\`), so prefer \`Number.isNaN()\`.
@@ -4048,20 +4048,20 @@ Number.EPSILON            // ~2.2e-16 (smallest difference between 1 and next fl
 
 \`\`\`javascript
 Number('42')        // 42
-Number('42px')      // NaN  — strict
-Number('')          // 0    — empty string is 0 (gotcha!)
-Number('  42  ')    // 42   — trims whitespace
+Number('42px')      // NaN   -  strict
+Number('')          // 0     -  empty string is 0 (gotcha!)
+Number('  42  ')    // 42    -  trims whitespace
 Number(null)        // 0
 Number(undefined)   // NaN
 Number(true)        // 1
 
-parseInt('42px')    // 42   — lenient, stops at non-digit
-parseInt('0xFF')    // 255  — auto-detects hex
-parseInt('11', 2)   // 3    — binary radix (ALWAYS specify radix!)
+parseInt('42px')    // 42    -  lenient, stops at non-digit
+parseInt('0xFF')    // 255   -  auto-detects hex
+parseInt('11', 2)   // 3     -  binary radix (ALWAYS specify radix!)
 parseFloat('3.14m') // 3.14
 
-(255).toString(16)  // 'ff'   — to hex
-(255).toString(2)   // '11111111' — to binary
+(255).toString(16)  // 'ff'    -  to hex
+(255).toString(2)   // '11111111'  -  to binary
 \`\`\`
 
 ## Number Formatting
@@ -4071,7 +4071,7 @@ parseFloat('3.14m') // 3.14
 (1234.5).toPrecision(2)     // '1.2e+3'
 (255).toString(16)          // 'ff'
 
-// Intl.NumberFormat — locale-aware, currency, percent
+// Intl.NumberFormat  -  locale-aware, currency, percent
 new Intl.NumberFormat('de-DE', {
   style: 'currency', currency: 'EUR',
 }).format(1234.56);  // '1.234,56 €'
@@ -4085,17 +4085,17 @@ new Intl.NumberFormat('en-US').format(1234567);  // '1,234,567'
 Math.round(4.5)     // 5    (round half up)
 Math.floor(4.9)     // 4    (round down)
 Math.ceil(4.1)      // 5    (round up)
-Math.trunc(4.9)     // 4    (drop decimal — no rounding)
+Math.trunc(4.9)     // 4    (drop decimal  -  no rounding)
 Math.trunc(-4.9)    // -4   (vs Math.floor(-4.9) = -5)
 Math.abs(-5)        // 5
 Math.sign(-3)       // -1   (-1, 0, or 1)
 Math.max(1, 2, 3)   // 3
 Math.min(...arr)    // smallest in array
 Math.hypot(3, 4)    // 5    (sqrt of sum of squares)
-Math.random()       // [0, 1)  — NOT cryptographically secure!
+Math.random()       // [0, 1)   -  NOT cryptographically secure!
 \`\`\`
 
-For secure randomness (tokens, IDs), use \`crypto.randomInt()\` / \`crypto.randomUUID()\` (Node) or \`crypto.getRandomValues()\` (browser) — never \`Math.random()\`.`,
+For secure randomness (tokens, IDs), use \`crypto.randomInt()\` / \`crypto.randomUUID()\` (Node) or \`crypto.getRandomValues()\` (browser)  -  never \`Math.random()\`.`,
     },
     {
       id: 'js-type-checking',
@@ -4118,7 +4118,7 @@ typeof {}           // 'object'
 typeof new Date()   // 'object'    ← can't distinguish dates
 \`\`\`
 
-\`typeof\` is safe on undeclared variables (returns \`'undefined'\` instead of throwing) — useful for feature detection.
+\`typeof\` is safe on undeclared variables (returns \`'undefined'\` instead of throwing)  -  useful for feature detection.
 
 ## The Reliable Type Check: Object.prototype.toString
 
@@ -4175,11 +4175,11 @@ arrayFromIframe instanceof Array  // false! (different Array constructor)
 Array.isArray(arrayFromIframe)    // true  (works across realms)
 \`\`\`
 
-This is why \`Array.isArray()\` exists — it works across realms.
+This is why \`Array.isArray()\` exists  -  it works across realms.
 
 ## Truthy / Falsy Conversion
 
-The 8 falsy values: \`false\`, \`0\`, \`-0\`, \`0n\`, \`''\`, \`null\`, \`undefined\`, \`NaN\`. Everything else is truthy — including \`[]\`, \`{}\`, \`'0'\`, \`'false'\`, and all functions.
+The 8 falsy values: \`false\`, \`0\`, \`-0\`, \`0n\`, \`''\`, \`null\`, \`undefined\`, \`NaN\`. Everything else is truthy  -  including \`[]\`, \`{}\`, \`'0'\`, \`'false'\`, and all functions.
 
 \`\`\`javascript
 Boolean([])         // true   ← empty array is truthy!
@@ -4196,7 +4196,7 @@ Boolean(' ')        // true   ← whitespace string
 \`\`\`javascript
 1 == '1'            // true   (string → number)
 0 == false          // true   (boolean → number)
-null == undefined   // true   (special case — only each other)
+null == undefined   // true   (special case  -  only each other)
 null == 0           // false  (null only equals undefined/null)
 '' == 0             // true   (empty string → 0)
 NaN == NaN          // false  (NaN never equals anything)
@@ -4207,7 +4207,7 @@ NaN == NaN          // false  (NaN never equals anything)
 
 **Rule: always use \`===\`** except one idiom: \`value == null\` to check for both \`null\` and \`undefined\` in one expression.
 
-## Object.is — SameValue Equality
+## Object.is  -  SameValue Equality
 
 \`\`\`javascript
 Object.is(NaN, NaN)      // true   ← unlike === !
@@ -4233,9 +4233,9 @@ Bitwise operators convert numbers to 32-bit signed integers, operate bit by bit,
 ## The Operators
 
 \`\`\`javascript
-5 & 3    // 1   AND  (101 & 011 = 001)  — bit set in BOTH
-5 | 3    // 7   OR   (101 | 011 = 111)  — bit set in EITHER
-5 ^ 3    // 6   XOR  (101 ^ 011 = 110)  — bit set in ONE but not both
+5 & 3    // 1   AND  (101 & 011 = 001)   -  bit set in BOTH
+5 | 3    // 7   OR   (101 | 011 = 111)   -  bit set in EITHER
+5 ^ 3    // 6   XOR  (101 ^ 011 = 110)   -  bit set in ONE but not both
 ~5       // -6  NOT  (inverts all bits: ~n === -(n+1))
 5 << 1   // 10  left shift  (multiply by 2^n)
 5 >> 1   // 2   right shift (divide by 2^n, sign-preserving)
@@ -4303,14 +4303,14 @@ const b = rgb & 0xFF;          // 51
 
 ## Caveats
 
-Bitwise operators only work on the lower 32 bits — numbers above 2^31 behave unexpectedly. For larger bit sets, use \`BigInt\` (which supports bitwise operators with arbitrary precision):
+Bitwise operators only work on the lower 32 bits  -  numbers above 2^31 behave unexpectedly. For larger bit sets, use \`BigInt\` (which supports bitwise operators with arbitrary precision):
 
 \`\`\`javascript
 1n << 40n        // works with BigInt
-1 << 40          // 256 — WRONG, wraps around 32 bits
+1 << 40          // 256  -  WRONG, wraps around 32 bits
 \`\`\`
 
-In modern application code, bit flags are often replaced by \`Set\` or boolean object fields for readability — but bitwise remains essential for protocols, compression, hashing, and interview puzzles.`,
+In modern application code, bit flags are often replaced by \`Set\` or boolean object fields for readability  -  but bitwise remains essential for protocols, compression, hashing, and interview puzzles.`,
     },
     {
       id: 'js-strict-mode',
@@ -4320,13 +4320,13 @@ In modern application code, bit flags are often replaced by \`Set\` or boolean o
 \`'use strict'\` opts into a restricted variant of JavaScript that catches common mistakes and disables error-prone features.
 
 \`\`\`javascript
-'use strict';           // at top of file — whole script/module
+'use strict';           // at top of file  -  whole script/module
 function fn() {
   'use strict';         // or per-function
 }
 \`\`\`
 
-**ES modules and class bodies are always strict** — no directive needed. Most modern code is strict by default.
+**ES modules and class bodies are always strict**  -  no directive needed. Most modern code is strict by default.
 
 ## What Strict Mode Changes
 
@@ -4335,7 +4335,7 @@ function fn() {
 \`\`\`javascript
 'use strict';
 function leak() {
-  x = 10;   // ReferenceError — without strict, this creates a global
+  x = 10;   // ReferenceError  -  without strict, this creates a global
 }
 \`\`\`
 
@@ -4379,7 +4379,7 @@ This prevents accidental global object mutation through unbound method calls.
 ### typeof null
 
 \`\`\`javascript
-typeof null === 'object'   // true — historical bug. Check value === null.
+typeof null === 'object'   // true  -  historical bug. Check value === null.
 \`\`\`
 
 ### Array Holes and Sparse Arrays
@@ -4388,7 +4388,7 @@ typeof null === 'object'   // true — historical bug. Check value === null.
 const arr = [1, , 3];      // hole at index 1
 arr.length                  // 3
 arr[1]                      // undefined
-arr.map(x => x * 2)         // [2, <hole>, 6] — skips holes!
+arr.map(x => x * 2)         // [2, <hole>, 6]  -  skips holes!
 \`\`\`
 
 ### NaN Is Not Equal to Itself
@@ -4404,7 +4404,7 @@ NaN === NaN          // false
 \`\`\`javascript
 const arr = [1, 2, 3, 4];
 arr.forEach((x, i) => { if (x === 2) arr.splice(i, 1); });
-// Skips elements — never mutate an array during forEach
+// Skips elements  -  never mutate an array during forEach
 \`\`\`
 
 ### Reference vs Value
@@ -4413,7 +4413,7 @@ arr.forEach((x, i) => { if (x === 2) arr.splice(i, 1); });
 const a = { x: 1 };
 const b = a;          // same reference
 b.x = 2;
-a.x;                  // 2 — both point to the same object
+a.x;                  // 2  -  both point to the same object
 
 function reset(obj) { obj = {}; }  // reassigns local param, no effect on caller
 function clear(obj) { obj.x = 0; } // mutates the shared object
@@ -4426,7 +4426,7 @@ function append(item, arr = []) {  // fresh array each call (good)
   arr.push(item);
   return arr;
 }
-// vs the Python-style gotcha — JS evaluates defaults per call, so this is safe
+// vs the Python-style gotcha  -  JS evaluates defaults per call, so this is safe
 \`\`\`
 
 ### Comparison Coercion
@@ -4454,7 +4454,7 @@ const intId = setInterval(() => poll(), 5000);
 clearInterval(intId);  // stop repeating
 \`\`\`
 
-**setTimeout(fn, 0) is not really 0ms** — it queues a macrotask that runs after the current synchronous code AND all microtasks. The minimum delay is also clamped (~4ms for nested timers in browsers).
+**setTimeout(fn, 0) is not really 0ms**  -  it queues a macrotask that runs after the current synchronous code AND all microtasks. The minimum delay is also clamped (~4ms for nested timers in browsers).
 
 \`\`\`javascript
 console.log('1');
@@ -4466,21 +4466,21 @@ console.log('1.5');
 
 ## queueMicrotask
 
-Schedule a microtask directly — runs after current code, before any timer:
+Schedule a microtask directly  -  runs after current code, before any timer:
 
 \`\`\`javascript
 queueMicrotask(() => console.log('runs before any setTimeout'));
 \`\`\`
 
-Use it when you need to defer work to "after this synchronous block" but before the next macrotask — e.g. batching DOM updates or state notifications.
+Use it when you need to defer work to "after this synchronous block" but before the next macrotask  -  e.g. batching DOM updates or state notifications.
 
 ## setImmediate and process.nextTick (Node.js)
 
 \`\`\`javascript
-// process.nextTick — runs BEFORE the microtask queue, after current operation
+// process.nextTick  -  runs BEFORE the microtask queue, after current operation
 process.nextTick(() => console.log('nextTick'));
 
-// setImmediate — runs in the 'check' phase, after I/O callbacks
+// setImmediate  -  runs in the 'check' phase, after I/O callbacks
 setImmediate(() => console.log('immediate'));
 
 // Ordering:
@@ -4574,19 +4574,19 @@ function abortableTask(signal) {
 }
 \`\`\`
 
-AbortController is the standard cancellation primitive across \`fetch\`, Node streams, \`events.on\`, and database drivers — learn it well for backend work.`,
+AbortController is the standard cancellation primitive across \`fetch\`, Node streams, \`events.on\`, and database drivers  -  learn it well for backend work.`,
     },
     {
       id: 'js-concurrency-control',
       title: 'Concurrency Control: Promise Pools, Queues & Rate Limiting',
       content: `## Why Concurrency Control Matters
 
-\`Promise.all\` runs everything at once. With 10,000 items, that means 10,000 simultaneous database connections or HTTP requests — overwhelming the server, hitting rate limits, or exhausting memory. Backend engineers need to **limit concurrency**.
+\`Promise.all\` runs everything at once. With 10,000 items, that means 10,000 simultaneous database connections or HTTP requests  -  overwhelming the server, hitting rate limits, or exhausting memory. Backend engineers need to **limit concurrency**.
 
 ## Sequential Processing
 
 \`\`\`javascript
-// One at a time — slow but safe
+// One at a time  -  slow but safe
 async function sequential(items, fn) {
   const results = [];
   for (const item of items) {
@@ -4616,7 +4616,7 @@ await inBatches(users, 10, sendEmail);  // 10 emails at a time
 
 ## Concurrency Pool (Sliding Window)
 
-A more efficient approach — always keep N tasks in flight, starting a new one as soon as one finishes:
+A more efficient approach  -  always keep N tasks in flight, starting a new one as soon as one finishes:
 
 \`\`\`javascript
 async function pool(items, concurrency, fn) {
@@ -4733,13 +4733,13 @@ await withTimeout(slowQuery(), 5000);  // rejects if query takes > 5s
 
 ## Key Takeaways
 
-- **Promise.all** — unbounded concurrency; only safe for small, known sets
-- **Batching** — simple, but the whole batch waits for its slowest member
-- **Pool / sliding window** — best throughput with bounded concurrency
-- **Rate limiter** — respect external API quotas
+- **Promise.all**  -  unbounded concurrency; only safe for small, known sets
+- **Batching**  -  simple, but the whole batch waits for its slowest member
+- **Pool / sliding window**  -  best throughput with bounded concurrency
+- **Rate limiter**  -  respect external API quotas
 - Always add **timeouts** to external calls so one hung request cannot stall the system
 
-These patterns appear constantly in backend interviews — "how would you process a million records without overwhelming the database?" The answer is bounded concurrency.`,
+These patterns appear constantly in backend interviews  -  "how would you process a million records without overwhelming the database?" The answer is bounded concurrency.`,
     },
   ],
   questions: [
@@ -4758,7 +4758,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 2,
       explanation:
-        '`const` prevents rebinding the variable — `arr = ...` throws a TypeError. But the array itself is still mutable, so push, index assignment, and clearing via length all work fine.',
+        '`const` prevents rebinding the variable  -  `arr = ...` throws a TypeError. But the array itself is still mutable, so push, index assignment, and clearing via length all work fine.',
       interviewTip: 'const is about the binding, not the value. Use Object.freeze() for true immutability.',
     },
     {
@@ -4770,7 +4770,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['null', 'undefined', 'object', 'boolean'],
       correctIndex: 2,
       explanation:
-        '`typeof null` returns "object" — a historical bug from JavaScript\'s first implementation that cannot be fixed without breaking existing code. Check for null explicitly with `=== null`.',
+        '`typeof null` returns "object"  -  a historical bug from JavaScript\'s first implementation that cannot be fixed without breaking existing code. Check for null explicitly with `=== null`.',
     },
     {
       id: 'js-q-coercion',
@@ -4781,7 +4781,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['true', 'false', 'TypeError', 'undefined'],
       correctIndex: 0,
       explanation:
-        'Both sides coerce to 0: `[]` → `""` → `0`, and `false` → `0`. So `0 == 0` is `true`. This is exactly why `===` should always be preferred — it does no coercion.',
+        'Both sides coerce to 0: `[]` → `""` → `0`, and `false` → `0`. So `0 == 0` is `true`. This is exactly why `===` should always be preferred  -  it does no coercion.',
       interviewTip: 'Loose equality coercion chains are notoriously confusing. Always use ===.',
     },
     {
@@ -4866,7 +4866,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['"default"', 'undefined', 'null', '"b"'],
       correctIndex: 0,
       explanation:
-        '`undefined` triggers the default parameter — passing `undefined` is equivalent to not passing the argument at all. `null`, `0`, `""`, and `false` do NOT trigger defaults; only `undefined` does.',
+        '`undefined` triggers the default parameter  -  passing `undefined` is equivalent to not passing the argument at all. `null`, `0`, `""`, and `false` do NOT trigger defaults; only `undefined` does.',
     },
     // Closures
     {
@@ -4932,14 +4932,14 @@ These patterns appear constantly in backend interviews — "how would you proces
       difficulty: 'foundation',
       question: 'Can you call a function declaration before its source line?',
       options: [
-        'No — it throws ReferenceError',
-        'Yes — function declarations are fully hoisted',
+        'No  -  it throws ReferenceError',
+        'Yes  -  function declarations are fully hoisted',
         'Only if declared with const',
         'Only in strict mode',
       ],
       correctIndex: 1,
       explanation:
-        'Function declarations are hoisted entirely — both the name and body. You can call them anywhere in the same scope. Function expressions are NOT: the variable is hoisted as undefined, so calling it early throws a TypeError.',
+        'Function declarations are hoisted entirely  -  both the name and body. You can call them anywhere in the same scope. Function expressions are NOT: the variable is hoisted as undefined, so calling it early throws a TypeError.',
     },
     // this
     {
@@ -5000,7 +5000,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        '`instanceof` walks the prototype chain checking if `Constructor.prototype` appears anywhere in it. This is why `dog instanceof Animal` is true even though `dog` was created with `new Dog` — Animal.prototype is in dog\'s chain.',
+        '`instanceof` walks the prototype chain checking if `Constructor.prototype` appears anywhere in it. This is why `dog instanceof Animal` is true even though `dog` was created with `new Dog`  -  Animal.prototype is in dog\'s chain.',
     },
     // Classes
     {
@@ -5017,7 +5017,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        'Class syntax is syntactic sugar over prototypes. Methods go on `ClassName.prototype`, so they are shared — only one copy in memory regardless of how many instances exist. Properties assigned in the constructor are own properties on each instance.',
+        'Class syntax is syntactic sugar over prototypes. Methods go on `ClassName.prototype`, so they are shared  -  only one copy in memory regardless of how many instances exist. Properties assigned in the constructor are own properties on each instance.',
     },
     {
       id: 'js-q-private-fields',
@@ -5033,7 +5033,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 2,
       explanation:
-        'Private fields with `#` are enforced at the syntax level. Accessing `instance.#field` outside the class body is a SyntaxError — caught before the code even runs. This is stronger than the old convention of `_private`.',
+        'Private fields with `#` are enforced at the syntax level. Accessing `instance.#field` outside the class body is a SyntaxError  -  caught before the code even runs. This is stronger than the old convention of `_private`.',
     },
     // Error handling
     {
@@ -5045,12 +5045,12 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: [
         'Only when no error is thrown',
         'Only when an error is caught',
-        'Always — whether the try block succeeds, throws, or returns',
+        'Always  -  whether the try block succeeds, throws, or returns',
         'Only if explicitly called',
       ],
       correctIndex: 2,
       explanation:
-        '`finally` always executes after the `try` and optional `catch` — even if the `try` block returns, or the `catch` block throws. It is the right place for cleanup like closing connections or releasing locks.',
+        '`finally` always executes after the `try` and optional `catch`  -  even if the `try` block returns, or the `catch` block throws. It is the right place for cleanup like closing connections or releasing locks.',
     },
     {
       id: 'js-q-rethrow',
@@ -5095,12 +5095,12 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: [
         'They run interleaved with microtasks',
         'They are cancelled',
-        'They starve — the microtask queue never empties so macrotasks never run',
+        'They starve  -  the microtask queue never empties so macrotasks never run',
         'They run in a separate thread',
       ],
       correctIndex: 2,
       explanation:
-        'The event loop drains the entire microtask queue before each macrotask. If microtasks perpetually enqueue more microtasks, the queue never empties and macrotasks (timers, I/O callbacks) are deferred indefinitely — a real production bug.',
+        'The event loop drains the entire microtask queue before each macrotask. If microtasks perpetually enqueue more microtasks, the queue never empties and macrotasks (timers, I/O callbacks) are deferred indefinitely  -  a real production bug.',
     },
     // Promises
     {
@@ -5128,7 +5128,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       question: 'Once a Promise is fulfilled, can it later become rejected?',
       options: [
         'Yes, if .catch() is called on it',
-        'No — Promise state transitions are one-way: pending → fulfilled or pending → rejected',
+        'No  -  Promise state transitions are one-way: pending → fulfilled or pending → rejected',
         'Yes, after a timeout',
         'Only if created with new Promise()',
       ],
@@ -5155,8 +5155,8 @@ These patterns appear constantly in backend interviews — "how would you proces
       difficulty: 'core',
       question: 'You write `const a = await fetchA(); const b = await fetchB();`. How do these execute?',
       options: [
-        'In parallel — both fetches run at the same time',
-        'Sequentially — fetchB starts only after fetchA completes',
+        'In parallel  -  both fetches run at the same time',
+        'Sequentially  -  fetchB starts only after fetchA completes',
         'In a worker thread',
         'fetchB is skipped if fetchA throws',
       ],
@@ -5213,7 +5213,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['[1, 2, 9, 10]', '[10, 9, 2, 1]', '[1, 10, 2, 9]', '[2, 1, 9, 10]'],
       correctIndex: 2,
       explanation:
-        'The default `sort()` converts elements to strings and compares lexicographically — so "10" comes before "2". For numeric sort, provide a comparator: `.sort((a, b) => a - b)` for ascending.',
+        'The default `sort()` converts elements to strings and compares lexicographically  -  so "10" comes before "2". For numeric sort, provide a comparator: `.sort((a, b) => a - b)` for ascending.',
     },
     {
       id: 'js-q-map-filter',
@@ -5234,14 +5234,14 @@ These patterns appear constantly in backend interviews — "how would you proces
       difficulty: 'core',
       question: '`Object.freeze(obj)` is called. A nested object `obj.nested.value` is then modified. What happens?',
       options: [
-        'TypeError — freeze prevents all modifications',
-        'The nested modification succeeds — freeze is shallow',
+        'TypeError  -  freeze prevents all modifications',
+        'The nested modification succeeds  -  freeze is shallow',
         'ReferenceError',
         'The modification is silently ignored at the top level only',
       ],
       correctIndex: 1,
       explanation:
-        '`Object.freeze` is **shallow** — it freezes the top-level properties of the object but not nested objects. `obj.nested` is a reference, and while you cannot reassign that reference, the object it points to is not frozen.',
+        '`Object.freeze` is **shallow**  -  it freezes the top-level properties of the object but not nested objects. `obj.nested` is a reference, and while you cannot reassign that reference, the object it points to is not frozen.',
     },
     // Map/Set
     {
@@ -5258,7 +5258,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        'Plain object keys must be strings or Symbols (other types are coerced to strings). Map accepts any value as a key — objects, functions, numbers — and preserves their identity. Map also has a built-in `size` property and maintains insertion order.',
+        'Plain object keys must be strings or Symbols (other types are coerced to strings). Map accepts any value as a key  -  objects, functions, numbers  -  and preserves their identity. Map also has a built-in `size` property and maintains insertion order.',
     },
     {
       id: 'js-q-set-dedup',
@@ -5291,7 +5291,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 2,
       explanation:
-        'Calling a generator function does not run any of the function body — it returns a generator/iterator object. The body only runs when you call `.next()`, which runs until the next `yield` and pauses there.',
+        'Calling a generator function does not run any of the function body  -  it returns a generator/iterator object. The body only runs when you call `.next()`, which runs until the next `yield` and pauses there.',
     },
     // Modules
     {
@@ -5308,7 +5308,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        'ESM imports are hoisted and resolved statically before code runs — enabling tree-shaking and circular dependency detection at build time. CommonJS `require` is synchronous and runs at runtime, allowing conditional and dynamic loading.',
+        'ESM imports are hoisted and resolved statically before code runs  -  enabling tree-shaking and circular dependency detection at build time. CommonJS `require` is synchronous and runs at runtime, allowing conditional and dynamic loading.',
     },
     {
       id: 'js-q-dynamic-import',
@@ -5334,9 +5334,9 @@ These patterns appear constantly in backend interviews — "how would you proces
       difficulty: 'core',
       question: 'You have a search input that makes API calls. You want to call the API only after the user stops typing for 300ms. Which technique?',
       options: [
-        'Throttle — fires at most once per 300ms',
-        'Debounce — delays until 300ms of inactivity',
-        'Memoize — caches the last result',
+        'Throttle  -  fires at most once per 300ms',
+        'Debounce  -  delays until 300ms of inactivity',
+        'Memoize  -  caches the last result',
         'setInterval with 300ms delay',
       ],
       correctIndex: 1,
@@ -5368,7 +5368,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: [
         'WeakMap is faster than Map',
         'WeakMap allows string keys',
-        'WeakMap holds keys weakly — when the key object is GC\'d, the entry is automatically removed, preventing memory leaks',
+        'WeakMap holds keys weakly  -  when the key object is GC\'d, the entry is automatically removed, preventing memory leaks',
         'WeakMap is iterable while Map is not',
       ],
       correctIndex: 2,
@@ -5424,7 +5424,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['"<b>"', '"bold"', '"<b>bold</b>"', '"<b>bold</b></b>"'],
       correctIndex: 2,
       explanation:
-        'Quantifiers are **greedy** by default — they match as much as possible. `<.+>` matches from the first `<` to the last `>`, consuming `<b>bold</b>`. Use `<.+?>` (lazy) to match only `<b>`.',
+        'Quantifiers are **greedy** by default  -  they match as much as possible. `<.+>` matches from the first `<` to the last `>`, consuming `<b>bold</b>`. Use `<.+?>` (lazy) to match only `<b>`.',
     },
     {
       id: 'js-q-regex-groups',
@@ -5435,7 +5435,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: [
         'Named capture group',
         'Lookahead assertion',
-        'Non-capturing group — groups without storing the match',
+        'Non-capturing group  -  groups without storing the match',
         'Negative lookahead',
       ],
       correctIndex: 2,
@@ -5451,7 +5451,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['"100 dollars"', '"dollars"', '"100"', 'No match'],
       correctIndex: 2,
       explanation:
-        '`(?= dollars)` is a **positive lookahead** — it asserts that the match must be followed by " dollars" but does not include it in the match. So `\\d+` matches "100" and the lookahead confirms " dollars" follows without consuming it.',
+        '`(?= dollars)` is a **positive lookahead**  -  it asserts that the match must be followed by " dollars" but does not include it in the match. So `\\d+` matches "100" and the lookahead confirms " dollars" follows without consuming it.',
     },
     // Execution Context
     {
@@ -5510,11 +5510,11 @@ These patterns appear constantly in backend interviews — "how would you proces
       category: 'javascript',
       subcategory: 'es2018',
       difficulty: 'core',
-      question: '`Promise.resolve(42).finally(() => 99).then(v => console.log(v))` — what logs?',
+      question: '`Promise.resolve(42).finally(() => 99).then(v => console.log(v))`  -  what logs?',
       options: ['99', '42', 'undefined', 'TypeError'],
       correctIndex: 1,
       explanation:
-        '`finally` does not change the promise\'s resolved value — its return value is ignored. The `42` passes through to the next `.then`. Only if `finally` throws does it change the outcome (replacing the current value/rejection with the thrown error).',
+        '`finally` does not change the promise\'s resolved value  -  its return value is ignored. The `42` passes through to the next `.then`. Only if `finally` throws does it change the outcome (replacing the current value/rejection with the thrown error).',
     },
     {
       id: 'js-q-object-rest',
@@ -5536,7 +5536,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['[1, 2, 3]', '[1, 2, [3]]', '[1, [2, 3]]', '[[1, 2, 3]]'],
       correctIndex: 1,
       explanation:
-        '`flat()` with no argument defaults to depth 1 — it flattens one level. `[1, [2, [3]]]` becomes `[1, 2, [3]]`. Use `flat(2)` to get `[1, 2, 3]`, or `flat(Infinity)` for arbitrary depth.',
+        '`flat()` with no argument defaults to depth 1  -  it flattens one level. `[1, [2, [3]]]` becomes `[1, 2, [3]]`. Use `flat(2)` to get `[1, 2, 3]`, or `flat(Infinity)` for arbitrary depth.',
     },
     {
       id: 'js-q-optional-catch',
@@ -5564,14 +5564,14 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['2n', '2', 'TypeError', 'NaN'],
       correctIndex: 2,
       explanation:
-        'You cannot mix BigInt and Number in arithmetic operations — JavaScript throws a `TypeError`. You must explicitly convert: `1n + BigInt(1)` or `Number(1n) + 1`. This prevents accidental precision loss.',
+        'You cannot mix BigInt and Number in arithmetic operations  -  JavaScript throws a `TypeError`. You must explicitly convert: `1n + BigInt(1)` or `Number(1n) + 1`. This prevents accidental precision loss.',
     },
     {
       id: 'js-q-promise-any',
       category: 'javascript',
       subcategory: 'es2021',
       difficulty: 'core',
-      question: '`Promise.any([p1, p2, p3])` — when does it reject?',
+      question: '`Promise.any([p1, p2, p3])`  -  when does it reject?',
       options: [
         'When the first promise rejects',
         'When any promise rejects',
@@ -5591,7 +5591,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['1', '1000', '1000000', 'SyntaxError'],
       correctIndex: 2,
       explanation:
-        'Numeric separators (`_`) are purely visual aids introduced in ES2021. They are ignored by the engine — `1_000_000` is exactly `1000000`. They can be placed anywhere in a numeric literal for readability.',
+        'Numeric separators (`_`) are purely visual aids introduced in ES2021. They are ignored by the engine  -  `1_000_000` is exactly `1000000`. They can be placed anywhere in a numeric literal for readability.',
     },
     // ES2022-2024
     {
@@ -5613,7 +5613,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       question: 'What is `Error.cause` used for?',
       options: [
         'Setting the error message',
-        'Chaining errors — preserving the original error that caused a higher-level error',
+        'Chaining errors  -  preserving the original error that caused a higher-level error',
         'Categorising errors by type',
         'Suppressing error stack traces',
       ],
@@ -5703,7 +5703,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       category: 'javascript',
       subcategory: 'functional',
       difficulty: 'core',
-      question: 'In functional programming, `compose(f, g)(x)` vs `pipe(f, g)(x)` — what is the difference?',
+      question: 'In functional programming, `compose(f, g)(x)` vs `pipe(f, g)(x)`  -  what is the difference?',
       options: [
         'compose and pipe are identical',
         'compose applies functions right-to-left (g then f); pipe applies left-to-right (f then g)',
@@ -5712,7 +5712,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        '`compose(f, g)(x)` = `f(g(x))` — right to left (mathematical notation). `pipe(f, g)(x)` = `g(f(x))` — left to right (data flows in reading order). Pipe is often more readable in JavaScript code.',
+        '`compose(f, g)(x)` = `f(g(x))`  -  right to left (mathematical notation). `pipe(f, g)(x)` = `g(f(x))`  -  left to right (data flows in reading order). Pipe is often more readable in JavaScript code.',
     },
     // Design Patterns
     {
@@ -5723,13 +5723,13 @@ These patterns appear constantly in backend interviews — "how would you proces
       question: 'What is the idiomatic way to implement a Singleton in ES modules?',
       options: [
         'Use a static class with a getInstance() method',
-        'Export an instance directly — the module cache ensures it is created once',
+        'Export an instance directly  -  the module cache ensures it is created once',
         'Use Object.freeze on the constructor',
         'Use a global variable',
       ],
       correctIndex: 1,
       explanation:
-        'ES modules are cached after first load — `import` the same module twice and you get the same module object. Simply `export const db = new Database()` creates the instance once. The module cache IS the singleton pattern.',
+        'ES modules are cached after first load  -  `import` the same module twice and you get the same module object. Simply `export const db = new Database()` creates the instance once. The module cache IS the singleton pattern.',
     },
     {
       id: 'js-q-observer-pattern',
@@ -5745,7 +5745,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        'In classic Observer, subjects hold references to observers (tight coupling). In Pub/Sub, an event bus sits between them — publishers emit to the bus, subscribers listen from the bus. Neither knows about the other, enabling looser coupling.',
+        'In classic Observer, subjects hold references to observers (tight coupling). In Pub/Sub, an event bus sits between them  -  publishers emit to the bus, subscribers listen from the bus. Neither knows about the other, enabling looser coupling.',
     },
     // Recursion
     {
@@ -5778,7 +5778,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        'A tail call is the very last operation before returning. In option B, the recursive call `f(n-1, n * acc)` IS the last operation — nothing happens after it returns. In option A, the result is multiplied by `n` after the call returns, so it is NOT tail-recursive.',
+        'A tail call is the very last operation before returning. In option B, the recursive call `f(n-1, n * acc)` IS the last operation  -  nothing happens after it returns. In option A, the result is multiplied by `n` after the call returns, so it is NOT tail-recursive.',
     },
     // Date & JSON
     {
@@ -5819,7 +5819,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        'Reference counting leaks memory when objects reference each other (A → B, B → A) even if nothing outside the cycle references them — the counts never reach zero. Mark-and-sweep starts from GC roots and marks all **reachable** objects, so cycles that have no outside references are correctly collected.',
+        'Reference counting leaks memory when objects reference each other (A → B, B → A) even if nothing outside the cycle references them  -  the counts never reach zero. Mark-and-sweep starts from GC roots and marks all **reachable** objects, so cycles that have no outside references are correctly collected.',
     },
     {
       id: 'js-q-stack-heap',
@@ -5896,7 +5896,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['11', '2', '3', 'NaN'],
       correctIndex: 2,
       explanation:
-        'The second argument is the radix (base). `parseInt("11", 2)` parses "11" as binary: 1×2 + 1 = 3. Always specify the radix to avoid surprises — without it, strings starting with "0x" are treated as hex.',
+        'The second argument is the radix (base). `parseInt("11", 2)` parses "11" as binary: 1×2 + 1 = 3. Always specify the radix to avoid surprises  -  without it, strings starting with "0x" are treated as hex.',
     },
     // Type Checking
     {
@@ -5924,7 +5924,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['"[object Object]"', '"[object Date]"', '"Date"', '"object"'],
       correctIndex: 1,
       explanation:
-        'This technique reads the internal type tag, returning "[object Date]" for dates, "[object Array]" for arrays, "[object Null]" for null, etc. Slicing out the tag (`.slice(8, -1)`) gives a reliable type string that distinguishes object subtypes — something typeof cannot do.',
+        'This technique reads the internal type tag, returning "[object Date]" for dates, "[object Array]" for arrays, "[object Null]" for null, etc. Slicing out the tag (`.slice(8, -1)`) gives a reliable type string that distinguishes object subtypes  -  something typeof cannot do.',
     },
     {
       id: 'js-q-object-is',
@@ -6067,7 +6067,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       ],
       correctIndex: 1,
       explanation:
-        '`Promise.all` provides unbounded concurrency — all 10,000 requests start at once, overwhelming the server, hitting rate limits, and exhausting memory/sockets. Use a concurrency pool (sliding window) or batching to keep a bounded number of requests in flight.',
+        '`Promise.all` provides unbounded concurrency  -  all 10,000 requests start at once, overwhelming the server, hitting rate limits, and exhausting memory/sockets. Use a concurrency pool (sliding window) or batching to keep a bounded number of requests in flight.',
       interviewTip: '"Process a million records without overwhelming the DB" → bounded concurrency pool.',
     },
     {
@@ -6079,7 +6079,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       options: ['Promise.all', 'Promise.race', 'Promise.allSettled', 'Promise.any'],
       correctIndex: 1,
       explanation:
-        '`Promise.race` settles as soon as the first of the in-flight promises settles, so awaiting it lets the pool start a new task the moment a slot frees up. This maintains exactly N concurrent tasks — better throughput than fixed batches, where the whole batch waits for its slowest member.',
+        '`Promise.race` settles as soon as the first of the in-flight promises settles, so awaiting it lets the pool start a new task the moment a slot frees up. This maintains exactly N concurrent tasks  -  better throughput than fixed batches, where the whole batch waits for its slowest member.',
     },
     {
       id: 'js-q-timeout-wrapper',
@@ -6089,7 +6089,7 @@ These patterns appear constantly in backend interviews — "how would you proces
       question: 'How do you add a timeout to a promise that has no built-in timeout?',
       options: [
         'Use setTimeout inside the promise',
-        'Promise.race([promise, rejectAfterMs]) — whichever settles first wins',
+        'Promise.race([promise, rejectAfterMs])  -  whichever settles first wins',
         'await the promise twice',
         'Wrap it in Promise.all with a delay',
       ],

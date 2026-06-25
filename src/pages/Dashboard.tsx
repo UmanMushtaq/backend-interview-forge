@@ -82,7 +82,7 @@ export function Dashboard() {
         />
       </div>
 
-      {/* Study streak banner — hidden for brand-new users */}
+      {/* Study streak banner  -  hidden for brand-new users */}
       {started && (
         studiedToday ? (
           <div className="flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-5 py-3">

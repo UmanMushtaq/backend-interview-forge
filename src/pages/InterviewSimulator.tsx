@@ -278,7 +278,7 @@ function InProgressScreen({
         );
         prefetchedRef.current = q;
       } catch {
-        // silently fail — will re-fetch when needed
+        // silently fail  -  will re-fetch when needed
       }
     },
     [apiKey, topic, difficulty, totalCount],
@@ -399,7 +399,7 @@ function InProgressScreen({
             onChange={(e) => setAnswer(e.target.value)}
             disabled={scoring || loadingQuestion}
             rows={7}
-            placeholder="Type your answer here. Speak as you would in a real interview — explain your reasoning, not just the answer."
+            placeholder="Type your answer here. Speak as you would in a real interview  -  explain your reasoning, not just the answer."
             className="w-full resize-none rounded-xl border border-border bg-surface p-4 text-sm leading-relaxed placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
           <div className="mt-1 flex items-center justify-between text-xs text-muted">
@@ -549,7 +549,7 @@ function ReportScreen({
     avgScore >= 8
       ? 'Strong performance'
       : avgScore >= 6
-        ? 'Good — a few gaps to address'
+        ? 'Good  -  a few gaps to address'
         : avgScore >= 4
           ? 'Room to grow'
           : 'Keep practising';

@@ -120,7 +120,7 @@ export function CodingChallenge() {
                       {r.error ? (
                         <span className="text-danger">{r.error}</span>
                       ) : r.isHidden && !solved ? (
-                        <span>Hidden test — details revealed once all visible tests pass.</span>
+                        <span>Hidden test  -  details revealed once all visible tests pass.</span>
                       ) : (
                         <>
                           expected <code>{fmt(r.expected)}</code> · got <code>{fmt(r.actual)}</code>

@@ -32,7 +32,7 @@ export const redis: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'With cache-aside (lazy loading), the application is in charge: on a miss it fetches from the source of truth, returns the value, and populates the cache with a TTL for next time. The cache itself is passive — it does not know about your database. The main risks are stale data (mitigated by TTL and invalidation on write) and the thundering-herd of many misses at once.',
+      'With cache-aside (lazy loading), the application is in charge: on a miss it fetches from the source of truth, returns the value, and populates the cache with a TTL for next time. The cache itself is passive  -  it does not know about your database. The main risks are stale data (mitigated by TTL and invalidation on write) and the thundering-herd of many misses at once.',
     interviewTip: 'Contrast cache-aside (app loads) with read-through (cache loads).',
   },
   {
@@ -82,7 +82,7 @@ export const redis: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Cache stampede (thundering herd) happens when a hot key expires and a flood of requests all find a miss at the same moment, each independently hitting the database. Prevention strategies include: (1) probabilistic early expiry — recompute the cache before it fully expires with some probability; (2) a per-key mutex so only one request rebuilds the cache while others wait; (3) keeping a stale value visible while one worker refreshes in the background. The right choice depends on your staleness tolerance.',
+      'Cache stampede (thundering herd) happens when a hot key expires and a flood of requests all find a miss at the same moment, each independently hitting the database. Prevention strategies include: (1) probabilistic early expiry  -  recompute the cache before it fully expires with some probability; (2) a per-key mutex so only one request rebuilds the cache while others wait; (3) keeping a stale value visible while one worker refreshes in the background. The right choice depends on your staleness tolerance.',
     interviewTip: 'Interviewers love this because it shows you think about failure modes, not just the happy path.',
   },
   {
@@ -132,7 +132,7 @@ export const redis: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Redis Pub/Sub is fire-and-forget: messages are delivered to currently connected subscribers and immediately discarded. A subscriber that reconnects after a disconnect has no way to replay missed messages. Redis Streams (XADD/XREAD) persist messages in an append-only log with consumer groups, acknowledged delivery, and the ability to read from any offset — making them suitable for reliable message queues. Pub/Sub is fine for real-time notifications where dropping a message is acceptable.',
+      'Redis Pub/Sub is fire-and-forget: messages are delivered to currently connected subscribers and immediately discarded. A subscriber that reconnects after a disconnect has no way to replay missed messages. Redis Streams (XADD/XREAD) persist messages in an append-only log with consumer groups, acknowledged delivery, and the ability to read from any offset  -  making them suitable for reliable message queues. Pub/Sub is fine for real-time notifications where dropping a message is acceptable.',
     interviewTip: 'Use Streams when you need at-least-once delivery; use Pub/Sub when missing messages is acceptable.',
   },
   {
@@ -143,13 +143,13 @@ export const redis: QuizQuestion[] = [
     question: 'How can you implement a sliding-window rate limiter in Redis?',
     options: [
       'INCR a counter key with no expiry and check its value',
-      'Use a Sorted Set where each request is a member with its timestamp as score; trim members older than the window and check the count — all in a Lua script for atomicity',
+      'Use a Sorted Set where each request is a member with its timestamp as score; trim members older than the window and check the count  -  all in a Lua script for atomicity',
       'Use SUBSCRIBE to count incoming messages per second',
       'Store request timestamps in a Redis List and use LLEN to count them',
     ],
     correctIndex: 1,
     explanation:
-      'A sorted set with timestamps as scores lets you ZADD the current request, ZREMRANGEBYSCORE to drop entries older than now minus window, and ZCARD to count remaining entries — all in a single atomic Lua script. If the count exceeds the limit, reject the request. This gives true sliding-window semantics. A simple INCR+EXPIRE is easier but gives fixed-window semantics, which can allow double the limit at window boundaries.',
+      'A sorted set with timestamps as scores lets you ZADD the current request, ZREMRANGEBYSCORE to drop entries older than now minus window, and ZCARD to count remaining entries  -  all in a single atomic Lua script. If the count exceeds the limit, reject the request. This gives true sliding-window semantics. A simple INCR+EXPIRE is easier but gives fixed-window semantics, which can allow double the limit at window boundaries.',
     interviewTip: 'Mention that wrapping multi-command patterns in Lua scripts preserves atomicity in Redis.',
   },
   {
@@ -167,7 +167,7 @@ export const redis: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'A single-instance Redis lock fails if that instance goes down or is partitioned: the lock is lost and two clients can acquire it. Redlock acquires locks on N independent Redis nodes (usually 5) and considers the lock held only when a majority (floor(N/2)+1) grant it within a short deadline. A minority of failed nodes cannot break mutual exclusion. Redlock is still debated (Martin Kleppmann\'s critique is worth reading) but is better than a single-node lock for availability-critical cases.',
-    interviewTip: 'Mention the quorum requirement (majority of N nodes) — that is the core of the algorithm.',
+    interviewTip: 'Mention the quorum requirement (majority of N nodes)  -  that is the core of the algorithm.',
   },
   {
     id: 'redis-pipeline-001',
@@ -183,8 +183,8 @@ export const redis: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Without pipelining, each command waits for a round-trip acknowledgement before the next is sent (RTT per command). Pipelining buffers many commands client-side, flushes them in a single write, and reads all responses together, so you pay the RTT only once per batch. This is purely a network optimization — commands still execute sequentially and there is no atomicity guarantee. For atomicity across commands, use MULTI/EXEC transactions or Lua scripts.',
-    interviewTip: 'Pipelining cuts latency; MULTI/EXEC gives atomicity — they are different tools for different problems.',
+      'Without pipelining, each command waits for a round-trip acknowledgement before the next is sent (RTT per command). Pipelining buffers many commands client-side, flushes them in a single write, and reads all responses together, so you pay the RTT only once per batch. This is purely a network optimization  -  commands still execute sequentially and there is no atomicity guarantee. For atomicity across commands, use MULTI/EXEC transactions or Lua scripts.',
+    interviewTip: 'Pipelining cuts latency; MULTI/EXEC gives atomicity  -  they are different tools for different problems.',
   },
   {
     id: 'redis-streams-001',
@@ -217,7 +217,7 @@ export const redis: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'SETNX and EXPIRE are two separate commands, so the pair is not atomic. If the process crashes, is killed, or loses connectivity after SETNX succeeds but before EXPIRE runs, the key exists with no TTL and the lock will never be automatically released. The atomic SET key value NX EX seconds command, introduced in Redis 2.6.12, eliminates this window entirely by setting the key and its expiry in one atomic operation.',
-    interviewTip: 'Always use the single SET NX EX form — the two-command form is a well-known antipattern.',
+    interviewTip: 'Always use the single SET NX EX form  -  the two-command form is a well-known antipattern.',
   },
   {
     id: 'redis-data-types-001',
@@ -233,8 +233,8 @@ export const redis: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Redis Sorted Sets store members with a floating-point score and maintain them in sorted order. ZADD adds or updates a member\'s score in O(log N), ZREVRANGE retrieves the top-N members in order, and ZRANK returns a member\'s position. This makes leaderboard operations — update score, top-10 list, rank lookup — all O(log N) or O(log N + M) without any sorting at read time.',
-    interviewTip: 'Sorted Sets are the canonical Redis leaderboard structure — being able to name the specific commands shows depth.',
+      'Redis Sorted Sets store members with a floating-point score and maintain them in sorted order. ZADD adds or updates a member\'s score in O(log N), ZREVRANGE retrieves the top-N members in order, and ZRANK returns a member\'s position. This makes leaderboard operations  -  update score, top-10 list, rank lookup  -  all O(log N) or O(log N + M) without any sorting at read time.',
+    interviewTip: 'Sorted Sets are the canonical Redis leaderboard structure  -  being able to name the specific commands shows depth.',
   },
   {
     id: 'redis-architecture-001',
@@ -251,7 +251,7 @@ export const redis: QuizQuestion[] = [
     correctIndex: 1,
     explanation:
       'Redis Sentinel is a high-availability solution for non-clustered Redis. A quorum of Sentinel processes monitors the primary; if it is unreachable for a configurable timeout, Sentinel elects a new primary from the replicas and notifies clients of the new address. This gives automatic failover with no manual intervention. Redis Cluster, by contrast, provides both high availability and horizontal sharding.',
-    interviewTip: 'Distinguish Sentinel (HA, no sharding) from Cluster (HA + sharding) — interviewers test this.',
+    interviewTip: 'Distinguish Sentinel (HA, no sharding) from Cluster (HA + sharding)  -  interviewers test this.',
   },
   {
     id: 'redis-lru-impl-001',
@@ -300,7 +300,7 @@ export const redis: QuizQuestion[] = [
     ],
     correctIndex: 1,
     explanation:
-      'Pipelining is a pure client-side network optimization: commands are sent in a batch to reduce RTT, but other clients can run commands between them on the server. MULTI/EXEC marks a transaction block on the server; all queued commands execute sequentially without interleaving from other clients, giving atomicity. However, commands inside MULTI/EXEC are queued blindly — you cannot inspect intermediate values and branch, which is why complex conditional logic typically requires Lua scripts (which also execute atomically).',
-    interviewTip: 'Pipelining = network efficiency; MULTI/EXEC = atomicity on the server side — separate concerns.',
+      'Pipelining is a pure client-side network optimization: commands are sent in a batch to reduce RTT, but other clients can run commands between them on the server. MULTI/EXEC marks a transaction block on the server; all queued commands execute sequentially without interleaving from other clients, giving atomicity. However, commands inside MULTI/EXEC are queued blindly  -  you cannot inspect intermediate values and branch, which is why complex conditional logic typically requires Lua scripts (which also execute atomically).',
+    interviewTip: 'Pipelining = network efficiency; MULTI/EXEC = atomicity on the server side  -  separate concerns.',
   },
 ];
