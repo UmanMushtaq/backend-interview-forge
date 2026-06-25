@@ -31,7 +31,7 @@ export function Dashboard() {
   const chaptersReadToday = todayEntry?.chaptersRead ?? 0;
   const questionsAnsweredToday = todayEntry?.questionsAnswered ?? 0;
 
-  const studiedToday = todayMinutes > 0 || questionsAnsweredToday > 0 || chaptersReadToday > 0;
+  const studiedToday = questionsAnsweredToday > 0 || chaptersReadToday > 0;
 
   const goalProgress = Math.max(chaptersReadToday / 2, questionsAnsweredToday / 5);
   const goalMet = goalProgress >= 1;

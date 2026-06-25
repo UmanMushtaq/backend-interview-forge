@@ -11,6 +11,7 @@ import { systemDesign } from './system-design';
 import { testing } from './testing';
 import { microservices } from './microservices';
 import { dsa } from './dsa';
+import { nexuspay } from './nexuspay';
 
 // Ordered as a learning path: language fundamentals first, then runtime,
 // frameworks, data stores, messaging, design, and testing.
@@ -27,6 +28,7 @@ export const LEARN_MODULES: LearnModule[] = [
   testing,
   microservices,
   dsa,
+  nexuspay,
 ];
 
 export const moduleById: Record<string, LearnModule> = Object.fromEntries(

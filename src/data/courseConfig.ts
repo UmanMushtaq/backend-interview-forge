@@ -11,6 +11,7 @@ import {
   FlaskConical,
   GitMerge,
   BrainCircuit,
+  Landmark,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -153,6 +154,16 @@ export const COURSES: CourseConfig[] = [
     color: 'text-indigo-400',
     bar: 'bg-indigo-400',
     tint: 'bg-indigo-400/10',
+  },
+  {
+    id: 'nexuspay',
+    title: 'NexusPay Deep Dive',
+    description: 'Own your flagship project. Every architectural decision, every flow, every trade-off — ready for interviews.',
+    icon: Landmark,
+    estimatedHours: 4,
+    color: 'text-violet-400',
+    bar: 'bg-violet-400',
+    tint: 'bg-violet-400/10',
   },
 ];
 
