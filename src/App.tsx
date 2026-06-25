@@ -14,6 +14,7 @@ import { DesignChallenge } from './pages/DesignChallenge';
 import { SqlList } from './pages/SqlList';
 import { SqlChallenge } from './pages/SqlChallenge';
 import { InterviewQA } from './pages/InterviewQA';
+import { InterviewSimulator } from './pages/InterviewSimulator';
 import { Progress } from './pages/Progress';
 import { Settings } from './pages/Settings';
 
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/sql" element={<SqlList />} />
         <Route path="/sql/:id" element={<SqlChallenge />} />
         <Route path="/interview" element={<InterviewQA />} />
+        <Route path="/interview-simulator" element={<InterviewSimulator />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Dashboard />} />

@@ -18,6 +18,7 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeft,
+  BrainCircuit,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -32,6 +33,7 @@ const PRACTICE = [
   { to: '/code', label: 'Coding', icon: Code2 },
   { to: '/design', label: 'System Design', icon: Network },
   { to: '/sql', label: 'SQL', icon: Database },
+  { to: '/interview-simulator', label: 'Interview Simulator', icon: BrainCircuit },
   { to: '/interview', label: 'Interview Q&A', icon: MessageSquare },
 ];
 
@@ -45,6 +47,7 @@ const SECTION_LABELS: Record<string, string> = {
   design: 'System Design',
   sql: 'SQL',
   interview: 'Interview Q&A',
+  'interview-simulator': 'Interview Simulator',
   progress: 'Progress',
   settings: 'Settings',
   quiz: 'Quizzes',
