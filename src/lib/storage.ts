@@ -321,6 +321,23 @@ export function updateSettings(patch: Partial<Settings>): void {
   setState((s) => ({ ...s, settings: { ...s.settings, ...patch } }));
 }
 
+export function toggleBookmark(courseId: string, lessonId: string): void {
+  setState((s) => {
+    const bookmarks = s.bookmarks ?? [];
+    const exists = bookmarks.some((b) => b.courseId === courseId && b.lessonId === lessonId);
+    return {
+      ...s,
+      bookmarks: exists
+        ? bookmarks.filter((b) => !(b.courseId === courseId && b.lessonId === lessonId))
+        : [...bookmarks, { courseId, lessonId }],
+    };
+  });
+}
+
+export function getBookmarks(s: ProgressState): Array<{ courseId: string; lessonId: string }> {
+  return s.bookmarks ?? [];
+}
+
 export function resetAll(): void {
   setState((s) => ({ ...defaultState(), settings: { ...s.settings } }));
 }

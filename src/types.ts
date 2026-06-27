@@ -208,4 +208,5 @@ export interface ProgressState {
   studyHistory: Record<string, StudyHistoryEntry>;
   settings: Settings;
   lastActivity?: LastActivity;
+  bookmarks?: Array<{ courseId: string; lessonId: string }>;
 }

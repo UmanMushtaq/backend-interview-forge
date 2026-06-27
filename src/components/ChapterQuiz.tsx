@@ -196,7 +196,7 @@ export function ChapterQuiz({ courseId, chapterId, courseTitle, chapterTitle, ch
         {current.options.map((opt, i) => {
           const isCorrect = i === current.correctIndex;
           const isSelected = i === selected;
-          let cls = 'w-full rounded-lg border px-4 py-2.5 text-left text-sm transition ';
+          let cls = 'w-full rounded-lg border px-4 py-3 text-left text-sm transition min-h-[44px] ';
           if (selected === null) {
             cls += 'border-border hover:border-primary/50 hover:bg-primary/5';
           } else if (isCorrect) {
