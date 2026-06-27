@@ -17,6 +17,7 @@ import { InterviewQA } from './pages/InterviewQA';
 import { InterviewSimulator } from './pages/InterviewSimulator';
 import { Progress } from './pages/Progress';
 import { Settings } from './pages/Settings';
+import { Bookmarks } from './pages/Bookmarks';
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/sql/:id" element={<SqlChallenge />} />
         <Route path="/interview" element={<InterviewQA />} />
         <Route path="/interview-simulator" element={<InterviewSimulator />} />
+        <Route path="/bookmarks" element={<Bookmarks />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Dashboard />} />

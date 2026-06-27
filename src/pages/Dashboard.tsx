@@ -117,7 +117,9 @@ export function Dashboard() {
           <div className="mb-2 flex items-center justify-between text-sm">
             <span className="font-medium">Daily goal</span>
             {goalMet ? (
-              <span className="text-xs font-medium text-success">Daily goal complete ✓</span>
+              <span className="flex items-center gap-1 text-xs font-medium text-success">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Daily goal complete
+              </span>
             ) : (
               <span className="text-xs text-muted">
                 Today: {chaptersReadToday} chapters read · {questionsAnsweredToday} questions answered

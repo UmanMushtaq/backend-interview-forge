@@ -1,9 +1,9 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Clock, CheckCircle2, Circle, Lightbulb, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, CheckCircle2, Circle, Lightbulb, Check, Bookmark } from 'lucide-react';
 import { courseConfigById } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
 import { useProgressState } from '../hooks/useProgress';
-import { markLessonRead, markLessonUnread } from '../lib/storage';
+import { markLessonRead, markLessonUnread, toggleBookmark, getBookmarks } from '../lib/storage';
 import { readSetFor, readingMinutes, keyTakeaway } from '../lib/courses';
 import { Markdown } from '../components/Markdown';
 import { ChapterQuiz } from '../components/ChapterQuiz';
@@ -30,6 +30,7 @@ export function ChapterPage() {
 
   const read = readSetFor(courseId, state);
   const isCurrentRead = read.has(chapterId);
+  const isBookmarked = getBookmarks(state).some((b) => b.courseId === courseId && b.lessonId === chapterId);
   const total = lessons.length;
   const prev = index > 0 ? lessons[index - 1] : null;
   const next = index < total - 1 ? lessons[index + 1] : null;
@@ -47,11 +48,11 @@ export function ChapterPage() {
               <Link to={`/courses/${courseId}`} className="font-medium text-muted hover:text-text">
                 {course.title}
               </Link>
-              <span className="flex items-center gap-3">
+              <span className="flex items-center gap-2 sm:gap-3">
                 <span className="tabular-nums">
                   Chapter {index + 1} of {total}
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="hidden items-center gap-1 sm:flex">
                   <Clock className="h-3.5 w-3.5" /> {minutes} min read
                 </span>
                 {isCurrentRead ? (
@@ -69,6 +70,15 @@ export function ChapterPage() {
                     <Circle className="h-3.5 w-3.5" /> Mark as read
                   </button>
                 )}
+                <button
+                  onClick={() => toggleBookmark(courseId, chapterId)}
+                  title={isBookmarked ? 'Remove bookmark' : 'Bookmark this chapter'}
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs transition hover:text-text"
+                >
+                  <Bookmark
+                    className={`h-3.5 w-3.5 ${isBookmarked ? 'fill-primary text-primary' : 'text-muted'}`}
+                  />
+                </button>
               </span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
