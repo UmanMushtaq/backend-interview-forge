@@ -223,6 +223,153 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   };
 }
 
+export async function generateNexusPayQuestion(
+  apiKey: string,
+  difficulty: string,
+  previousQuestions: string[],
+  focusArea?: string,
+): Promise<{ question: string; hints: string[]; focusArea: string }> {
+  const prompt = `You are a senior backend engineer at a European fintech company (like Qonto, Alan, or Swan) interviewing a candidate for a Senior NestJS Engineer role. The candidate's CV lists NexusPay as their flagship project.
+
+NexusPay is a production-grade event-driven fintech platform with 7 NestJS microservices in an Nx monorepo: User Service, Wallet Service, Transaction Service, Notification Service, Analytics Service, Payment Gateway Service, and API Gateway. Each service has its own PostgreSQL database. RabbitMQ handles directed commands and Saga orchestration. Kafka handles event streaming to the transactions.stream topic. Redis handles caching (user profiles, TTL 5min), rate limiting (100 req/min per IP), distributed locks (SET NX EX 30 to prevent double-spending), and JWT blacklisting. The KYC flow: user submits documents, admin approves, user.kyc.approved published to RabbitMQ, Wallet Service auto-creates wallet, Notification Service sends confirmation. The transfer Saga: Redis lock acquired, transaction saved as PENDING, debit requested via RabbitMQ, wallet debited, credit requested, wallet credited, transaction.completed published to Kafka. REST in Phase 1-3, gRPC in Phase 4, GraphQL subscriptions in Phase 5. 85% Jest test coverage, Docker Compose, GitHub Actions.
+
+Difficulty level: ${difficulty}
+
+${focusArea && focusArea !== 'Any' ? `Focus this question on: ${focusArea}` : 'Choose any aspect of the architecture.'}
+
+${previousQuestions.length > 0 ? `Do NOT repeat these questions already asked:\n${previousQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}` : ''}
+
+Generate one sharp, specific interview question about NexusPay. The question should feel like it comes from a real interviewer who has read the candidate's CV and wants to probe their genuine understanding. It should NOT be answerable by someone who just read a summary - it should require real architectural understanding.
+
+Examples of good questions:
+- 'You mentioned your Redis lock uses SET NX EX 30. What happens if the service crashes after acquiring the lock but before the finally block runs? Walk me through exactly what happens to that transfer.'
+- 'Your Saga marks the transaction COMPLETED after the debit. But what if the credit to the destination wallet fails after the debit already happened? How does your compensating transaction work?'
+- 'You said each service has its own PostgreSQL database. A user profile update in User Service needs to be reflected in the Wallet Service. How does that data eventually get there?'
+
+Return ONLY valid JSON with this shape:
+{
+  "question": "<the question>",
+  "hints": ["<a nudge if stuck, not the full answer>", "<a second nudge>"],
+  "focusArea": "<the area this question targets, e.g. 'Redis distributed locks' or 'Saga pattern' or 'Kafka consumer groups'>"
+}`;
+
+  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.8, maxOutputTokens: 768 },
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
+  }
+
+  const data = await response.json();
+  const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!raw) throw new Error('Gemini returned an empty response.');
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (!obj.question || !Array.isArray(obj.hints) || !obj.focusArea) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    question: String(obj.question),
+    hints: (obj.hints as unknown[]).map(String),
+    focusArea: String(obj.focusArea),
+  };
+}
+
+export async function scoreNexusPayAnswer(
+  apiKey: string,
+  question: string,
+  userAnswer: string,
+  focusArea: string,
+): Promise<{
+  score: number;
+  verdict: string;
+  whatYouGotRight: string[];
+  whatWasMissing: string[];
+  modelAnswer: string;
+}> {
+  const prompt = `You are a senior backend engineer at a European fintech company scoring a candidate's answer about their NexusPay project.
+
+Focus area: ${focusArea}
+Question: ${question}
+
+Candidate's answer:
+"""
+${userAnswer}
+"""
+
+Score this rigorously. You are checking whether this candidate truly built and understands this system, or whether they are bluffing. A score of 9-10 means they answered with the precision of someone who genuinely built it - naming specific Redis commands, specific RabbitMQ exchange patterns, specific error scenarios. A score of 7-8 is good but missing one key technical detail. A score of 4-6 covers the concept but lacks implementation depth. A score of 1-3 is vague or incorrect.
+
+Return ONLY valid JSON with this shape:
+{
+  "score": <0-10 integer>,
+  "verdict": "<one precise sentence like 'Good understanding of the lock mechanism but missed the crash recovery scenario'>",
+  "whatYouGotRight": ["<specific correct point>"],
+  "whatWasMissing": ["<specific missing detail or depth>"],
+  "modelAnswer": "<exactly what a senior engineer who built this system would say - precise, uses real command names, mentions specific trade-offs, 4-6 sentences>"
+}`;
+
+  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.4, maxOutputTokens: 1024 },
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
+  }
+
+  const data = await response.json();
+  const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!raw) throw new Error('Gemini returned an empty response.');
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    typeof obj.score !== 'number' ||
+    !obj.verdict ||
+    !Array.isArray(obj.whatYouGotRight) ||
+    !Array.isArray(obj.whatWasMissing) ||
+    !obj.modelAnswer
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    score: Math.max(0, Math.min(10, Math.round(obj.score as number))),
+    verdict: String(obj.verdict),
+    whatYouGotRight: (obj.whatYouGotRight as unknown[]).map(String),
+    whatWasMissing: (obj.whatWasMissing as unknown[]).map(String),
+    modelAnswer: String(obj.modelAnswer),
+  };
+}
+
 export async function testGeminiConnection(apiKey: string): Promise<void> {
   const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
     method: 'POST',

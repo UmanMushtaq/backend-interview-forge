@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   BrainCircuit,
   ChevronDown,
@@ -13,7 +13,12 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
-import { generateInterviewQuestion, scoreInterviewAnswer } from '../lib/gemini';
+import {
+  generateInterviewQuestion,
+  scoreInterviewAnswer,
+  generateNexusPayQuestion,
+  scoreNexusPayAnswer,
+} from '../lib/gemini';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -28,14 +33,29 @@ const TOPICS = [
   'System Design',
   'Microservices',
   'DSA',
+  'NexusPay',
 ] as const;
 
 const DIFFICULTIES = ['Mid', 'Senior', 'Lead'] as const;
 const QUESTION_COUNTS = [3, 5, 8] as const;
 
+const NEXUSPAY_FOCUS_AREAS = [
+  'Any',
+  'KYC Flow',
+  'Transfer Saga',
+  'Redis Usage',
+  'RabbitMQ vs Kafka',
+  'Bounded Contexts',
+  'API Gateway',
+  'Testing Strategy',
+  'Docker and CI/CD',
+  'gRPC and GraphQL Evolution',
+] as const;
+
 type Topic = (typeof TOPICS)[number];
 type Difficulty = (typeof DIFFICULTIES)[number];
 type QuestionCount = (typeof QUESTION_COUNTS)[number];
+type NexusPayFocusArea = (typeof NEXUSPAY_FOCUS_AREAS)[number];
 
 interface AnswerResult {
   score: number;
@@ -49,6 +69,7 @@ interface SessionEntry {
   question: string;
   answer: string;
   result: AnswerResult;
+  focusArea?: string;
 }
 
 type Screen = 'setup' | 'in-progress' | 'report';
@@ -81,16 +102,24 @@ function ScoreIcon({ score }: { score: number }) {
 // ─── Setup screen ─────────────────────────────────────────────────────────────
 
 function SetupScreen({
+  initialTopic,
   onStart,
 }: {
-  onStart: (topic: Topic, difficulty: Difficulty, count: QuestionCount) => void;
+  initialTopic?: Topic;
+  onStart: (topic: Topic, difficulty: Difficulty, count: QuestionCount, focusArea: NexusPayFocusArea) => void;
 }) {
   const { settings } = useProgressState();
   const apiKey = settings.geminiApiKey ?? '';
 
-  const [topic, setTopic] = useState<Topic | null>(null);
+  const [topic, setTopic] = useState<Topic | null>(initialTopic ?? null);
   const [difficulty, setDifficulty] = useState<Difficulty>('Senior');
   const [count, setCount] = useState<QuestionCount>(5);
+  const [focusArea, setFocusArea] = useState<NexusPayFocusArea>('Any');
+
+  // Apply initialTopic when it arrives (from navigation state)
+  useEffect(() => {
+    if (initialTopic) setTopic(initialTopic);
+  }, [initialTopic]);
 
   if (!apiKey) {
     return (
@@ -131,7 +160,9 @@ function SetupScreen({
               onClick={() => setTopic(t)}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                 topic === t
-                  ? 'border-primary bg-primary/15 text-primary'
+                  ? t === 'NexusPay'
+                    ? 'border-violet-400 bg-violet-400/15 text-violet-400'
+                    : 'border-primary bg-primary/15 text-primary'
                   : 'border-border text-muted hover:border-primary/50 hover:text-text'
               }`}
             >
@@ -139,7 +170,45 @@ function SetupScreen({
             </button>
           ))}
         </div>
+
+        {/* NexusPay callout */}
+        {topic === 'NexusPay' && (
+          <div className="mt-4 rounded-xl border border-violet-400/30 bg-violet-400/5 p-4">
+            <div className="flex items-start gap-3">
+              <BrainCircuit className="mt-0.5 h-4 w-4 shrink-0 text-violet-400" />
+              <p className="text-sm text-muted">
+                This mode simulates a real interviewer who has read your CV and wants to probe your
+                understanding of NexusPay. Questions will be specific, technical, and hard. No
+                generic backend questions.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Focus area - NexusPay only */}
+      {topic === 'NexusPay' && (
+        <div className="mb-6">
+          <p className="mb-3 text-sm font-semibold text-muted uppercase tracking-wider">
+            Focus Area <span className="normal-case font-normal">(optional)</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {NEXUSPAY_FOCUS_AREAS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setFocusArea(f)}
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                  focusArea === f
+                    ? 'border-violet-400 bg-violet-400/15 text-violet-400'
+                    : 'border-border text-muted hover:border-violet-400/50 hover:text-text'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Difficulty */}
       <div className="mb-6">
@@ -185,10 +254,10 @@ function SetupScreen({
 
       <button
         disabled={!topic}
-        onClick={() => topic && onStart(topic, difficulty, count)}
+        onClick={() => topic && onStart(topic, difficulty, count, focusArea)}
         className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Start Interview
+        {topic === 'NexusPay' ? 'Start NexusPay Interview' : 'Start Interview'}
         <ArrowRight className="h-4 w-4" />
       </button>
     </div>
@@ -202,17 +271,22 @@ function InProgressScreen({
   difficulty,
   totalCount,
   apiKey,
+  focusArea,
   onComplete,
 }: {
   topic: Topic;
   difficulty: Difficulty;
   totalCount: number;
   apiKey: string;
+  focusArea: NexusPayFocusArea;
   onComplete: (entries: SessionEntry[]) => void;
 }) {
+  const isNexusPay = topic === 'NexusPay';
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [question, setQuestion] = useState<string | null>(null);
   const [hints, setHints] = useState<string[]>([]);
+  const [currentFocusArea, setCurrentFocusArea] = useState<string>('');
   const [hintsShown, setHintsShown] = useState(0);
   const [loadingQuestion, setLoadingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState('');
@@ -224,15 +298,15 @@ function InProgressScreen({
   const [showModelAnswer, setShowModelAnswer] = useState(false);
 
   const [entries, setEntries] = useState<SessionEntry[]>([]);
-  const prefetchedRef = useRef<{ question: string; hints: string[] } | null>(null);
+  const prefetchedRef = useRef<{ question: string; hints: string[]; focusArea?: string } | null>(null);
   const previousQuestionsRef = useRef<string[]>([]);
 
-  // Load question on mount and when index advances
   const loadQuestion = useCallback(
-    async (index: number, prefetched: { question: string; hints: string[] } | null) => {
+    async (prefetched: { question: string; hints: string[]; focusArea?: string } | null) => {
       if (prefetched) {
         setQuestion(prefetched.question);
         setHints(prefetched.hints);
+        setCurrentFocusArea(prefetched.focusArea ?? '');
         setHintsShown(0);
         prefetchedRef.current = null;
         return;
@@ -240,48 +314,70 @@ function InProgressScreen({
       setLoadingQuestion(true);
       setQuestionError('');
       try {
-        const q = await generateInterviewQuestion(
-          apiKey,
-          topic,
-          difficulty,
-          previousQuestionsRef.current,
-        );
-        setQuestion(q.question);
-        setHints(q.hints);
-        setHintsShown(0);
+        if (isNexusPay) {
+          const q = await generateNexusPayQuestion(
+            apiKey,
+            difficulty,
+            previousQuestionsRef.current,
+            focusArea !== 'Any' ? focusArea : undefined,
+          );
+          setQuestion(q.question);
+          setHints(q.hints);
+          setCurrentFocusArea(q.focusArea);
+          setHintsShown(0);
+        } else {
+          const q = await generateInterviewQuestion(
+            apiKey,
+            topic,
+            difficulty,
+            previousQuestionsRef.current,
+          );
+          setQuestion(q.question);
+          setHints(q.hints);
+          setCurrentFocusArea('');
+          setHintsShown(0);
+        }
       } catch (e) {
         setQuestionError(e instanceof Error ? e.message : 'Failed to load question.');
       } finally {
         setLoadingQuestion(false);
       }
     },
-    [apiKey, topic, difficulty],
+    [apiKey, topic, difficulty, isNexusPay, focusArea],
   );
 
-  // Load first question on mount
   const hasLoaded = useRef(false);
   if (!hasLoaded.current) {
     hasLoaded.current = true;
-    loadQuestion(0, null);
+    loadQuestion(null);
   }
 
-  // Prefetch the next question in background
   const prefetchNext = useCallback(
     async (index: number) => {
-      if (index >= totalCount - 1) return; // no next question needed
+      if (index >= totalCount - 1) return;
       try {
-        const q = await generateInterviewQuestion(
-          apiKey,
-          topic,
-          difficulty,
-          previousQuestionsRef.current,
-        );
-        prefetchedRef.current = q;
+        if (isNexusPay) {
+          const q = await generateNexusPayQuestion(
+            apiKey,
+            difficulty,
+            previousQuestionsRef.current,
+            focusArea !== 'Any' ? focusArea : undefined,
+          );
+          prefetchedRef.current = { question: q.question, hints: q.hints, focusArea: q.focusArea };
+        } else {
+          const q = await generateInterviewQuestion(
+            apiKey,
+            topic,
+            difficulty,
+            previousQuestionsRef.current,
+          );
+          prefetchedRef.current = { question: q.question, hints: q.hints };
+        }
       } catch {
-        // silently fail  -  will re-fetch when needed
+        // silently fail - will re-fetch when needed
       }
     },
-    [apiKey, topic, difficulty, totalCount],
+    [apiKey, topic, difficulty, isNexusPay, focusArea, totalCount],
   );
 
   async function handleSubmit() {
@@ -291,11 +387,14 @@ function InProgressScreen({
     setResult(null);
     setShowModelAnswer(false);
     try {
-      const r = await scoreInterviewAnswer(apiKey, question, topic, answer.trim());
+      let r: AnswerResult;
+      if (isNexusPay) {
+        r = await scoreNexusPayAnswer(apiKey, question, answer.trim(), currentFocusArea);
+      } else {
+        r = await scoreInterviewAnswer(apiKey, question, topic, answer.trim());
+      }
       setResult(r);
-      // register question as seen
       previousQuestionsRef.current = [...previousQuestionsRef.current, question];
-      // prefetch next while user reads feedback
       prefetchNext(currentIndex);
     } catch (e) {
       setScoreError(e instanceof Error ? e.message : 'Scoring failed. Try again.');
@@ -306,7 +405,12 @@ function InProgressScreen({
 
   function handleNext() {
     if (!question || !result) return;
-    const newEntry: SessionEntry = { question, answer: answer.trim(), result };
+    const newEntry: SessionEntry = {
+      question,
+      answer: answer.trim(),
+      result,
+      focusArea: isNexusPay ? currentFocusArea : undefined,
+    };
     const newEntries = [...entries, newEntry];
 
     if (currentIndex + 1 >= totalCount) {
@@ -321,7 +425,7 @@ function InProgressScreen({
     setScoreError('');
     setShowModelAnswer(false);
     setHintsShown(0);
-    loadQuestion(currentIndex + 1, prefetchedRef.current);
+    loadQuestion(prefetchedRef.current);
   }
 
   const progress = ((currentIndex + (result ? 1 : 0)) / totalCount) * 100;
@@ -334,7 +438,13 @@ function InProgressScreen({
           <span className="font-medium text-muted">
             Question {currentIndex + 1} of {totalCount}
           </span>
-          <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
+          <span
+            className={`rounded-full px-3 py-0.5 text-xs font-semibold ${
+              isNexusPay
+                ? 'bg-violet-400/10 text-violet-400'
+                : 'bg-primary/10 text-primary'
+            }`}
+          >
             {topic}
           </span>
         </div>
@@ -345,6 +455,15 @@ function InProgressScreen({
           />
         </div>
       </div>
+
+      {/* Focus area badge (NexusPay only) */}
+      {isNexusPay && currentFocusArea && !loadingQuestion && (
+        <div className="mb-3">
+          <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-3 py-1 text-xs font-semibold text-violet-400">
+            {currentFocusArea}
+          </span>
+        </div>
+      )}
 
       {/* Question card */}
       <div className="mb-5 rounded-xl border border-border bg-surface p-6">
@@ -399,11 +518,14 @@ function InProgressScreen({
             onChange={(e) => setAnswer(e.target.value)}
             disabled={scoring || loadingQuestion}
             rows={7}
-            placeholder="Type your answer here. Speak as you would in a real interview  -  explain your reasoning, not just the answer."
+            placeholder="Type your answer here. Speak as you would in a real interview — explain your reasoning, not just the answer."
             className="w-full resize-none rounded-xl border border-border bg-surface p-4 text-sm leading-relaxed placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
           <div className="mt-1 flex items-center justify-between text-xs text-muted">
-            <span>{answer.trim().length} characters {answer.trim().length < 50 && answer.trim().length > 0 ? '(minimum 50)' : ''}</span>
+            <span>
+              {answer.trim().length} characters{' '}
+              {answer.trim().length < 50 && answer.trim().length > 0 ? '(minimum 50)' : ''}
+            </span>
           </div>
         </div>
       )}
@@ -431,7 +553,6 @@ function InProgressScreen({
       {/* Score result */}
       {result && (
         <div className="mt-6 rounded-xl border border-border bg-surface p-6 space-y-4">
-          {/* Score + verdict */}
           <div className="flex items-start gap-4">
             <ScoreBadge score={result.score} large />
             <div>
@@ -440,7 +561,6 @@ function InProgressScreen({
             </div>
           </div>
 
-          {/* What you got right */}
           {result.whatYouGotRight.length > 0 && (
             <div>
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-400">
@@ -458,7 +578,6 @@ function InProgressScreen({
             </div>
           )}
 
-          {/* What was missing */}
           {result.whatWasMissing.length > 0 && (
             <div>
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-400">
@@ -476,7 +595,6 @@ function InProgressScreen({
             </div>
           )}
 
-          {/* Model answer toggle */}
           <div>
             <button
               onClick={() => setShowModelAnswer((s) => !s)}
@@ -496,7 +614,6 @@ function InProgressScreen({
             )}
           </div>
 
-          {/* Next / Finish */}
           <div className="pt-2">
             <button
               onClick={handleNext}
@@ -538,6 +655,7 @@ function ReportScreen({
   onRetake: () => void;
   onChangeTopic: () => void;
 }) {
+  const isNexusPay = topic === 'NexusPay';
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const avgScore =
@@ -545,8 +663,13 @@ function ReportScreen({
       ? Math.round((entries.reduce((s, e) => s + e.result.score, 0) / entries.length) * 10) / 10
       : 0;
 
-  const label =
-    avgScore >= 8
+  const label = isNexusPay
+    ? avgScore >= 8
+      ? 'You can confidently discuss NexusPay in an interview. Apply to Qonto.'
+      : avgScore >= 6
+        ? 'Solid foundation. Review the weak areas below before your next interview.'
+        : 'Keep studying NexusPay. Focus on the NexusPay Deep Dive course.'
+    : avgScore >= 8
       ? 'Strong performance'
       : avgScore >= 6
         ? 'Good  -  a few gaps to address'
@@ -563,11 +686,9 @@ function ReportScreen({
           ? 'text-amber-400'
           : 'text-red-400';
 
-  // Deduplicate weaknesses
   const allMissing = entries.flatMap((e) => e.result.whatWasMissing);
   const missingCounts = new Map<string, number>();
   for (const m of allMissing) {
-    // normalise slightly for dedup
     const key = m.trim().toLowerCase().slice(0, 60);
     missingCounts.set(key, (missingCounts.get(key) ?? 0) + 1);
   }
@@ -590,13 +711,26 @@ function ReportScreen({
     <div className="mx-auto max-w-2xl">
       {/* Header */}
       <div className="mb-8 text-center">
-        <p className="mb-1 text-sm text-muted uppercase tracking-wider font-semibold">Interview complete</p>
+        <p className="mb-1 text-sm text-muted uppercase tracking-wider font-semibold">
+          {isNexusPay ? 'NexusPay Interview Complete' : 'Interview complete'}
+        </p>
         <h1 className="mb-3 text-3xl font-bold">{topic} · {difficulty}</h1>
         <div className="flex flex-col items-center gap-2">
           <div className="flex items-center justify-center rounded-full border-4 border-primary/20 bg-primary/10 h-24 w-24">
             <span className="text-4xl font-bold text-primary">{avgScore}</span>
           </div>
+          {isNexusPay && (
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Readiness score</p>
+          )}
           <p className={`text-lg font-semibold ${labelColor}`}>{label}</p>
+          {isNexusPay && avgScore < 6 && (
+            <Link
+              to="/courses/nexuspay"
+              className="mt-1 inline-flex items-center gap-2 rounded-lg bg-violet-400/15 px-4 py-2 text-sm font-semibold text-violet-400 transition hover:bg-violet-400/25"
+            >
+              Go to NexusPay Deep Dive <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
           <p className="text-sm text-muted">{entries.length} questions answered</p>
         </div>
       </div>
@@ -629,7 +763,12 @@ function ReportScreen({
               className="flex w-full items-center gap-3 p-4 text-left hover:bg-surface-2 transition"
             >
               <ScoreIcon score={entry.result.score} />
-              <span className="flex-1 truncate text-sm font-medium">{entry.question}</span>
+              <div className="flex-1 min-w-0">
+                <span className="block truncate text-sm font-medium">{entry.question}</span>
+                {entry.focusArea && (
+                  <span className="text-xs text-violet-400">{entry.focusArea}</span>
+                )}
+              </div>
               <ScoreBadge score={entry.result.score} />
               {expandedIndex === i ? (
                 <ChevronUp className="h-4 w-4 shrink-0 text-muted" />
@@ -697,18 +836,23 @@ function ReportScreen({
 export function InterviewSimulator() {
   const { settings } = useProgressState();
   const apiKey = settings.geminiApiKey ?? '';
+  const location = useLocation();
+
+  const initialTopic = (location.state as { topic?: Topic } | null)?.topic ?? undefined;
 
   const [screen, setScreen] = useState<Screen>('setup');
   const [topic, setTopic] = useState<Topic | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>('Senior');
   const [count, setCount] = useState<QuestionCount>(5);
+  const [focusArea, setFocusArea] = useState<NexusPayFocusArea>('Any');
   const [entries, setEntries] = useState<SessionEntry[]>([]);
   const [sessionKey, setSessionKey] = useState(0);
 
-  function handleStart(t: Topic, d: Difficulty, c: QuestionCount) {
+  function handleStart(t: Topic, d: Difficulty, c: QuestionCount, fa: NexusPayFocusArea) {
     setTopic(t);
     setDifficulty(d);
     setCount(c);
+    setFocusArea(fa);
     setEntries([]);
     setSessionKey((k) => k + 1);
     setScreen('in-progress');
@@ -731,7 +875,9 @@ export function InterviewSimulator() {
 
   return (
     <div>
-      {screen === 'setup' && <SetupScreen onStart={handleStart} />}
+      {screen === 'setup' && (
+        <SetupScreen initialTopic={initialTopic} onStart={handleStart} />
+      )}
 
       {screen === 'in-progress' && topic && (
         <InProgressScreen
@@ -740,6 +886,7 @@ export function InterviewSimulator() {
           difficulty={difficulty}
           totalCount={count}
           apiKey={apiKey}
+          focusArea={focusArea}
           onComplete={handleComplete}
         />
       )}

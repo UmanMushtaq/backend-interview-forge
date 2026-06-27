@@ -1,5 +1,5 @@
-import { useParams, Link } from 'react-router-dom';
-import { Clock, BookOpen, ArrowRight, ArrowLeft, CheckCircle2, Circle, Trophy } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Clock, BookOpen, ArrowRight, ArrowLeft, CheckCircle2, Circle, Trophy, BrainCircuit } from 'lucide-react';
 import { COURSES, courseConfigById } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
 import { useProgressState } from '../hooks/useProgress';
@@ -8,6 +8,7 @@ import { courseProgress, readSetFor } from '../lib/courses';
 
 export function CourseOverview() {
   const { courseId = '' } = useParams();
+  const navigate = useNavigate();
   const state = useProgressState();
   const course = courseConfigById[courseId];
   const mod = moduleById[courseId];
@@ -124,6 +125,32 @@ export function CourseOverview() {
           })}
         </div>
       </div>
+
+      {/* NexusPay Mock Interview CTA */}
+      {courseId === 'nexuspay' && (
+        <div className="rounded-xl border border-violet-400/30 bg-violet-400/5 p-5">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-400/10">
+              <BrainCircuit className="h-6 w-6 text-violet-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold">Test yourself in a mock interview</h3>
+              <p className="mt-1 text-sm text-muted">
+                Gemini plays a senior engineer from Qonto and asks you hard questions about NexusPay.
+                No generic questions — only questions about your actual architecture.
+              </p>
+              <button
+                onClick={() => navigate('/interview-simulator', { state: { topic: 'NexusPay' } })}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-violet-400/20 px-4 py-2 text-sm font-semibold text-violet-400 transition hover:bg-violet-400/30"
+              >
+                <BrainCircuit className="h-4 w-4" />
+                Start NexusPay Mock Interview
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Prev / next course */}
       <div className="flex items-center justify-between gap-3 border-t border-border pt-5">
