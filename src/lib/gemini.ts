@@ -53,6 +53,9 @@ export async function generateChapterQuiz(
   });
 
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
+    }
     const body = await response.text().catch(() => '');
     throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
   }
@@ -117,6 +120,9 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   });
 
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
+    }
     const body = await response.text().catch(() => '');
     throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
   }
@@ -187,6 +193,9 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   });
 
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
+    }
     const body = await response.text().catch(() => '');
     throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
   }
@@ -263,6 +272,9 @@ Return ONLY valid JSON with this shape:
   });
 
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
+    }
     const body = await response.text().catch(() => '');
     throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
   }
@@ -334,6 +346,9 @@ Return ONLY valid JSON with this shape:
   });
 
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
+    }
     const body = await response.text().catch(() => '');
     throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
   }
