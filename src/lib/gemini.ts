@@ -405,3 +405,32 @@ export async function testGeminiConnection(apiKey: string): Promise<void> {
     maxOutputTokens: 50,
   });
 }
+
+export async function generateWarmupQuestion(
+  apiKey: string,
+  topic: string,
+): Promise<{ question: string; options: string[]; correctIndex: number; explanation: string }> {
+  const prompt = `Generate exactly one multiple-choice backend engineering interview question on the topic: ${topic}. Make it sharp and realistic, the kind of question that gets asked in a 45-minute technical screen. Return ONLY valid JSON with this shape: { "question": "...", "options": ["A","B","C","D"], "correctIndex": 0, "explanation": "..." }`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 512 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (!obj.question || !Array.isArray(obj.options) || typeof obj.correctIndex !== 'number' || !obj.explanation) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    question: String(obj.question),
+    options: (obj.options as unknown[]).map(String),
+    correctIndex: Math.max(0, Math.min(3, Math.round(obj.correctIndex as number))),
+    explanation: String(obj.explanation),
+  };
+}
