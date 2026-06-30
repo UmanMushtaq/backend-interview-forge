@@ -1,6 +1,6 @@
 import type { QuizQuestion } from '../types';
 
-const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-8b'];
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 let _workingModel: string | null = null;
@@ -12,11 +12,39 @@ async function callGemini(
 ): Promise<string> {
   let lastError: Error | null = null;
 
-  const modelsToTry = _workingModel
-    ? [_workingModel, ...GEMINI_MODELS.filter((m) => m !== _workingModel)]
-    : GEMINI_MODELS;
+  // If a working model is cached, try it first; on failure clear the cache and fall through to the full list
+  if (_workingModel) {
+    const cached = _workingModel;
+    try {
+      const response = await fetch(`${GEMINI_BASE_URL}/${cached}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig,
+        }),
+      });
 
-  for (const model of modelsToTry) {
+      if (response.ok) {
+        const data = await response.json();
+        const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (raw) return raw;
+        lastError = new Error(`Gemini returned an empty response from ${cached}.`);
+      } else {
+        const body = await response.text().catch(() => '');
+        if (response.status === 429) {
+          lastError = new Error('QUOTA_EXCEEDED');
+        } else {
+          lastError = new Error(`Gemini API error ${response.status} on ${cached}: ${body || response.statusText}`);
+        }
+      }
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
+    _workingModel = null;
+  }
+
+  for (const model of GEMINI_MODELS) {
     try {
       const response = await fetch(`${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -27,21 +55,20 @@ async function callGemini(
         }),
       });
 
-      if (response.status === 429) {
-        lastError = new Error('QUOTA_EXCEEDED');
-        continue;
-      }
-
       if (!response.ok) {
         const body = await response.text().catch(() => '');
-        lastError = new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
+        if (response.status === 429) {
+          lastError = new Error('QUOTA_EXCEEDED');
+        } else {
+          lastError = new Error(`Gemini API error ${response.status} on ${model}: ${body || response.statusText}`);
+        }
         continue;
       }
 
       const data = await response.json();
       const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!raw) {
-        lastError = new Error('Gemini returned an empty response.');
+        lastError = new Error(`Gemini returned an empty response from ${model}.`);
         continue;
       }
 
