@@ -1,7 +1,65 @@
 import type { QuizQuestion } from '../types';
 
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-8b'];
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+let _workingModel: string | null = null;
+
+async function callGemini(
+  apiKey: string,
+  prompt: string,
+  generationConfig: { temperature: number; maxOutputTokens: number },
+): Promise<string> {
+  let lastError: Error | null = null;
+
+  const modelsToTry = _workingModel
+    ? [_workingModel, ...GEMINI_MODELS.filter((m) => m !== _workingModel)]
+    : GEMINI_MODELS;
+
+  for (const model of modelsToTry) {
+    try {
+      const response = await fetch(`${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig,
+        }),
+      });
+
+      if (response.status === 429) {
+        lastError = new Error('QUOTA_EXCEEDED');
+        continue;
+      }
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        lastError = new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
+        continue;
+      }
+
+      const data = await response.json();
+      const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!raw) {
+        lastError = new Error('Gemini returned an empty response.');
+        continue;
+      }
+
+      _workingModel = model;
+      return raw;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      continue;
+    }
+  }
+
+  if (lastError?.message === 'QUOTA_EXCEEDED') {
+    throw new Error(
+      'All Gemini models are currently rate limited on this API key. This usually resets at midnight Pacific time. Try a different API key from a separate Google account in Settings, or wait for the daily reset.',
+    );
+  }
+  throw lastError ?? new Error('Gemini request failed for an unknown reason.');
+}
 
 function buildPrompt(
   courseTitle: string,
@@ -42,31 +100,10 @@ export async function generateChapterQuiz(
   previousQuestionIds: string[],
 ): Promise<QuizQuestion[]> {
   const prompt = buildPrompt(courseTitle, chapterTitle, chapterContent, previousQuestionIds);
-
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-    }),
-  });
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
-    }
-    const body = await response.text().catch(() => '');
-    throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
-  }
-
-  const data = await response.json();
-  const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) throw new Error('Gemini returned an empty response.');
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
-    // Strip markdown code fences if present
     const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
     parsed = JSON.parse(cleaned);
   } catch {
@@ -110,26 +147,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   "hints": ["<a nudge the interviewer might give if the candidate is stuck  -  not the full answer>", "<a second nudge>"]
 }`;
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 512 },
-    }),
-  });
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
-    }
-    const body = await response.text().catch(() => '');
-    throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
-  }
-
-  const data = await response.json();
-  const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) throw new Error('Gemini returned an empty response.');
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 512 });
 
   let parsed: unknown;
   try {
@@ -183,26 +201,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   "modelAnswer": "<what a senior engineer would say in 3-5 sentences  -  concrete, precise, no fluff>"
 }`;
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 1024 },
-    }),
-  });
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
-    }
-    const body = await response.text().catch(() => '');
-    throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
-  }
-
-  const data = await response.json();
-  const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) throw new Error('Gemini returned an empty response.');
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -262,26 +261,7 @@ Return ONLY valid JSON with this shape:
   "focusArea": "<the area this question targets, e.g. 'Redis distributed locks' or 'Saga pattern' or 'Kafka consumer groups'>"
 }`;
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 768 },
-    }),
-  });
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
-    }
-    const body = await response.text().catch(() => '');
-    throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
-  }
-
-  const data = await response.json();
-  const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) throw new Error('Gemini returned an empty response.');
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 768 });
 
   let parsed: unknown;
   try {
@@ -336,26 +316,7 @@ Return ONLY valid JSON with this shape:
   "modelAnswer": "<exactly what a senior engineer who built this system would say - precise, uses real command names, mentions specific trade-offs, 4-6 sentences>"
 }`;
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 1024 },
-    }),
-  });
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error('Gemini quota exceeded. Go to Settings and add a new API key from a different Google account at aistudio.google.com/apikey');
-    }
-    const body = await response.text().catch(() => '');
-    throw new Error(`Gemini API error ${response.status}: ${body || response.statusText}`);
-  }
-
-  const data = await response.json();
-  const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!raw) throw new Error('Gemini returned an empty response.');
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -386,17 +347,8 @@ Return ONLY valid JSON with this shape:
 }
 
 export async function testGeminiConnection(apiKey: string): Promise<void> {
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: 'Reply with the single word: OK' }] }],
-      generationConfig: { temperature: 0, maxOutputTokens: 10 },
-    }),
+  await callGemini(apiKey, 'Reply with the single word: OK', {
+    temperature: 0,
+    maxOutputTokens: 10,
   });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`API error ${response.status}: ${body || response.statusText}`);
-  }
 }

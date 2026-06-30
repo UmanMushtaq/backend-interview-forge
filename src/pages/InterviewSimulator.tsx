@@ -473,7 +473,19 @@ function InProgressScreen({
             <span>Generating question…</span>
           </div>
         ) : questionError ? (
-          <div className="text-red-400">{questionError}</div>
+          <div className="text-red-400">
+            {questionError.includes('rate limited') || questionError.includes('QUOTA_EXCEEDED') ? (
+              <>
+                Gemini is rate limited right now. This usually clears up by midnight Pacific time. You can also add a different API key in{' '}
+                <Link to="/settings" className="underline underline-offset-2 hover:opacity-80">
+                  Settings
+                </Link>
+                .
+              </>
+            ) : (
+              questionError
+            )}
+          </div>
         ) : (
           <p className="text-xl font-medium leading-relaxed">{question}</p>
         )}
@@ -548,7 +560,21 @@ function InProgressScreen({
         </button>
       )}
 
-      {scoreError && <p className="mt-3 text-sm text-red-400">{scoreError}</p>}
+      {scoreError && (
+        <p className="mt-3 text-sm text-red-400">
+          {scoreError.includes('rate limited') || scoreError.includes('QUOTA_EXCEEDED') ? (
+            <>
+              Gemini is rate limited right now. This usually clears up by midnight Pacific time. You can also add a different API key in{' '}
+              <Link to="/settings" className="underline underline-offset-2 hover:opacity-80">
+                Settings
+              </Link>
+              .
+            </>
+          ) : (
+            scoreError
+          )}
+        </p>
+      )}
 
       {/* Score result */}
       {result && (

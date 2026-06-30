@@ -122,9 +122,22 @@ export function ChapterQuiz({ courseId, chapterId, courseTitle, chapterTitle, ch
 
   // ── Error ─────────────────────────────────────────────────────────────────
   if (phase === 'error') {
+    const isQuotaError = errorMessage.includes('rate limited') || errorMessage.includes('QUOTA_EXCEEDED');
     return (
       <div className="mt-8 rounded-xl border border-danger/30 bg-surface p-5">
-        <p className="text-sm text-danger">{errorMessage}</p>
+        <p className="text-sm text-danger">
+          {isQuotaError ? (
+            <>
+              Gemini is rate limited right now. This usually clears up by midnight Pacific time. You can also add a different API key in{' '}
+              <Link to="/settings" className="underline underline-offset-2 hover:opacity-80">
+                Settings
+              </Link>
+              .
+            </>
+          ) : (
+            errorMessage
+          )}
+        </p>
         <button
           onClick={start}
           className="mt-3 flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm transition hover:text-text"
