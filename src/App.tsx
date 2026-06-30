@@ -15,6 +15,8 @@ import { SqlList } from './pages/SqlList';
 import { SqlChallenge } from './pages/SqlChallenge';
 import { InterviewQA } from './pages/InterviewQA';
 import { InterviewSimulator } from './pages/InterviewSimulator';
+import { Companies } from './pages/Companies';
+import { CompanyDetail } from './pages/CompanyDetail';
 import { Progress } from './pages/Progress';
 import { Settings } from './pages/Settings';
 import { Bookmarks } from './pages/Bookmarks';
@@ -38,6 +40,8 @@ export default function App() {
         <Route path="/sql/:id" element={<SqlChallenge />} />
         <Route path="/interview" element={<InterviewQA />} />
         <Route path="/interview-simulator" element={<InterviewSimulator />} />
+        <Route path="/companies" element={<Companies />} />
+        <Route path="/companies/:companyId" element={<CompanyDetail />} />
         <Route path="/bookmarks" element={<Bookmarks />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/settings" element={<Settings />} />

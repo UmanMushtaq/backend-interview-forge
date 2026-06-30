@@ -23,6 +23,7 @@ import {
   Bookmark,
   Menu,
   X,
+  Building2,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -40,6 +41,7 @@ const PRACTICE = [
   { to: '/sql', label: 'SQL', icon: Database },
   { to: '/interview-simulator', label: 'Interview Simulator', icon: BrainCircuit },
   { to: '/interview', label: 'Interview Q&A', icon: MessageSquare },
+  { to: '/companies', label: 'Companies', icon: Building2 },
 ];
 
 const ACCOUNT = [
@@ -58,6 +60,7 @@ const SECTION_LABELS: Record<string, string> = {
   settings: 'Settings',
   quiz: 'Quizzes',
   learn: 'Learn',
+  companies: 'Companies',
 };
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
