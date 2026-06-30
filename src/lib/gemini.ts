@@ -5,6 +5,52 @@ const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models
 
 let _workingModel: string | null = null;
 
+async function tryModel(
+  apiKey: string,
+  model: string,
+  prompt: string,
+  generationConfig: { temperature: number; maxOutputTokens: number },
+): Promise<{ raw: string } | { error: Error; maxTokens?: boolean }> {
+  try {
+    const response = await fetch(`${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      if (response.status === 429) {
+        return { error: new Error('QUOTA_EXCEEDED') };
+      }
+      return { error: new Error(`Gemini API error ${response.status} on ${model}: ${body || response.statusText}`) };
+    }
+
+    const data = await response.json();
+    const candidate = data?.candidates?.[0];
+    const raw: string | undefined = candidate?.content?.parts?.[0]?.text;
+
+    if (!raw) {
+      console.error(`[gemini] No text from ${model}:`, JSON.stringify(data));
+      const finishReason: string = candidate?.finishReason ?? 'UNKNOWN';
+      const promptFeedback: string | undefined = data?.promptFeedback?.blockReason;
+      return {
+        error: new Error(
+          `Gemini returned no text from ${model}. finishReason: ${finishReason}${promptFeedback ? `, blockReason: ${promptFeedback}` : ''}`,
+        ),
+        maxTokens: finishReason === 'MAX_TOKENS',
+      };
+    }
+
+    return { raw };
+  } catch (err) {
+    return { error: err instanceof Error ? err : new Error(String(err)) };
+  }
+}
+
 async function callGemini(
   apiKey: string,
   prompt: string,
@@ -15,68 +61,45 @@ async function callGemini(
   // If a working model is cached, try it first; on failure clear the cache and fall through to the full list
   if (_workingModel) {
     const cached = _workingModel;
-    try {
-      const response = await fetch(`${GEMINI_BASE_URL}/${cached}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (raw) return raw;
-        lastError = new Error(`Gemini returned an empty response from ${cached}.`);
-      } else {
-        const body = await response.text().catch(() => '');
-        if (response.status === 429) {
-          lastError = new Error('QUOTA_EXCEEDED');
-        } else {
-          lastError = new Error(`Gemini API error ${response.status} on ${cached}: ${body || response.statusText}`);
-        }
-      }
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-    }
     _workingModel = null;
+    const result = await tryModel(apiKey, cached, prompt, generationConfig);
+    if ('raw' in result) {
+      _workingModel = cached;
+      return result.raw;
+    }
+    lastError = result.error;
+    // If MAX_TOKENS, retry cached model with doubled token limit before falling through
+    if (result.maxTokens) {
+      const retry = await tryModel(apiKey, cached, prompt, {
+        ...generationConfig,
+        maxOutputTokens: generationConfig.maxOutputTokens * 2,
+      });
+      if ('raw' in retry) {
+        _workingModel = cached;
+        return retry.raw;
+      }
+      lastError = retry.error;
+    }
   }
 
   for (const model of GEMINI_MODELS) {
-    try {
-      const response = await fetch(`${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig,
-        }),
-      });
-
-      if (!response.ok) {
-        const body = await response.text().catch(() => '');
-        if (response.status === 429) {
-          lastError = new Error('QUOTA_EXCEEDED');
-        } else {
-          lastError = new Error(`Gemini API error ${response.status} on ${model}: ${body || response.statusText}`);
-        }
-        continue;
-      }
-
-      const data = await response.json();
-      const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!raw) {
-        lastError = new Error(`Gemini returned an empty response from ${model}.`);
-        continue;
-      }
-
+    const result = await tryModel(apiKey, model, prompt, generationConfig);
+    if ('raw' in result) {
       _workingModel = model;
-      return raw;
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      continue;
+      return result.raw;
+    }
+    lastError = result.error;
+    // If MAX_TOKENS, retry this model once with doubled token limit before moving on
+    if (result.maxTokens) {
+      const retry = await tryModel(apiKey, model, prompt, {
+        ...generationConfig,
+        maxOutputTokens: generationConfig.maxOutputTokens * 2,
+      });
+      if ('raw' in retry) {
+        _workingModel = model;
+        return retry.raw;
+      }
+      lastError = retry.error;
     }
   }
 
@@ -228,7 +251,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   "modelAnswer": "<what a senior engineer would say in 3-5 sentences  -  concrete, precise, no fluff>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
@@ -288,7 +311,7 @@ Return ONLY valid JSON with this shape:
   "focusArea": "<the area this question targets, e.g. 'Redis distributed locks' or 'Saga pattern' or 'Kafka consumer groups'>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 768 });
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -343,7 +366,7 @@ Return ONLY valid JSON with this shape:
   "modelAnswer": "<exactly what a senior engineer who built this system would say - precise, uses real command names, mentions specific trade-offs, 4-6 sentences>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
