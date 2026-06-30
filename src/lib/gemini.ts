@@ -17,7 +17,10 @@ async function tryModel(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig,
+        generationConfig: {
+          ...generationConfig,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
     });
 
@@ -197,7 +200,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   "hints": ["<a nudge the interviewer might give if the candidate is stuck  -  not the full answer>", "<a second nudge>"]
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 512 });
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -311,7 +314,7 @@ Return ONLY valid JSON with this shape:
   "focusArea": "<the area this question targets, e.g. 'Redis distributed locks' or 'Saga pattern' or 'Kafka consumer groups'>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 1024 });
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 1536 });
 
   let parsed: unknown;
   try {
@@ -399,6 +402,6 @@ Return ONLY valid JSON with this shape:
 export async function testGeminiConnection(apiKey: string): Promise<void> {
   await callGemini(apiKey, 'Reply with the single word: OK', {
     temperature: 0,
-    maxOutputTokens: 10,
+    maxOutputTokens: 50,
   });
 }
