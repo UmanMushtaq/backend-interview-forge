@@ -24,6 +24,7 @@ import {
   Menu,
   X,
   Building2,
+  FileText,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -46,6 +47,7 @@ const PRACTICE = [
 
 const ACCOUNT = [
   { to: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
+  { to: '/cv-assistant', label: 'CV Assistant', icon: FileText },
   { to: '/progress', label: 'Progress', icon: BarChart3 },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -61,6 +63,7 @@ const SECTION_LABELS: Record<string, string> = {
   quiz: 'Quizzes',
   learn: 'Learn',
   companies: 'Companies',
+  'cv-assistant': 'CV Assistant',
 };
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>

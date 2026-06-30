@@ -406,6 +406,67 @@ export async function testGeminiConnection(apiKey: string): Promise<void> {
   });
 }
 
+export async function reviewCV(
+  apiKey: string,
+  cvText: string,
+  targetCompany: string,
+): Promise<{ score: number; strengths: string[]; weaknesses: string[]; suggestions: string[] }> {
+  const prompt = `You are a senior technical recruiter at a European fintech company reviewing a CV for a Senior Backend Engineer role. The target company is ${targetCompany}. Review this CV text and give honest, specific feedback. Score it 0-10 on how well it would pass an ATS screen and a human recruiter glance for this kind of role.
+
+CV text:
+"""
+${cvText}
+"""
+
+Return ONLY valid JSON with this shape:
+{
+  "score": <0-10 integer>,
+  "strengths": ["<specific strength 1>", "<specific strength 2>"],
+  "weaknesses": ["<specific weakness, be honest, do not sugarcoat>"],
+  "suggestions": ["<specific actionable fix the candidate can make today>"]
+}`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    typeof obj.score !== 'number' ||
+    !Array.isArray(obj.strengths) ||
+    !Array.isArray(obj.weaknesses) ||
+    !Array.isArray(obj.suggestions)
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    score: Math.max(0, Math.min(10, Math.round(obj.score as number))),
+    strengths: (obj.strengths as unknown[]).map(String),
+    weaknesses: (obj.weaknesses as unknown[]).map(String),
+    suggestions: (obj.suggestions as unknown[]).map(String),
+  };
+}
+
+export async function generateCoverLetter(
+  apiKey: string,
+  cvSummary: string,
+  companyName: string,
+  roleTitle: string,
+  tone: 'formal' | 'direct' | 'enthusiastic',
+): Promise<string> {
+  const prompt = `Write a cover letter for a ${roleTitle} position at ${companyName}. The candidate background: ${cvSummary}. Tone: ${tone}. Rules: under 250 words, no generic filler phrases like 'I am writing to express my interest', no placeholder brackets like [Company Name] or [Your Name], use the actual company name directly, be specific about why this candidate fits this company based on their actual experience, no markdown formatting, no quotation marks around the letter. Return only the cover letter text with no preamble.`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
+  return raw.trim();
+}
+
 export async function generateWarmupQuestion(
   apiKey: string,
   topic: string,
