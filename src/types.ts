@@ -144,7 +144,7 @@ export interface InterviewProgressEntry {
 export interface StudyHistoryEntry {
   minutesSpent: number;
   questionsAnswered: number;
-  chaptersRead?: number;
+  chaptersRead: number;
 }
 
 export type ThemeMode = 'dark' | 'light';

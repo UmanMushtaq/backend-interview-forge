@@ -107,7 +107,7 @@ export function todayKey(date: Date = new Date()): string {
 
 function bumpStudyToday(s: ProgressState, questions: number, minutes: number, chapters = 0): ProgressState {
   const key = todayKey();
-  const prev = s.studyHistory[key] ?? { minutesSpent: 0, questionsAnswered: 0 };
+  const prev = s.studyHistory[key] ?? { minutesSpent: 0, questionsAnswered: 0, chaptersRead: 0 };
   return {
     ...s,
     studyHistory: {

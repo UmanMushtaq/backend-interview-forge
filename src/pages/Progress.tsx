@@ -89,7 +89,7 @@ export function Progress() {
   const activeDays = Object.entries(state.studyHistory).filter(
     ([key, entry]) =>
       key >= ninetyDaysAgoKey &&
-      (entry.questionsAnswered > 0 || (entry.chaptersRead ?? 0) > 0),
+      (entry.questionsAnswered > 0 || entry.chaptersRead > 0),
   ).length;
 
   return (

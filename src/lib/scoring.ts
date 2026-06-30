@@ -100,7 +100,7 @@ export interface StreakInfo {
 export function computeStreaks(studyHistory: Record<string, StudyHistoryEntry>): StreakInfo {
   const active = (key: string): boolean => {
     const e = studyHistory[key];
-    return !!e && (e.questionsAnswered > 0 || (e.chaptersRead ?? 0) > 0);
+    return !!e && (e.questionsAnswered > 0 || e.chaptersRead > 0);
   };
 
   const keys = Object.keys(studyHistory).filter(active).sort();
