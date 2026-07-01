@@ -190,6 +190,8 @@ export interface ModuleProgress {
   lastAttemptAt: number;
   /** Recently-asked question ids, so retakes rotate to fresh questions. */
   seenQuestionIds: string[];
+  /** lessonId -> timestamp of last read, used for spaced repetition. */
+  lessonReadTimestamps?: Record<string, number>;
 }
 
 export interface LastActivity {
