@@ -399,6 +399,145 @@ Return ONLY valid JSON with this shape:
   };
 }
 
+export async function askChapterTutor(
+  apiKey: string,
+  courseTitle: string,
+  chapterTitle: string,
+  chapterContent: string,
+  question: string,
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<string> {
+  const prompt = `You are an expert backend engineering tutor helping a Senior NestJS engineer prepare for technical interviews at European fintech companies like Qonto, Alan, and Swan. You are currently helping them understand a chapter from their personal learning platform.
+
+Course: ${courseTitle}
+Chapter: ${chapterTitle}
+
+Chapter content (for context):
+"""
+${chapterContent.slice(0, 3000)}
+"""
+
+Previous conversation:
+${conversationHistory.map((m) => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.content}`).join('\n')}
+
+Student question: ${question}
+
+Answer clearly and specifically. If the question is about a concept in the chapter, explain it differently from how the chapter explains it. Use concrete examples. If relevant, relate the answer to NexusPay or fintech use cases. Keep the answer focused and under 200 words unless more is genuinely needed. Never use em dashes. Never use AI phrases like 'great question', 'certainly', 'of course', 'absolutely'.`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
+  return raw.trim();
+}
+
+export async function generateBehavioralQuestion(
+  apiKey: string,
+  category: string,
+  previousQuestions: string[],
+): Promise<{ question: string; competencies: string[]; followUp: string }> {
+  const prompt = `You are a senior engineering manager at a European fintech company (Qonto, Alan, or Swan) conducting a behavioral interview for a Senior Backend Engineer role. Generate one realistic behavioral interview question for the category: ${category}. Avoid repeating these questions: ${previousQuestions.join(', ')}. Return ONLY valid JSON: { "question": "...", "competencies": ["<competency this tests>"], "followUp": "<one natural follow-up question the interviewer would ask>" }`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 512 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (!obj.question || !Array.isArray(obj.competencies) || !obj.followUp) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    question: String(obj.question),
+    competencies: (obj.competencies as unknown[]).map(String),
+    followUp: String(obj.followUp),
+  };
+}
+
+export async function scoreBehavioralAnswer(
+  apiKey: string,
+  question: string,
+  userAnswer: string,
+  competencies: string[],
+): Promise<{
+  situationScore: number;
+  taskScore: number;
+  actionScore: number;
+  resultScore: number;
+  overallScore: number;
+  verdict: string;
+  whatWasStrong: string[];
+  whatWasMissing: string[];
+  improvedVersion: string;
+}> {
+  const prompt = `You are scoring a behavioral interview answer using the STAR method (Situation, Task, Action, Result). The candidate is a Senior Backend Engineer applying to a European fintech company.
+
+Question: ${question}
+Testing competencies: ${competencies.join(', ')}
+
+Candidate answer:
+"""
+${userAnswer}
+"""
+
+Score each STAR component 0-10. Be honest and specific. A 9-10 means the candidate gave precise, quantified, memorable detail. A 5-6 means it was present but vague. A 1-3 means it was missing or very weak.
+
+Return ONLY valid JSON:
+{
+  "situationScore": <0-10>,
+  "taskScore": <0-10>,
+  "actionScore": <0-10>,
+  "resultScore": <0-10>,
+  "overallScore": <0-10>,
+  "verdict": "<one precise sentence>",
+  "whatWasStrong": ["<specific strong point>"],
+  "whatWasMissing": ["<specific missing or weak point>"],
+  "improvedVersion": "<a rewritten version of the answer that would score 9-10, in first person, using the candidate's domain - backend engineering, fintech, NexusPay - as the example context. 3-5 sentences.>"
+}`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.3, maxOutputTokens: 2048 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    typeof obj.situationScore !== 'number' ||
+    typeof obj.taskScore !== 'number' ||
+    typeof obj.actionScore !== 'number' ||
+    typeof obj.resultScore !== 'number' ||
+    typeof obj.overallScore !== 'number' ||
+    !obj.verdict ||
+    !Array.isArray(obj.whatWasStrong) ||
+    !Array.isArray(obj.whatWasMissing) ||
+    !obj.improvedVersion
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  const clamp = (n: number) => Math.max(0, Math.min(10, Math.round(n)));
+
+  return {
+    situationScore: clamp(obj.situationScore as number),
+    taskScore: clamp(obj.taskScore as number),
+    actionScore: clamp(obj.actionScore as number),
+    resultScore: clamp(obj.resultScore as number),
+    overallScore: clamp(obj.overallScore as number),
+    verdict: String(obj.verdict),
+    whatWasStrong: (obj.whatWasStrong as unknown[]).map(String),
+    whatWasMissing: (obj.whatWasMissing as unknown[]).map(String),
+    improvedVersion: String(obj.improvedVersion),
+  };
+}
+
 export async function testGeminiConnection(apiKey: string): Promise<void> {
   await callGemini(apiKey, 'Reply with the single word: OK', {
     temperature: 0,

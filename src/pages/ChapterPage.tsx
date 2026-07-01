@@ -7,6 +7,7 @@ import { markLessonRead, markLessonUnread, toggleBookmark, getBookmarks } from '
 import { readSetFor, readingMinutes, keyTakeaway } from '../lib/courses';
 import { Markdown } from '../components/Markdown';
 import { ChapterQuiz } from '../components/ChapterQuiz';
+import { ChapterTutor } from '../components/ChapterTutor';
 
 export function ChapterPage() {
   const { courseId = '', chapterId = '' } = useParams();
@@ -104,6 +105,15 @@ export function ChapterPage() {
               <p className="text-sm leading-relaxed text-text/90">{takeaway}</p>
             </div>
           )}
+
+          {/* AI tutor */}
+          <ChapterTutor
+            key={chapterId}
+            apiKey={state.settings.geminiApiKey ?? ''}
+            courseTitle={course.title}
+            chapterTitle={lesson.title}
+            chapterContent={lesson.content}
+          />
 
           {/* AI chapter quiz */}
           <ChapterQuiz

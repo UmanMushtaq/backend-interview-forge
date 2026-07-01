@@ -261,7 +261,17 @@ export function markLessonUnread(moduleId: string, lessonId: string): void {
 export function markLessonRead(moduleId: string, lessonId: string): void {
   setState((s) => {
     const prev = s.moduleProgress[moduleId] ?? emptyModuleProgress();
-    if (prev.lessonsRead.includes(lessonId)) return s;
+    const now = Date.now();
+    const lessonReadTimestamps = { ...prev.lessonReadTimestamps, [lessonId]: now };
+    if (prev.lessonsRead.includes(lessonId)) {
+      return {
+        ...s,
+        moduleProgress: {
+          ...s.moduleProgress,
+          [moduleId]: { ...prev, lessonReadTimestamps },
+        },
+      };
+    }
     const withModule: ProgressState = {
       ...s,
       moduleProgress: {
@@ -270,6 +280,7 @@ export function markLessonRead(moduleId: string, lessonId: string): void {
           ...prev,
           lessonsRead: [...prev.lessonsRead, lessonId],
           status: prev.status === 'not-started' ? 'learning' : prev.status,
+          lessonReadTimestamps,
         },
       },
       lastActivity: { label: 'Learn', path: `/learn/${moduleId}`, timestamp: Date.now() },

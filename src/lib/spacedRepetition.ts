@@ -1,4 +1,5 @@
-import type { QuizProgressEntry } from '../types';
+import type { QuizProgressEntry, ProgressState, LearnModule } from '../types';
+import type { CourseConfig } from '../data/courseConfig';
 
 export const DAY_MS = 86_400_000;
 
@@ -50,4 +51,57 @@ export function isStruggling(entry: QuizProgressEntry): boolean {
 
 export function isDue(entry: QuizProgressEntry, now: number = Date.now()): boolean {
   return entry.nextReview <= now;
+}
+
+// --- chapter review queue ---------------------------------------------------
+
+export const REVIEW_DUE_DAYS = 7;
+const FALLBACK_STALE_DAYS = 8;
+
+export interface ReviewItem {
+  courseId: string;
+  lessonId: string;
+  courseTitle: string;
+  lessonTitle: string;
+  lastReadAt: number;
+  daysSinceRead: number;
+  dueForReview: boolean;
+}
+
+export function getReviewQueue(
+  state: ProgressState,
+  courses: CourseConfig[],
+  modules: Record<string, LearnModule>,
+): ReviewItem[] {
+  const now = Date.now();
+  const items: ReviewItem[] = [];
+
+  for (const course of courses) {
+    const progress = state.moduleProgress[course.id];
+    if (!progress) continue;
+    const mod = modules[course.id];
+    if (!mod) continue;
+
+    for (const lessonId of progress.lessonsRead) {
+      const lesson = mod.lessons.find((l) => l.id === lessonId);
+      if (!lesson) continue;
+
+      const lastReadAt = progress.lessonReadTimestamps?.[lessonId] ?? now - FALLBACK_STALE_DAYS * DAY_MS;
+      const daysSinceRead = Math.floor((now - lastReadAt) / DAY_MS);
+
+      if (daysSinceRead >= REVIEW_DUE_DAYS) {
+        items.push({
+          courseId: course.id,
+          lessonId,
+          courseTitle: course.title,
+          lessonTitle: lesson.title,
+          lastReadAt,
+          daysSinceRead,
+          dueForReview: true,
+        });
+      }
+    }
+  }
+
+  return items.sort((a, b) => b.daysSinceRead - a.daysSinceRead);
 }

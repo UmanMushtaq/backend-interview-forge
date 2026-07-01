@@ -12,6 +12,7 @@ import {
   BrainCircuit,
   Sparkles,
   Loader2,
+  RotateCcw,
 } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
 import { MetricCard } from '../components/MetricCard';
@@ -26,6 +27,7 @@ import {
   courseProgress,
 } from '../lib/courses';
 import { generateWarmupQuestion } from '../lib/gemini';
+import { getReviewQueue } from '../lib/spacedRepetition';
 
 const STATUS_STYLES: Record<string, string> = {
   mastered: 'bg-success/15 text-success',
@@ -297,6 +299,7 @@ export function Dashboard() {
     : null;
 
   const started = overall.read > 0;
+  const reviewQueue = getReviewQueue(state, COURSES, moduleById);
 
   return (
     <div className="space-y-6">
@@ -397,6 +400,53 @@ export function Dashboard() {
               style={{ width: `${Math.min(100, goalProgress * 100)}%` }}
             />
           </div>
+        </div>
+      )}
+
+      {/* Review queue */}
+      {reviewQueue.length > 0 && (
+        <div className="rounded-xl border border-warning/30 bg-warning/5 p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <RotateCcw className="h-4 w-4 text-warning" />
+            <span className="text-sm font-semibold">Due for review</span>
+            <span className="rounded-full bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning">
+              {reviewQueue.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {reviewQueue.slice(0, 3).map((item) => {
+              const course = courseConfigById[item.courseId];
+              const Icon = course?.icon;
+              return (
+                <div
+                  key={`${item.courseId}-${item.lessonId}`}
+                  className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2.5"
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {Icon && course && <Icon className={`h-4 w-4 shrink-0 ${course.color}`} />}
+                    <div className="min-w-0">
+                      <span className="text-xs text-muted">{item.courseTitle} · </span>
+                      <span className="truncate text-sm font-medium">{item.lessonTitle}</span>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span className="text-xs text-muted">{item.daysSinceRead} days ago</span>
+                    <Link
+                      to={`/courses/${item.courseId}/${item.lessonId}`}
+                      className="text-xs font-semibold text-warning hover:underline"
+                    >
+                      Review now
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {reviewQueue.length > 3 && (
+            <Link to="/review" className="mt-3 inline-block text-xs text-warning hover:underline">
+              and {reviewQueue.length - 3} more due
+            </Link>
+          )}
         </div>
       )}
 

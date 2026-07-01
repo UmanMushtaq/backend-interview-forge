@@ -2,5 +2,3 @@ node_modules/
 dist/
 package-lock.json
 src/data/learn/javascript.ts
-
-# CRITICAL: Always push directly to main. Never create a branch.

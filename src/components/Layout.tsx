@@ -25,6 +25,8 @@ import {
   X,
   Building2,
   FileText,
+  Users,
+  RotateCcw,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -33,6 +35,7 @@ import { computeStreaks } from '../lib/scoring';
 import { COURSES, courseConfigById } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
 import { courseProgress, overallChapterProgress, readSetFor } from '../lib/courses';
+import { getReviewQueue } from '../lib/spacedRepetition';
 import { OnboardingModal } from './OnboardingModal';
 import { GlobalSearch } from './GlobalSearch';
 
@@ -43,6 +46,7 @@ const PRACTICE = [
   { to: '/interview-simulator', label: 'Interview Simulator', icon: BrainCircuit },
   { to: '/interview', label: 'Interview Q&A', icon: MessageSquare },
   { to: '/companies', label: 'Companies', icon: Building2 },
+  { to: '/behavioral', label: 'Behavioral Prep', icon: Users },
 ];
 
 const ACCOUNT = [
@@ -64,6 +68,8 @@ const SECTION_LABELS: Record<string, string> = {
   learn: 'Learn',
   companies: 'Companies',
   'cv-assistant': 'CV Assistant',
+  behavioral: 'Behavioral Prep',
+  review: 'Review Queue',
 };
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
@@ -120,6 +126,7 @@ export function Layout({ children }: { children: ReactNode }) {
   }, [activeCourseId]);
 
   const overall = overallChapterProgress(state);
+  const reviewCount = getReviewQueue(state, COURSES, moduleById).length;
   const streakInfo = computeStreaks(state.studyHistory);
   const streak = streakInfo.current;
   const longestStreak = streakInfo.best;
@@ -246,6 +253,15 @@ export function Layout({ children }: { children: ReactNode }) {
                 </div>
               );
             })}
+            <NavLink to="/review" title="Review Queue" className={navItemClass}>
+              <RotateCcw className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="flex-1 truncate text-left">Review Queue</span>}
+              {reviewCount > 0 && (
+                <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
+                  {reviewCount}
+                </span>
+              )}
+            </NavLink>
           </div>
         </div>
 
@@ -403,6 +419,15 @@ export function Layout({ children }: { children: ReactNode }) {
                     </div>
                   );
                 })}
+                <NavLink to="/review" className={navItemClass}>
+                  <RotateCcw className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 truncate">Review Queue</span>
+                  {reviewCount > 0 && (
+                    <span className="rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
+                      {reviewCount}
+                    </span>
+                  )}
+                </NavLink>
               </div>
             </div>
             <div>

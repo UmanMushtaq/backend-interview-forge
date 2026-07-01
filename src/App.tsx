@@ -21,6 +21,8 @@ import { CVAssistant } from './pages/CVAssistant';
 import { Progress } from './pages/Progress';
 import { Settings } from './pages/Settings';
 import { Bookmarks } from './pages/Bookmarks';
+import { BehavioralPrep } from './pages/BehavioralPrep';
+import { ReviewQueue } from './pages/ReviewQueue';
 
 export default function App() {
   return (
@@ -45,6 +47,8 @@ export default function App() {
         <Route path="/companies/:companyId" element={<CompanyDetail />} />
         <Route path="/cv-assistant" element={<CVAssistant />} />
         <Route path="/bookmarks" element={<Bookmarks />} />
+        <Route path="/behavioral" element={<BehavioralPrep />} />
+        <Route path="/review" element={<ReviewQueue />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Dashboard />} />
