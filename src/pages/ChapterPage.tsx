@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Clock, CheckCircle2, Circle, Lightbulb, Check, Bookmark } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Clock, CheckCircle2, Circle, Lightbulb, Check, Bookmark, X, Loader2 } from 'lucide-react';
 import { courseConfigById } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
 import { useProgressState } from '../hooks/useProgress';
@@ -8,6 +9,16 @@ import { readSetFor, readingMinutes, keyTakeaway } from '../lib/courses';
 import { Markdown } from '../components/Markdown';
 import { ChapterQuiz } from '../components/ChapterQuiz';
 import { ChapterTutor } from '../components/ChapterTutor';
+import { explainSelectedText } from '../lib/gemini';
+
+interface ExplainPopover {
+  x: number;
+  y: number;
+  text: string;
+  loading: boolean;
+  explanation: string;
+  error: string;
+}
 
 export function ChapterPage() {
   const { courseId = '', chapterId = '' } = useParams();
@@ -17,6 +28,79 @@ export function ChapterPage() {
   const lessons = mod?.lessons ?? [];
   const index = lessons.findIndex((l) => l.id === chapterId);
   const lesson = index >= 0 ? lessons[index] : undefined;
+
+  const articleRef = useRef<HTMLDivElement>(null);
+  const [explainButton, setExplainButton] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [popover, setPopover] = useState<ExplainPopover | null>(null);
+  const apiKey = state.settings.geminiApiKey ?? '';
+
+  useEffect(() => {
+    setExplainButton(null);
+    setPopover(null);
+  }, [chapterId]);
+
+  useEffect(() => {
+    function onMouseUp(e: MouseEvent) {
+      const target = e.target as Node;
+      // Clicks on the floating button / popover shouldn't clear the selection state.
+      if ((target as HTMLElement).closest?.('[data-explain-ui]')) return;
+
+      const selection = window.getSelection();
+      const text = selection?.toString().trim() ?? '';
+      const container = articleRef.current;
+
+      if (!selection || !container || text.length < 10 || text.length > 500 || selection.rangeCount === 0) {
+        setExplainButton(null);
+        setPopover(null);
+        return;
+      }
+
+      const range = selection.getRangeAt(0);
+      const anchorNode = selection.anchorNode;
+      if (!anchorNode || !container.contains(anchorNode)) {
+        setExplainButton(null);
+        setPopover(null);
+        return;
+      }
+
+      const rect = range.getBoundingClientRect();
+      setExplainButton({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+        text,
+      });
+      setPopover(null);
+    }
+
+    document.addEventListener('mouseup', onMouseUp);
+    return () => document.removeEventListener('mouseup', onMouseUp);
+  }, []);
+
+  async function handleExplain() {
+    if (!explainButton || !course || !lesson) return;
+    const { x, y, text } = explainButton;
+    setPopover({ x, y, text, loading: true, explanation: '', error: '' });
+    setExplainButton(null);
+    try {
+      const explanation = await explainSelectedText(apiKey, text, course.title, lesson.title);
+      setPopover({ x, y, text, loading: false, explanation, error: '' });
+    } catch (err) {
+      setPopover({
+        x,
+        y,
+        text,
+        loading: false,
+        explanation: '',
+        error: err instanceof Error ? err.message : 'Failed to explain this text.',
+      });
+    }
+  }
+
+  function closePopover() {
+    setPopover(null);
+    setExplainButton(null);
+    window.getSelection()?.removeAllRanges();
+  }
 
   if (!course || !mod || !lesson) {
     return (
@@ -92,9 +176,51 @@ export function ChapterPage() {
 
           <h1 className="text-2xl font-bold tracking-tight">{lesson.title}</h1>
 
-          <div className="mt-5">
+          <div ref={articleRef} className="mt-5">
             <Markdown>{lesson.content}</Markdown>
           </div>
+
+          {/* Floating "Explain" button on text selection */}
+          {explainButton && apiKey && (
+            <button
+              data-explain-ui
+              onClick={handleExplain}
+              style={{ position: 'fixed', left: explainButton.x, top: explainButton.y }}
+              className="z-50 flex -translate-x-1/2 -translate-y-[calc(100%+8px)] items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg transition hover:opacity-90"
+            >
+              <Lightbulb className="h-3.5 w-3.5" /> Explain
+            </button>
+          )}
+
+          {/* Explanation popover */}
+          {popover && (
+            <div
+              data-explain-ui
+              style={{ position: 'fixed', left: popover.x, top: popover.y }}
+              className="z-50 w-80 max-w-[90vw] -translate-x-1/2 rounded-xl border border-border bg-surface p-4 shadow-xl"
+            >
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                  <Lightbulb className="h-3.5 w-3.5" /> Explanation
+                </div>
+                <button onClick={closePopover} className="text-muted transition hover:text-text" aria-label="Close">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {popover.loading && (
+                <div className="flex items-center gap-2 text-sm text-muted">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking...
+                </div>
+              )}
+
+              {popover.error && !popover.loading && <p className="text-sm text-danger">{popover.error}</p>}
+
+              {popover.explanation && !popover.loading && (
+                <p className="text-sm leading-relaxed text-text/90">{popover.explanation}</p>
+              )}
+            </div>
+          )}
 
           {/* Key takeaway callout */}
           {takeaway && (

@@ -23,6 +23,8 @@ import { Settings } from './pages/Settings';
 import { Bookmarks } from './pages/Bookmarks';
 import { BehavioralPrep } from './pages/BehavioralPrep';
 import { ReviewQueue } from './pages/ReviewQueue';
+import { Roadmap } from './pages/Roadmap';
+import { Flashcards } from './pages/Flashcards';
 
 export default function App() {
   return (
@@ -49,6 +51,8 @@ export default function App() {
         <Route path="/bookmarks" element={<Bookmarks />} />
         <Route path="/behavioral" element={<BehavioralPrep />} />
         <Route path="/review" element={<ReviewQueue />} />
+        <Route path="/roadmap" element={<Roadmap />} />
+        <Route path="/flashcards" element={<Flashcards />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Dashboard />} />

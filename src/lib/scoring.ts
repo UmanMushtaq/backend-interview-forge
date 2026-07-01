@@ -1,6 +1,8 @@
-import type { ProgressState, QuizQuestion, QuizProgressEntry, StudyHistoryEntry } from '../types';
+import type { ProgressState, QuizQuestion, QuizProgressEntry, StudyHistoryEntry, LearnModule } from '../types';
 import { isDue, isMastered, isStruggling, DAY_MS } from './spacedRepetition';
 import { todayKey } from './storage';
+import { LEARN_MODULES } from '../data/learn';
+import { COURSES, type CourseConfig } from '../data/courseConfig';
 
 export function pct(part: number, whole: number): number {
   if (whole <= 0) return 0;
@@ -137,4 +139,57 @@ export function totalQuestionsAnswered(state: ProgressState): number {
 
 export function totalCodingSolved(state: ProgressState): number {
   return Object.values(state.codingProgress).filter((c) => c.solved).length;
+}
+
+export interface WeakSpot {
+  courseId: string;
+  courseTitle: string;
+  lessonTitle?: string;
+  reason: 'low-quiz-score' | 'failed-multiple-times' | 'never-quizzed';
+  score?: number;
+  attempts?: number;
+}
+
+export function getWeakSpots(
+  state: ProgressState,
+  modules: LearnModule[] = LEARN_MODULES,
+  configs: CourseConfig[] = COURSES,
+): WeakSpot[] {
+  const configById = Object.fromEntries(configs.map((c) => [c.id, c]));
+
+  const needsReview: WeakSpot[] = [];
+  const lowScore: WeakSpot[] = [];
+  const neverQuizzed: WeakSpot[] = [];
+
+  for (const mod of modules) {
+    const progress = state.moduleProgress[mod.id];
+    const config = configById[mod.id];
+    if (!progress || !config) continue;
+
+    if (progress.status === 'needs-review') {
+      needsReview.push({
+        courseId: mod.id,
+        courseTitle: config.title,
+        reason: 'failed-multiple-times',
+        score: progress.lastScore,
+      });
+    } else if (progress.bestScore > 0 && progress.bestScore < 60) {
+      lowScore.push({
+        courseId: mod.id,
+        courseTitle: config.title,
+        reason: 'low-quiz-score',
+        score: progress.bestScore,
+      });
+    } else if (progress.lessonsRead.length >= 3 && progress.attempts === 0) {
+      neverQuizzed.push({
+        courseId: mod.id,
+        courseTitle: config.title,
+        reason: 'never-quizzed',
+      });
+    }
+  }
+
+  lowScore.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+
+  return [...needsReview, ...lowScore, ...neverQuizzed].slice(0, 5);
 }

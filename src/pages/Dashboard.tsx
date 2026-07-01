@@ -13,10 +13,11 @@ import {
   Sparkles,
   Loader2,
   RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
 import { MetricCard } from '../components/MetricCard';
-import { computeStreaks } from '../lib/scoring';
+import { computeStreaks, getWeakSpots } from '../lib/scoring';
 import { todayKey } from '../lib/storage';
 import { COURSES, courseConfigById } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
@@ -300,6 +301,14 @@ export function Dashboard() {
 
   const started = overall.read > 0;
   const reviewQueue = getReviewQueue(state, COURSES, moduleById);
+  const weakSpots = getWeakSpots(state);
+
+  const reasonLabel = (spot: (typeof weakSpots)[number]) =>
+    spot.reason === 'failed-multiple-times'
+      ? 'Failed quiz'
+      : spot.reason === 'low-quiz-score'
+        ? `Low score: ${spot.score}%`
+        : 'Quiz pending';
 
   return (
     <div className="space-y-6">
@@ -445,6 +454,50 @@ export function Dashboard() {
           {reviewQueue.length > 3 && (
             <Link to="/review" className="mt-3 inline-block text-xs text-warning hover:underline">
               and {reviewQueue.length - 3} more due
+            </Link>
+          )}
+        </div>
+      )}
+
+      {/* Knowledge gaps */}
+      {weakSpots.length > 0 && (
+        <div className="rounded-xl border border-danger/30 bg-danger/5 p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-danger" />
+            <span className="text-sm font-semibold">Knowledge gaps</span>
+            <span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-semibold text-danger">
+              {weakSpots.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {weakSpots.slice(0, 3).map((spot) => {
+              const course = courseConfigById[spot.courseId];
+              const Icon = course?.icon;
+              return (
+                <div
+                  key={spot.courseId}
+                  className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2.5"
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {Icon && course && <Icon className={`h-4 w-4 shrink-0 ${course.color}`} />}
+                    <div className="min-w-0">
+                      <span className="truncate text-sm font-medium">{spot.courseTitle}</span>
+                      <span className="ml-2 text-xs text-danger">{reasonLabel(spot)}</span>
+                    </div>
+                  </div>
+                  <Link
+                    to={`/courses/${spot.courseId}`}
+                    className="shrink-0 rounded-lg bg-danger/15 px-3 py-1.5 text-xs font-semibold text-danger transition hover:bg-danger/25"
+                  >
+                    Fix it
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+          {weakSpots.length > 3 && (
+            <Link to="/progress" className="mt-3 inline-block text-xs text-danger hover:underline">
+              and {weakSpots.length - 3} more
             </Link>
           )}
         </div>

@@ -634,3 +634,56 @@ export async function generateWarmupQuestion(
     explanation: String(obj.explanation),
   };
 }
+
+export async function generateFlashcards(
+  apiKey: string,
+  courseTitle: string,
+  chapterTitle: string,
+  chapterContent: string,
+): Promise<Array<{ front: string; back: string; example: string }>> {
+  const prompt = `You are creating flashcards for a senior backend engineer studying for technical interviews. Based on this chapter content, generate 6 flashcards. Each flashcard has a front (a key term, concept, or pattern name - 1-8 words), a back (a clear definition - 1-3 sentences, no jargon padding), and an example (one concrete real-world example of where this is used, ideally in a fintech or NestJS context - 1 sentence). Return ONLY valid JSON array: [{ "front": "...", "back": "...", "example": "..." }]
+
+Course: ${courseTitle}
+Chapter: ${chapterTitle}
+
+Chapter content:
+"""
+${chapterContent.slice(0, 6000)}
+"""`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.5, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error('Gemini did not return a flashcard array. Try again.');
+  }
+
+  return (parsed as Record<string, unknown>[]).map((c) => ({
+    front: String(c.front ?? ''),
+    back: String(c.back ?? ''),
+    example: String(c.example ?? ''),
+  }));
+}
+
+export async function explainSelectedText(
+  apiKey: string,
+  selectedText: string,
+  courseTitle: string,
+  chapterTitle: string,
+): Promise<string> {
+  const prompt = `A backend engineer is reading a chapter titled '${chapterTitle}' from a course on '${courseTitle}'. They highlighted this text:
+
+"${selectedText}"
+
+Explain this in a different, clearer way. Use a concrete analogy or real-world example. If it is a technical term or pattern, say what problem it solves and give a one-line code example if helpful. Keep the explanation under 120 words. Never use em dashes. Never use phrases like 'great question', 'certainly', 'of course'.`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 512 });
+  return raw.trim();
+}

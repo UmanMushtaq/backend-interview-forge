@@ -27,6 +27,8 @@ import {
   FileText,
   Users,
   RotateCcw,
+  Map,
+  Layers,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -47,6 +49,7 @@ const PRACTICE = [
   { to: '/interview', label: 'Interview Q&A', icon: MessageSquare },
   { to: '/companies', label: 'Companies', icon: Building2 },
   { to: '/behavioral', label: 'Behavioral Prep', icon: Users },
+  { to: '/flashcards', label: 'Flashcards', icon: Layers },
 ];
 
 const ACCOUNT = [
@@ -70,6 +73,8 @@ const SECTION_LABELS: Record<string, string> = {
   'cv-assistant': 'CV Assistant',
   behavioral: 'Behavioral Prep',
   review: 'Review Queue',
+  roadmap: 'Roadmap',
+  flashcards: 'Flashcards',
 };
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
@@ -179,6 +184,10 @@ export function Layout({ children }: { children: ReactNode }) {
             <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Courses</p>
           )}
           <div className="space-y-0.5">
+            <NavLink to="/roadmap" title="Roadmap" className={navItemClass}>
+              <Map className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="flex-1 truncate text-left">Roadmap</span>}
+            </NavLink>
             {COURSES.map((course) => {
               const Icon = course.icon;
               const isActiveCourse = activeCourseId === course.id;
@@ -376,6 +385,10 @@ export function Layout({ children }: { children: ReactNode }) {
             <div>
               <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Courses</p>
               <div className="space-y-0.5">
+                <NavLink to="/roadmap" className={navItemClass}>
+                  <Map className="h-4 w-4 shrink-0" />
+                  <span className="flex-1 truncate">Roadmap</span>
+                </NavLink>
                 {COURSES.map((course) => {
                   const Icon = course.icon;
                   const isActiveCourse = activeCourseId === course.id;
