@@ -29,6 +29,11 @@ import {
   RotateCcw,
   Map,
   Layers,
+  DollarSign,
+  ClipboardList,
+  Pencil,
+  Flag,
+  ClipboardCheck,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -50,11 +55,16 @@ const PRACTICE = [
   { to: '/companies', label: 'Companies', icon: Building2 },
   { to: '/behavioral', label: 'Behavioral Prep', icon: Users },
   { to: '/flashcards', label: 'Flashcards', icon: Layers },
+  { to: '/take-home', label: 'Take-home Sim', icon: ClipboardList },
+  { to: '/design-interview', label: 'Design Interview', icon: Pencil },
 ];
 
 const ACCOUNT = [
   { to: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
   { to: '/cv-assistant', label: 'CV Assistant', icon: FileText },
+  { to: '/salary', label: 'Salary Negotiation', icon: DollarSign },
+  { to: '/france-guide', label: 'France Guide', icon: Flag },
+  { to: '/debrief', label: 'Interview Debrief', icon: ClipboardCheck },
   { to: '/progress', label: 'Progress', icon: BarChart3 },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -75,6 +85,11 @@ const SECTION_LABELS: Record<string, string> = {
   review: 'Review Queue',
   roadmap: 'Roadmap',
   flashcards: 'Flashcards',
+  salary: 'Salary Negotiation',
+  'take-home': 'Take-home Sim',
+  'design-interview': 'Design Interview',
+  'france-guide': 'France Guide',
+  debrief: 'Interview Debrief',
 };
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>

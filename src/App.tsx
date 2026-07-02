@@ -25,6 +25,11 @@ import { BehavioralPrep } from './pages/BehavioralPrep';
 import { ReviewQueue } from './pages/ReviewQueue';
 import { Roadmap } from './pages/Roadmap';
 import { Flashcards } from './pages/Flashcards';
+import { SalaryNegotiation } from './pages/SalaryNegotiation';
+import { TakeHome } from './pages/TakeHome';
+import { DesignInterview } from './pages/DesignInterview';
+import { FranceGuide } from './pages/FranceGuide';
+import { InterviewDebrief } from './pages/InterviewDebrief';
 
 export default function App() {
   return (
@@ -53,6 +58,11 @@ export default function App() {
         <Route path="/review" element={<ReviewQueue />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/flashcards" element={<Flashcards />} />
+        <Route path="/salary" element={<SalaryNegotiation />} />
+        <Route path="/take-home" element={<TakeHome />} />
+        <Route path="/design-interview" element={<DesignInterview />} />
+        <Route path="/france-guide" element={<FranceGuide />} />
+        <Route path="/debrief" element={<InterviewDebrief />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Dashboard />} />

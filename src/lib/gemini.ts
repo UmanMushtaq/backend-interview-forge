@@ -687,3 +687,282 @@ Explain this in a different, clearer way. Use a concrete analogy or real-world e
   const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 512 });
   return raw.trim();
 }
+
+export async function getSalaryAdvice(
+  apiKey: string,
+  company: string,
+  role: string,
+  yearsExperience: number,
+  currentExpectation: string,
+  situation: 'first-mention' | 'counter-offer' | 'pushback' | 'competing-offer',
+): Promise<{ strategy: string; exactWords: string; thingsToAvoid: string[]; followUpMoves: string[] }> {
+  const prompt = `You are a senior salary negotiation coach specialising in European tech companies, specifically French fintech. The candidate is a Senior Backend Engineer with ${yearsExperience} years of experience interviewing at ${company} for the role of ${role}. Their current expectation is ${currentExpectation}. The situation is: ${situation}.
+
+Give concrete, actionable advice. Do not give generic tips. Give the exact words to say in this specific situation.
+
+Return ONLY valid JSON:
+{
+  "strategy": "<2-3 sentences explaining the overall approach for this specific situation>",
+  "exactWords": "<the exact script to say or write, in first person, ready to use verbatim>",
+  "thingsToAvoid": ["<specific mistake to avoid in this situation>"],
+  "followUpMoves": ["<what to do or say next depending on their response>"]
+}`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (!obj.strategy || !obj.exactWords || !Array.isArray(obj.thingsToAvoid) || !Array.isArray(obj.followUpMoves)) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    strategy: String(obj.strategy),
+    exactWords: String(obj.exactWords),
+    thingsToAvoid: (obj.thingsToAvoid as unknown[]).map(String),
+    followUpMoves: (obj.followUpMoves as unknown[]).map(String),
+  };
+}
+
+export async function generateTakeHomeAssessment(
+  apiKey: string,
+  company: string,
+  difficulty: string,
+): Promise<{ title: string; context: string; requirements: string[]; constraints: string[]; evaluationCriteria: string[] }> {
+  const prompt = `Generate a realistic take-home coding assessment for a Senior Backend Engineer role at ${company}, difficulty: ${difficulty}. Make it specific to the kind of system ${company} builds (fintech, payments, healthcare tech etc). It should be completable in 3-5 hours.
+
+Return ONLY valid JSON:
+{
+  "title": "<short project title>",
+  "context": "<2-3 sentences of business context explaining what the company needs>",
+  "requirements": ["<functional requirement>"],
+  "constraints": ["<technical constraint or rule>"],
+  "evaluationCriteria": ["<what the reviewer will specifically look for>"]
+}`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    !obj.title ||
+    !obj.context ||
+    !Array.isArray(obj.requirements) ||
+    !Array.isArray(obj.constraints) ||
+    !Array.isArray(obj.evaluationCriteria)
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    title: String(obj.title),
+    context: String(obj.context),
+    requirements: (obj.requirements as unknown[]).map(String),
+    constraints: (obj.constraints as unknown[]).map(String),
+    evaluationCriteria: (obj.evaluationCriteria as unknown[]).map(String),
+  };
+}
+
+export async function scoreTakeHomeApproach(
+  apiKey: string,
+  assessment: { title: string; requirements: string[]; evaluationCriteria: string[] },
+  userApproach: string,
+): Promise<{
+  architectureScore: number;
+  qualityScore: number;
+  communicationScore: number;
+  overallScore: number;
+  strengths: string[];
+  gaps: string[];
+  whatReviewersWouldSay: string;
+  improvedApproach: string;
+}> {
+  const prompt = `You are a senior engineer at a European fintech company reviewing a take-home assessment submission. The assessment was: ${assessment.title}. Requirements: ${assessment.requirements.join(', ')}. Evaluation criteria: ${assessment.evaluationCriteria.join(', ')}.
+
+The candidate's planned approach:
+"""
+${userApproach}
+"""
+
+Score it honestly. 9-10 means production-quality thinking. 7-8 is solid with minor gaps. 5-6 has good ideas but missing key concerns. Below 5 has fundamental gaps.
+
+Return ONLY valid JSON:
+{
+  "architectureScore": <0-10>,
+  "qualityScore": <0-10>,
+  "communicationScore": <0-10>,
+  "overallScore": <0-10>,
+  "strengths": ["<specific strength>"],
+  "gaps": ["<specific gap or missed concern>"],
+  "whatReviewersWouldSay": "<what the engineering team would say in their debrief about this submission, 2-3 sentences>",
+  "improvedApproach": "<a rewritten version of the approach that would score 9-10, specific and technical, 4-6 sentences>"
+}`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.3, maxOutputTokens: 2048 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    typeof obj.architectureScore !== 'number' ||
+    typeof obj.qualityScore !== 'number' ||
+    typeof obj.communicationScore !== 'number' ||
+    typeof obj.overallScore !== 'number' ||
+    !Array.isArray(obj.strengths) ||
+    !Array.isArray(obj.gaps) ||
+    !obj.whatReviewersWouldSay ||
+    !obj.improvedApproach
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  const clamp = (n: number) => Math.max(0, Math.min(10, Math.round(n)));
+
+  return {
+    architectureScore: clamp(obj.architectureScore as number),
+    qualityScore: clamp(obj.qualityScore as number),
+    communicationScore: clamp(obj.communicationScore as number),
+    overallScore: clamp(obj.overallScore as number),
+    strengths: (obj.strengths as unknown[]).map(String),
+    gaps: (obj.gaps as unknown[]).map(String),
+    whatReviewersWouldSay: String(obj.whatReviewersWouldSay),
+    improvedApproach: String(obj.improvedApproach),
+  };
+}
+
+export async function getDesignInterviewResponse(
+  apiKey: string,
+  question: string,
+  conversationHistory: Array<{ role: 'interviewer' | 'candidate'; content: string }>,
+  phase: 'requirements' | 'design' | 'deep-dive' | 'wrap-up',
+): Promise<{ response: string; nextPhase?: string; score?: number; feedback?: string }> {
+  const prompt = `You are a senior engineering interviewer at a European fintech company conducting a system design interview. You are ${phase === 'wrap-up' ? 'wrapping up the interview' : 'in the ' + phase + ' phase'}.
+
+Original question: ${question}
+
+Conversation so far:
+${conversationHistory.map((m) => `${m.role === 'interviewer' ? 'Interviewer' : 'Candidate'}: ${m.content}`).join('\n')}
+
+Your job: Ask ONE sharp follow-up question or probe. Push back if their answer was vague. Challenge their trade-off decisions. If they have not addressed scale, ask about it. If they have not mentioned failure modes, ask about them. If this is the wrap-up phase, give a brief honest assessment of their performance (score 1-10) and 2-3 specific pieces of feedback.
+
+Keep your response concise: 1-3 sentences for follow-up questions, or a short assessment paragraph for wrap-up.
+
+Return ONLY valid JSON:
+{
+  "response": "<your follow-up question or probe or assessment>",
+  "nextPhase": "<only include if you think it is time to move to the next phase: requirements|design|deep-dive|wrap-up>",
+  "score": <only include in wrap-up phase, 0-10>,
+  "feedback": "<only include in wrap-up phase, 2-3 specific pieces of feedback>"
+}`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.6, maxOutputTokens: 512 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (!obj.response) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    response: String(obj.response),
+    nextPhase: obj.nextPhase ? String(obj.nextPhase) : undefined,
+    score: typeof obj.score === 'number' ? Math.max(0, Math.min(10, Math.round(obj.score))) : undefined,
+    feedback: obj.feedback ? String(obj.feedback) : undefined,
+  };
+}
+
+export async function analyzeDebrief(
+  apiKey: string,
+  company: string,
+  role: string,
+  questionsAsked: string,
+  yourAnswers: string,
+  yourFeeling: 'great' | 'okay' | 'struggled',
+): Promise<{
+  analysis: string;
+  whatWentWell: string[];
+  whatToImprove: string[];
+  topicsToStudy: string[];
+  estimatedOutcome: string;
+}> {
+  const prompt = `You are a senior interview coach analysing a candidate's debrief after a technical interview for a ${role} role at ${company}.
+
+Questions asked in the interview:
+"""
+${questionsAsked}
+"""
+
+How the candidate answered (their own account):
+"""
+${yourAnswers}
+"""
+
+Candidate's overall feeling: ${yourFeeling}
+
+Give an honest analysis. Identify specific topics and concepts that came up. Assess where the candidate performed well and where they have gaps. Recommend exactly what to study before a potential next round.
+
+Return ONLY valid JSON:
+{
+  "analysis": "<2-3 sentence overall assessment>",
+  "whatWentWell": ["<specific thing that went well>"],
+  "whatToImprove": ["<specific gap or weak area>"],
+  "topicsToStudy": ["<specific topic to review before the next round>"],
+  "estimatedOutcome": "<honest one-sentence assessment of how likely they are to progress and why>"
+}`;
+
+  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    !obj.analysis ||
+    !Array.isArray(obj.whatWentWell) ||
+    !Array.isArray(obj.whatToImprove) ||
+    !Array.isArray(obj.topicsToStudy) ||
+    !obj.estimatedOutcome
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    analysis: String(obj.analysis),
+    whatWentWell: (obj.whatWentWell as unknown[]).map(String),
+    whatToImprove: (obj.whatToImprove as unknown[]).map(String),
+    topicsToStudy: (obj.topicsToStudy as unknown[]).map(String),
+    estimatedOutcome: String(obj.estimatedOutcome),
+  };
+}
