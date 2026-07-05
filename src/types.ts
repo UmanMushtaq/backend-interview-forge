@@ -156,6 +156,8 @@ export interface Settings {
   onboarded: boolean;
   /** Optional, user-supplied Gemini API key. Stored only on this device. */
   geminiApiKey?: string;
+  geminiApiKey2?: string;
+  geminiApiKey3?: string;
 }
 
 // ---------------------------------------------------------------------------

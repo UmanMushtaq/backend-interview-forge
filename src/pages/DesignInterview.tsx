@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Send } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
-import { getDesignInterviewResponse } from '../lib/gemini';
+import { getDesignInterviewResponse, getApiKeys } from '../lib/gemini';
 
 type Difficulty = 'Mid' | 'Senior' | 'Lead';
 type Phase = 'requirements' | 'design' | 'deep-dive' | 'wrap-up';
@@ -42,7 +42,7 @@ function useElapsed(active: boolean) {
 
 export function DesignInterview() {
   const state = useProgressState();
-  const apiKey = state.settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(state.settings).length > 0;
 
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [customQuestion, setCustomQuestion] = useState('');
@@ -76,7 +76,7 @@ export function DesignInterview() {
     setLoading(true);
     setError('');
     try {
-      const res = await getDesignInterviewResponse(apiKey, q, [], 'requirements');
+      const res = await getDesignInterviewResponse(state.settings, q, [], 'requirements');
       setMessages([{ role: 'interviewer', content: res.response }]);
       if (res.nextPhase && PHASES.includes(res.nextPhase as Phase)) setPhase(res.nextPhase as Phase);
     } catch (err) {
@@ -94,7 +94,7 @@ export function DesignInterview() {
     setError('');
     const targetPhase = forcedPhase ?? phase;
     try {
-      const res = await getDesignInterviewResponse(apiKey, question, history, targetPhase);
+      const res = await getDesignInterviewResponse(state.settings, question, history, targetPhase);
       setMessages((m) => [...m, { role: 'interviewer', content: res.response }]);
       if (targetPhase === 'wrap-up' || res.nextPhase === 'wrap-up') {
         setPhase('wrap-up');
@@ -128,7 +128,7 @@ export function DesignInterview() {
     setError('');
   }
 
-  if (!apiKey) {
+  if (!hasApiKey) {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
         <h1 className="text-2xl font-bold tracking-tight">System Design Interview</h1>

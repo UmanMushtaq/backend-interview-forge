@@ -4,7 +4,7 @@ import { Loader2, Layers } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
 import { COURSES } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
-import { generateFlashcards } from '../lib/gemini';
+import { generateFlashcards, getApiKeys } from '../lib/gemini';
 import { FlashcardDeck } from '../components/FlashcardDeck';
 
 interface Card {
@@ -17,7 +17,7 @@ type Phase = 'setup' | 'loading' | 'session' | 'error';
 
 export function Flashcards() {
   const state = useProgressState();
-  const apiKey = state.settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(state.settings).length > 0;
 
   const [courseId, setCourseId] = useState('');
   const [chapterId, setChapterId] = useState('');
@@ -40,7 +40,7 @@ export function Flashcards() {
     setPhase('loading');
     setError('');
     try {
-      const result = await generateFlashcards(apiKey, course.title, chapter.title, chapter.content);
+      const result = await generateFlashcards(state.settings, course.title, chapter.title, chapter.content);
       setCards(result);
       setPhase('session');
     } catch (err) {
@@ -55,7 +55,7 @@ export function Flashcards() {
     setError('');
   }
 
-  if (!apiKey) {
+  if (!hasApiKey) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-2xl font-bold tracking-tight">Flashcards</h1>

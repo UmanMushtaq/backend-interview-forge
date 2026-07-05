@@ -3,7 +3,15 @@ import type { QuizQuestion } from '../types';
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
+type GeminiKeySettings = { geminiApiKey?: string; geminiApiKey2?: string; geminiApiKey3?: string };
+
+export function getApiKeys(settings: GeminiKeySettings): string[] {
+  return [settings.geminiApiKey, settings.geminiApiKey2, settings.geminiApiKey3]
+    .filter((k): k is string => typeof k === 'string' && k.trim().length > 0);
+}
+
 let _workingModel: string | null = null;
+let _workingKeyIndex: number = 0;
 
 async function tryModel(
   apiKey: string,
@@ -54,64 +62,87 @@ async function tryModel(
   }
 }
 
-async function callGemini(
+async function tryModelWithMaxTokensRetry(
   apiKey: string,
+  model: string,
+  prompt: string,
+  generationConfig: { temperature: number; maxOutputTokens: number },
+): Promise<{ raw: string } | { error: Error }> {
+  const result = await tryModel(apiKey, model, prompt, generationConfig);
+  if ('raw' in result) return result;
+  if (result.maxTokens) {
+    const retry = await tryModel(apiKey, model, prompt, {
+      ...generationConfig,
+      maxOutputTokens: generationConfig.maxOutputTokens * 2,
+    });
+    if ('raw' in retry) return retry;
+    return { error: retry.error };
+  }
+  return { error: result.error };
+}
+
+async function callGemini(
+  apiKeys: string[],
   prompt: string,
   generationConfig: { temperature: number; maxOutputTokens: number },
 ): Promise<string> {
-  let lastError: Error | null = null;
-
-  // If a working model is cached, try it first; on failure clear the cache and fall through to the full list
-  if (_workingModel) {
-    const cached = _workingModel;
-    _workingModel = null;
-    const result = await tryModel(apiKey, cached, prompt, generationConfig);
-    if ('raw' in result) {
-      _workingModel = cached;
-      return result.raw;
-    }
-    lastError = result.error;
-    // If MAX_TOKENS, retry cached model with doubled token limit before falling through
-    if (result.maxTokens) {
-      const retry = await tryModel(apiKey, cached, prompt, {
-        ...generationConfig,
-        maxOutputTokens: generationConfig.maxOutputTokens * 2,
-      });
-      if ('raw' in retry) {
-        _workingModel = cached;
-        return retry.raw;
-      }
-      lastError = retry.error;
-    }
+  if (apiKeys.length === 0) {
+    throw new Error('No Gemini API key configured. Add one in Settings.');
   }
 
-  for (const model of GEMINI_MODELS) {
-    const result = await tryModel(apiKey, model, prompt, generationConfig);
+  let lastError: Error | null = null;
+
+  // If a working key+model is cached, try it first before cycling through everything again.
+  if (_workingModel && _workingKeyIndex < apiKeys.length) {
+    const cachedModel = _workingModel;
+    const cachedKey = apiKeys[_workingKeyIndex];
+    const result = await tryModelWithMaxTokensRetry(cachedKey, cachedModel, prompt, generationConfig);
     if ('raw' in result) {
-      _workingModel = model;
       return result.raw;
     }
     lastError = result.error;
-    // If MAX_TOKENS, retry this model once with doubled token limit before moving on
-    if (result.maxTokens) {
-      const retry = await tryModel(apiKey, model, prompt, {
-        ...generationConfig,
-        maxOutputTokens: generationConfig.maxOutputTokens * 2,
-      });
-      if ('raw' in retry) {
+    // Cached key+model failed; reset the cache and fall through to the full rotation.
+    _workingModel = null;
+    _workingKeyIndex = 0;
+  }
+
+  for (let keyIndex = 0; keyIndex < apiKeys.length; keyIndex++) {
+    const key = apiKeys[keyIndex];
+    let quotaExceededForThisKey = false;
+
+    for (const model of GEMINI_MODELS) {
+      const result = await tryModelWithMaxTokensRetry(key, model, prompt, generationConfig);
+      if ('raw' in result) {
         _workingModel = model;
-        return retry.raw;
+        _workingKeyIndex = keyIndex;
+        return result.raw;
       }
-      lastError = retry.error;
+      lastError = result.error;
+      if (result.error.message === 'QUOTA_EXCEEDED') {
+        quotaExceededForThisKey = true;
+        break;
+      }
     }
+
+    if (quotaExceededForThisKey) continue;
   }
 
   if (lastError?.message === 'QUOTA_EXCEEDED') {
     throw new Error(
-      'All Gemini models are currently rate limited on this API key. This usually resets at midnight Pacific time. Try a different API key from a separate Google account in Settings, or wait for the daily reset.',
+      apiKeys.length > 1
+        ? 'All Gemini models are currently rate limited on every configured API key. This usually resets at midnight Pacific time. Add another key from a separate Google account in Settings, or wait for the daily reset.'
+        : 'All Gemini models are currently rate limited on this API key. This usually resets at midnight Pacific time. Try a different API key from a separate Google account in Settings, or wait for the daily reset.',
     );
   }
   throw lastError ?? new Error('Gemini request failed for an unknown reason.');
+}
+
+export async function callGeminiWithSettings(
+  settings: GeminiKeySettings,
+  prompt: string,
+  generationConfig: { temperature: number; maxOutputTokens: number },
+): Promise<string> {
+  return callGemini(getApiKeys(settings), prompt, generationConfig);
 }
 
 function buildPrompt(
@@ -146,14 +177,14 @@ Return a JSON array (no markdown fences, no extra text) of exactly 5 objects wit
 }
 
 export async function generateChapterQuiz(
-  apiKey: string,
+  settings: GeminiKeySettings,
   courseTitle: string,
   chapterTitle: string,
   chapterContent: string,
   previousQuestionIds: string[],
 ): Promise<QuizQuestion[]> {
   const prompt = buildPrompt(courseTitle, chapterTitle, chapterContent, previousQuestionIds);
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 2048 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.7, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
@@ -180,7 +211,7 @@ export async function generateChapterQuiz(
 }
 
 export async function generateInterviewQuestion(
-  apiKey: string,
+  settings: GeminiKeySettings,
   topic: string,
   difficulty: string,
   previousQuestions: string[],
@@ -200,7 +231,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   "hints": ["<a nudge the interviewer might give if the candidate is stuck  -  not the full answer>", "<a second nudge>"]
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 1024 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.8, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -222,7 +253,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
 }
 
 export async function scoreInterviewAnswer(
-  apiKey: string,
+  settings: GeminiKeySettings,
   question: string,
   topic: string,
   userAnswer: string,
@@ -254,7 +285,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
   "modelAnswer": "<what a senior engineer would say in 3-5 sentences  -  concrete, precise, no fluff>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
@@ -285,7 +316,7 @@ Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape
 }
 
 export async function generateNexusPayQuestion(
-  apiKey: string,
+  settings: GeminiKeySettings,
   difficulty: string,
   previousQuestions: string[],
   focusArea?: string,
@@ -314,7 +345,7 @@ Return ONLY valid JSON with this shape:
   "focusArea": "<the area this question targets, e.g. 'Redis distributed locks' or 'Saga pattern' or 'Kafka consumer groups'>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.8, maxOutputTokens: 1536 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.8, maxOutputTokens: 1536 });
 
   let parsed: unknown;
   try {
@@ -337,7 +368,7 @@ Return ONLY valid JSON with this shape:
 }
 
 export async function scoreNexusPayAnswer(
-  apiKey: string,
+  settings: GeminiKeySettings,
   question: string,
   userAnswer: string,
   focusArea: string,
@@ -369,7 +400,7 @@ Return ONLY valid JSON with this shape:
   "modelAnswer": "<exactly what a senior engineer who built this system would say - precise, uses real command names, mentions specific trade-offs, 4-6 sentences>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
@@ -400,7 +431,7 @@ Return ONLY valid JSON with this shape:
 }
 
 export async function askChapterTutor(
-  apiKey: string,
+  settings: GeminiKeySettings,
   courseTitle: string,
   chapterTitle: string,
   chapterContent: string,
@@ -424,18 +455,18 @@ Student question: ${question}
 
 Answer clearly and specifically. If the question is about a concept in the chapter, explain it differently from how the chapter explains it. Use concrete examples. If relevant, relate the answer to NexusPay or fintech use cases. Keep the answer focused and under 200 words unless more is genuinely needed. Never use em dashes. Never use AI phrases like 'great question', 'certainly', 'of course', 'absolutely'.`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
   return raw.trim();
 }
 
 export async function generateBehavioralQuestion(
-  apiKey: string,
+  settings: GeminiKeySettings,
   category: string,
   previousQuestions: string[],
 ): Promise<{ question: string; competencies: string[]; followUp: string }> {
   const prompt = `You are a senior engineering manager at a European fintech company (Qonto, Alan, or Swan) conducting a behavioral interview for a Senior Backend Engineer role. Generate one realistic behavioral interview question for the category: ${category}. Avoid repeating these questions: ${previousQuestions.join(', ')}. Return ONLY valid JSON: { "question": "...", "competencies": ["<competency this tests>"], "followUp": "<one natural follow-up question the interviewer would ask>" }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 512 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.7, maxOutputTokens: 512 });
 
   let parsed: unknown;
   try {
@@ -458,7 +489,7 @@ export async function generateBehavioralQuestion(
 }
 
 export async function scoreBehavioralAnswer(
-  apiKey: string,
+  settings: GeminiKeySettings,
   question: string,
   userAnswer: string,
   competencies: string[],
@@ -498,7 +529,7 @@ Return ONLY valid JSON:
   "improvedVersion": "<a rewritten version of the answer that would score 9-10, in first person, using the candidate's domain - backend engineering, fintech, NexusPay - as the example context. 3-5 sentences.>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.3, maxOutputTokens: 2048 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.3, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
@@ -539,14 +570,14 @@ Return ONLY valid JSON:
 }
 
 export async function testGeminiConnection(apiKey: string): Promise<void> {
-  await callGemini(apiKey, 'Reply with the single word: OK', {
+  await callGemini([apiKey], 'Reply with the single word: OK', {
     temperature: 0,
     maxOutputTokens: 50,
   });
 }
 
 export async function reviewCV(
-  apiKey: string,
+  settings: GeminiKeySettings,
   cvText: string,
   targetCompany: string,
 ): Promise<{ score: number; strengths: string[]; weaknesses: string[]; suggestions: string[] }> {
@@ -565,7 +596,7 @@ Return ONLY valid JSON with this shape:
   "suggestions": ["<specific actionable fix the candidate can make today>"]
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.4, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
@@ -594,7 +625,7 @@ Return ONLY valid JSON with this shape:
 }
 
 export async function generateCoverLetter(
-  apiKey: string,
+  settings: GeminiKeySettings,
   cvSummary: string,
   companyName: string,
   roleTitle: string,
@@ -602,17 +633,17 @@ export async function generateCoverLetter(
 ): Promise<string> {
   const prompt = `Write a cover letter for a ${roleTitle} position at ${companyName}. The candidate background: ${cvSummary}. Tone: ${tone}. Rules: under 250 words, no generic filler phrases like 'I am writing to express my interest', no placeholder brackets like [Company Name] or [Your Name], use the actual company name directly, be specific about why this candidate fits this company based on their actual experience, no markdown formatting, no quotation marks around the letter. Return only the cover letter text with no preamble.`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
   return raw.trim();
 }
 
 export async function generateWarmupQuestion(
-  apiKey: string,
+  settings: GeminiKeySettings,
   topic: string,
 ): Promise<{ question: string; options: string[]; correctIndex: number; explanation: string }> {
   const prompt = `Generate exactly one multiple-choice backend engineering interview question on the topic: ${topic}. Make it sharp and realistic, the kind of question that gets asked in a 45-minute technical screen. Return ONLY valid JSON with this shape: { "question": "...", "options": ["A","B","C","D"], "correctIndex": 0, "explanation": "..." }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 512 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.7, maxOutputTokens: 512 });
 
   let parsed: unknown;
   try {
@@ -636,7 +667,7 @@ export async function generateWarmupQuestion(
 }
 
 export async function generateFlashcards(
-  apiKey: string,
+  settings: GeminiKeySettings,
   courseTitle: string,
   chapterTitle: string,
   chapterContent: string,
@@ -651,7 +682,7 @@ Chapter content:
 ${chapterContent.slice(0, 6000)}
 """`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.5, maxOutputTokens: 1024 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.5, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -673,7 +704,7 @@ ${chapterContent.slice(0, 6000)}
 }
 
 export async function explainSelectedText(
-  apiKey: string,
+  settings: GeminiKeySettings,
   selectedText: string,
   courseTitle: string,
   chapterTitle: string,
@@ -684,12 +715,12 @@ export async function explainSelectedText(
 
 Explain this in a different, clearer way. Use a concrete analogy or real-world example. If it is a technical term or pattern, say what problem it solves and give a one-line code example if helpful. Keep the explanation under 120 words. Never use em dashes. Never use phrases like 'great question', 'certainly', 'of course'.`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 512 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.7, maxOutputTokens: 512 });
   return raw.trim();
 }
 
 export async function getSalaryAdvice(
-  apiKey: string,
+  settings: GeminiKeySettings,
   company: string,
   role: string,
   yearsExperience: number,
@@ -708,7 +739,7 @@ Return ONLY valid JSON:
   "followUpMoves": ["<what to do or say next depending on their response>"]
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -732,7 +763,7 @@ Return ONLY valid JSON:
 }
 
 export async function generateTakeHomeAssessment(
-  apiKey: string,
+  settings: GeminiKeySettings,
   company: string,
   difficulty: string,
 ): Promise<{ title: string; context: string; requirements: string[]; constraints: string[]; evaluationCriteria: string[] }> {
@@ -747,7 +778,7 @@ Return ONLY valid JSON:
   "evaluationCriteria": ["<what the reviewer will specifically look for>"]
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.7, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -778,7 +809,7 @@ Return ONLY valid JSON:
 }
 
 export async function scoreTakeHomeApproach(
-  apiKey: string,
+  settings: GeminiKeySettings,
   assessment: { title: string; requirements: string[]; evaluationCriteria: string[] },
   userApproach: string,
 ): Promise<{
@@ -812,7 +843,7 @@ Return ONLY valid JSON:
   "improvedApproach": "<a rewritten version of the approach that would score 9-10, specific and technical, 4-6 sentences>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.3, maxOutputTokens: 2048 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.3, maxOutputTokens: 2048 });
 
   let parsed: unknown;
   try {
@@ -851,7 +882,7 @@ Return ONLY valid JSON:
 }
 
 export async function getDesignInterviewResponse(
-  apiKey: string,
+  settings: GeminiKeySettings,
   question: string,
   conversationHistory: Array<{ role: 'interviewer' | 'candidate'; content: string }>,
   phase: 'requirements' | 'design' | 'deep-dive' | 'wrap-up',
@@ -875,7 +906,7 @@ Return ONLY valid JSON:
   "feedback": "<only include in wrap-up phase, 2-3 specific pieces of feedback>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.6, maxOutputTokens: 512 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.6, maxOutputTokens: 512 });
 
   let parsed: unknown;
   try {
@@ -899,7 +930,7 @@ Return ONLY valid JSON:
 }
 
 export async function analyzeDebrief(
-  apiKey: string,
+  settings: GeminiKeySettings,
   company: string,
   role: string,
   questionsAsked: string,
@@ -937,7 +968,7 @@ Return ONLY valid JSON:
   "estimatedOutcome": "<honest one-sentence assessment of how likely they are to progress and why>"
 }`;
 
-  const raw = await callGemini(apiKey, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
 
   let parsed: unknown;
   try {
@@ -964,5 +995,80 @@ Return ONLY valid JSON:
     whatToImprove: (obj.whatToImprove as unknown[]).map(String),
     topicsToStudy: (obj.topicsToStudy as unknown[]).map(String),
     estimatedOutcome: String(obj.estimatedOutcome),
+  };
+}
+
+export async function scoreVoiceAnswer(
+  settings: GeminiKeySettings,
+  question: string,
+  topic: string,
+  transcribedAnswer: string,
+  difficulty: string,
+): Promise<{
+  score: number;
+  verdict: string;
+  clarity: number;
+  depth: number;
+  whatWasGood: string[];
+  whatWasMissing: string[];
+  modelAnswer: string;
+}> {
+  const prompt = `You are a senior backend engineering interviewer at a European fintech company scoring a candidate's spoken interview answer. The answer was transcribed from speech so it may have minor transcription errors or filler words like 'um', 'uh', 'like' - treat these generously and focus on technical content.
+
+Question: ${question}
+Topic: ${topic}
+Difficulty: ${difficulty}
+
+Transcribed spoken answer:
+"""
+${transcribedAnswer}
+"""
+
+Score it honestly. A spoken interview answer is naturally less polished than a written one - reward clear thinking and correct technical content, not perfect sentence structure.
+
+Return ONLY valid JSON:
+{
+  "score": <0-10>,
+  "clarity": <0-10, how clearly they communicated>,
+  "depth": <0-10, how technically deep the answer was>,
+  "verdict": "<one precise sentence>",
+  "whatWasGood": ["<specific good point>"],
+  "whatWasMissing": ["<specific technical gap>"],
+  "modelAnswer": "<what an excellent spoken answer would cover, written as natural speech, 3-5 sentences>"
+}`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.3, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    typeof obj.score !== 'number' ||
+    typeof obj.clarity !== 'number' ||
+    typeof obj.depth !== 'number' ||
+    !obj.verdict ||
+    !Array.isArray(obj.whatWasGood) ||
+    !Array.isArray(obj.whatWasMissing) ||
+    !obj.modelAnswer
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  const clamp = (n: number) => Math.max(0, Math.min(10, Math.round(n)));
+
+  return {
+    score: clamp(obj.score as number),
+    clarity: clamp(obj.clarity as number),
+    depth: clamp(obj.depth as number),
+    verdict: String(obj.verdict),
+    whatWasGood: (obj.whatWasGood as unknown[]).map(String),
+    whatWasMissing: (obj.whatWasMissing as unknown[]).map(String),
+    modelAnswer: String(obj.modelAnswer),
   };
 }

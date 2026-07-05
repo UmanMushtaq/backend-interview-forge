@@ -27,7 +27,8 @@ import {
   continueTarget,
   courseProgress,
 } from '../lib/courses';
-import { generateWarmupQuestion } from '../lib/gemini';
+import { generateWarmupQuestion, getApiKeys } from '../lib/gemini';
+import type { Settings } from '../types';
 import { getReviewQueue } from '../lib/spacedRepetition';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -52,7 +53,8 @@ interface WarmupStored {
 const WARMUP_LS_KEY = 'bif:warmup';
 const LABELS = ['A', 'B', 'C', 'D'];
 
-function WarmupCard({ apiKey }: { apiKey: string }) {
+function WarmupCard({ settings }: { settings: Settings }) {
+  const hasApiKey = getApiKeys(settings).length > 0;
   const today = todayKey();
   const topicIndex = new Date().getDate() % COURSES.length;
   const topic = COURSES[topicIndex].title;
@@ -72,7 +74,7 @@ function WarmupCard({ apiKey }: { apiKey: string }) {
   const fetchedRef = useRef(false);
 
   useEffect(() => {
-    if (fetchedRef.current || stored || !apiKey) return;
+    if (fetchedRef.current || stored || !hasApiKey) return;
     fetchedRef.current = true;
     fetchWarmup();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,7 +84,7 @@ function WarmupCard({ apiKey }: { apiKey: string }) {
     setLoading(true);
     setError('');
     try {
-      const q = await generateWarmupQuestion(apiKey, topic);
+      const q = await generateWarmupQuestion(settings, topic);
       const next: WarmupStored = { date: today, topic, ...q, selectedIndex: null };
       setStored(next);
       localStorage.setItem(WARMUP_LS_KEY, JSON.stringify(next));
@@ -111,7 +113,7 @@ function WarmupCard({ apiKey }: { apiKey: string }) {
     </div>
   );
 
-  if (!apiKey) {
+  if (!hasApiKey) {
     return (
       <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-5">
         {header}
@@ -278,7 +280,6 @@ function OnboardingBlock() {
 
 export function Dashboard() {
   const state = useProgressState();
-  const apiKey = state.settings.geminiApiKey ?? '';
 
   const overall = overallChapterProgress(state);
   const mastered = coursesMastered(state);
@@ -357,7 +358,7 @@ export function Dashboard() {
       )}
 
       {/* Daily warm-up — only for returning users */}
-      {started && <WarmupCard apiKey={apiKey} />}
+      {started && <WarmupCard settings={state.settings} />}
 
       {/* Study streak banner */}
       {started && (

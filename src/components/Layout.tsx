@@ -34,6 +34,7 @@ import {
   Pencil,
   Flag,
   ClipboardCheck,
+  Mic,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -51,6 +52,7 @@ const PRACTICE = [
   { to: '/design', label: 'System Design', icon: Network },
   { to: '/sql', label: 'SQL', icon: Database },
   { to: '/interview-simulator', label: 'Interview Simulator', icon: BrainCircuit },
+  { to: '/voice-interview', label: 'Voice Interview', icon: Mic },
   { to: '/interview', label: 'Interview Q&A', icon: MessageSquare },
   { to: '/companies', label: 'Companies', icon: Building2 },
   { to: '/behavioral', label: 'Behavioral Prep', icon: Users },
@@ -75,6 +77,7 @@ const SECTION_LABELS: Record<string, string> = {
   sql: 'SQL',
   interview: 'Interview Q&A',
   'interview-simulator': 'Interview Simulator',
+  'voice-interview': 'Voice Interview',
   progress: 'Progress',
   settings: 'Settings',
   quiz: 'Quizzes',

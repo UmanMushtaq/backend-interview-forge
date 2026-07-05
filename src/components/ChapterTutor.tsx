@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, X, Loader2, RefreshCw } from 'lucide-react';
-import { askChapterTutor } from '../lib/gemini';
+import { askChapterTutor, getApiKeys } from '../lib/gemini';
+import type { Settings } from '../types';
 
 interface Props {
-  apiKey: string;
+  settings: Pick<Settings, 'geminiApiKey' | 'geminiApiKey2' | 'geminiApiKey3'>;
   courseTitle: string;
   chapterTitle: string;
   chapterContent: string;
@@ -21,7 +22,8 @@ const STARTERS = [
   'What would an interviewer ask about this?',
 ];
 
-export function ChapterTutor({ apiKey, courseTitle, chapterTitle, chapterContent }: Props) {
+export function ChapterTutor({ settings, courseTitle, chapterTitle, chapterContent }: Props) {
+  const hasApiKey = getApiKeys(settings).length > 0;
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -53,7 +55,7 @@ export function ChapterTutor({ apiKey, courseTitle, chapterTitle, chapterContent
     setInput('');
     setLoading(true);
     try {
-      const answer = await askChapterTutor(apiKey, courseTitle, chapterTitle, chapterContent, question, history);
+      const answer = await askChapterTutor(settings, courseTitle, chapterTitle, chapterContent, question, history);
       setMessages((m) => [...m, { role: 'assistant', content: answer }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reach the AI tutor.');
@@ -75,13 +77,13 @@ export function ChapterTutor({ apiKey, courseTitle, chapterTitle, chapterContent
     return (
       <div className="mt-6">
         <button
-          onClick={() => apiKey && setOpen(true)}
-          title={apiKey ? undefined : 'Add Gemini API key in Settings'}
+          onClick={() => hasApiKey && setOpen(true)}
+          title={hasApiKey ? undefined : 'Add Gemini API key in Settings'}
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border px-4 py-2.5 text-sm text-muted transition hover:border-primary/40 hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={!apiKey}
+          disabled={!hasApiKey}
         >
           <MessageCircle className="h-4 w-4" />
-          {apiKey ? 'Ask AI about this chapter' : 'Ask AI about this chapter (add API key in Settings)'}
+          {hasApiKey ? 'Ask AI about this chapter' : 'Ask AI about this chapter (add API key in Settings)'}
         </button>
       </div>
     );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, CheckCircle2, AlertTriangle, RefreshCw, Brain } from 'lucide-react';
-import { generateChapterQuiz } from '../lib/gemini';
+import { generateChapterQuiz, getApiKeys } from '../lib/gemini';
 import { recordModuleAttempt } from '../lib/storage';
 import { useProgressState } from '../hooks/useProgress';
 import type { QuizQuestion } from '../types';
@@ -18,7 +18,7 @@ interface Props {
 
 export function ChapterQuiz({ courseId, chapterId, courseTitle, chapterTitle, chapterContent }: Props) {
   const { settings, moduleProgress } = useProgressState();
-  const apiKey = settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(settings).length > 0;
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -32,13 +32,13 @@ export function ChapterQuiz({ courseId, chapterId, courseTitle, chapterTitle, ch
   const previousIds = [...(progress?.seenQuestionIds ?? []), ...usedIds];
 
   async function start() {
-    if (!apiKey) return;
+    if (!hasApiKey) return;
     setPhase('loading');
     setCurrentIndex(0);
     setSelected(null);
     setCorrectCount(0);
     try {
-      const qs = await generateChapterQuiz(apiKey, courseTitle, chapterTitle, chapterContent, previousIds);
+      const qs = await generateChapterQuiz(settings, courseTitle, chapterTitle, chapterContent, previousIds);
       setQuestions(qs);
       setPhase('active');
     } catch (err) {
@@ -77,7 +77,7 @@ export function ChapterQuiz({ courseId, chapterId, courseTitle, chapterTitle, ch
 
   // ── Idle ──────────────────────────────────────────────────────────────────
   if (phase === 'idle') {
-    if (!apiKey) {
+    if (!hasApiKey) {
       return (
         <div className="mt-8 rounded-xl border border-border bg-surface p-5 text-sm text-muted">
           <span className="mr-1">🔑</span>

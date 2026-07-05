@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Loader2, Users } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
-import { generateBehavioralQuestion, scoreBehavioralAnswer } from '../lib/gemini';
+import { generateBehavioralQuestion, scoreBehavioralAnswer, getApiKeys } from '../lib/gemini';
 
 const STAR_PARTS = [
   { letter: 'S', label: 'Situation', desc: 'The context you were in.', color: 'text-sky-400 bg-sky-400/10' },
@@ -63,7 +63,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 
 export function BehavioralPrep() {
   const state = useProgressState();
-  const apiKey = state.settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(state.settings).length > 0;
 
   const [category, setCategory] = useState<string | null>(null);
   const [screen, setScreen] = useState<'select' | 'practice'>('select');
@@ -90,7 +90,7 @@ export function BehavioralPrep() {
     setAnswer('');
     setScore(null);
     try {
-      const q = await generateBehavioralQuestion(apiKey, cat, prev);
+      const q = await generateBehavioralQuestion(state.settings, cat, prev);
       setQuestion(q);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate a question.');
@@ -104,7 +104,7 @@ export function BehavioralPrep() {
     setLoadingScore(true);
     setError('');
     try {
-      const result = await scoreBehavioralAnswer(apiKey, question.question, answer, question.competencies);
+      const result = await scoreBehavioralAnswer(state.settings, question.question, answer, question.competencies);
       setScore(result);
       setPracticedCount((c) => c + 1);
     } catch (err) {
@@ -130,7 +130,7 @@ export function BehavioralPrep() {
     setError('');
   }
 
-  if (!apiKey) {
+  if (!hasApiKey) {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
         <h1 className="text-2xl font-bold tracking-tight">Behavioral Interview Prep</h1>

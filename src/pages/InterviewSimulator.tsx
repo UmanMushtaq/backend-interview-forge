@@ -18,7 +18,9 @@ import {
   scoreInterviewAnswer,
   generateNexusPayQuestion,
   scoreNexusPayAnswer,
+  getApiKeys,
 } from '../lib/gemini';
+import type { Settings as SettingsType } from '../types';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -109,7 +111,7 @@ function SetupScreen({
   onStart: (topic: Topic, difficulty: Difficulty, count: QuestionCount, focusArea: NexusPayFocusArea) => void;
 }) {
   const { settings } = useProgressState();
-  const apiKey = settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(settings).length > 0;
 
   const [topic, setTopic] = useState<Topic | null>(initialTopic ?? null);
   const [difficulty, setDifficulty] = useState<Difficulty>('Senior');
@@ -121,7 +123,7 @@ function SetupScreen({
     if (initialTopic) setTopic(initialTopic);
   }, [initialTopic]);
 
-  if (!apiKey) {
+  if (!hasApiKey) {
     return (
       <div className="mx-auto max-w-lg py-20 text-center">
         <BrainCircuit className="mx-auto mb-4 h-12 w-12 text-primary" />
@@ -270,14 +272,14 @@ function InProgressScreen({
   topic,
   difficulty,
   totalCount,
-  apiKey,
+  settings,
   focusArea,
   onComplete,
 }: {
   topic: Topic;
   difficulty: Difficulty;
   totalCount: number;
-  apiKey: string;
+  settings: SettingsType;
   focusArea: NexusPayFocusArea;
   onComplete: (entries: SessionEntry[]) => void;
 }) {
@@ -316,7 +318,7 @@ function InProgressScreen({
       try {
         if (isNexusPay) {
           const q = await generateNexusPayQuestion(
-            apiKey,
+            settings,
             difficulty,
             previousQuestionsRef.current,
             focusArea !== 'Any' ? focusArea : undefined,
@@ -327,7 +329,7 @@ function InProgressScreen({
           setHintsShown(0);
         } else {
           const q = await generateInterviewQuestion(
-            apiKey,
+            settings,
             topic,
             difficulty,
             previousQuestionsRef.current,
@@ -343,7 +345,7 @@ function InProgressScreen({
         setLoadingQuestion(false);
       }
     },
-    [apiKey, topic, difficulty, isNexusPay, focusArea],
+    [settings, topic, difficulty, isNexusPay, focusArea],
   );
 
   const hasLoaded = useRef(false);
@@ -358,7 +360,7 @@ function InProgressScreen({
       try {
         if (isNexusPay) {
           const q = await generateNexusPayQuestion(
-            apiKey,
+            settings,
             difficulty,
             previousQuestionsRef.current,
             focusArea !== 'Any' ? focusArea : undefined,
@@ -366,7 +368,7 @@ function InProgressScreen({
           prefetchedRef.current = { question: q.question, hints: q.hints, focusArea: q.focusArea };
         } else {
           const q = await generateInterviewQuestion(
-            apiKey,
+            settings,
             topic,
             difficulty,
             previousQuestionsRef.current,
@@ -377,7 +379,7 @@ function InProgressScreen({
         // silently fail - will re-fetch when needed
       }
     },
-    [apiKey, topic, difficulty, isNexusPay, focusArea, totalCount],
+    [settings, topic, difficulty, isNexusPay, focusArea, totalCount],
   );
 
   async function handleSubmit() {
@@ -389,9 +391,9 @@ function InProgressScreen({
     try {
       let r: AnswerResult;
       if (isNexusPay) {
-        r = await scoreNexusPayAnswer(apiKey, question, answer.trim(), currentFocusArea);
+        r = await scoreNexusPayAnswer(settings, question, answer.trim(), currentFocusArea);
       } else {
-        r = await scoreInterviewAnswer(apiKey, question, topic, answer.trim());
+        r = await scoreInterviewAnswer(settings, question, topic, answer.trim());
       }
       setResult(r);
       previousQuestionsRef.current = [...previousQuestionsRef.current, question];
@@ -861,7 +863,6 @@ function ReportScreen({
 
 export function InterviewSimulator() {
   const { settings } = useProgressState();
-  const apiKey = settings.geminiApiKey ?? '';
   const location = useLocation();
 
   const initialTopic = (location.state as { topic?: Topic } | null)?.topic ?? undefined;
@@ -911,7 +912,7 @@ export function InterviewSimulator() {
           topic={topic}
           difficulty={difficulty}
           totalCount={count}
-          apiKey={apiKey}
+          settings={settings}
           focusArea={focusArea}
           onComplete={handleComplete}
         />

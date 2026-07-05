@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
 import { COMPANIES } from '../data/companies';
-import { reviewCV, generateCoverLetter } from '../lib/gemini';
+import { reviewCV, generateCoverLetter, getApiKeys } from '../lib/gemini';
+import type { Settings } from '../types';
 
 type Tab = 'review' | 'letter';
 type Tone = 'formal' | 'direct' | 'enthusiastic';
@@ -74,7 +75,7 @@ type ReviewResult = {
   suggestions: string[];
 };
 
-function CVReviewTab({ apiKey }: { apiKey: string }) {
+function CVReviewTab({ settings }: { settings: Settings }) {
   const [cvText, setCvText] = useState('');
   const [company, setCompany] = useState('');
   const [loading, setLoading] = useState(false);
@@ -88,7 +89,7 @@ function CVReviewTab({ apiKey }: { apiKey: string }) {
     setError('');
     setResult(null);
     try {
-      const res = await reviewCV(apiKey, cvText, company);
+      const res = await reviewCV(settings, cvText, company);
       setResult(res);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Review failed. Try again.');
@@ -250,7 +251,7 @@ function CVReviewTab({ apiKey }: { apiKey: string }) {
 
 // ─── Cover Letter tab ─────────────────────────────────────────────────────────
 
-function CoverLetterTab({ apiKey }: { apiKey: string }) {
+function CoverLetterTab({ settings }: { settings: Settings }) {
   const [summary, setSummary] = useState('');
   const [company, setCompany] = useState('');
   const [roleTitle, setRoleTitle] = useState('Senior Backend Engineer');
@@ -268,7 +269,7 @@ function CoverLetterTab({ apiKey }: { apiKey: string }) {
     setError('');
     setLetter('');
     try {
-      const result = await generateCoverLetter(apiKey, summary, company, roleTitle, tone);
+      const result = await generateCoverLetter(settings, summary, company, roleTitle, tone);
       setLetter(result);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Generation failed. Try again.');
@@ -415,10 +416,10 @@ function CoverLetterTab({ apiKey }: { apiKey: string }) {
 
 export function CVAssistant() {
   const { settings } = useProgressState();
-  const apiKey = settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(settings).length > 0;
   const [tab, setTab] = useState<Tab>('review');
 
-  if (!apiKey) {
+  if (!hasApiKey) {
     return (
       <div className="py-20 text-center">
         <FileText className="mx-auto mb-4 h-12 w-12 text-muted/40" />
@@ -460,8 +461,8 @@ export function CVAssistant() {
         ))}
       </div>
 
-      {tab === 'review' && <CVReviewTab apiKey={apiKey} />}
-      {tab === 'letter' && <CoverLetterTab apiKey={apiKey} />}
+      {tab === 'review' && <CVReviewTab settings={settings} />}
+      {tab === 'letter' && <CoverLetterTab settings={settings} />}
     </div>
   );
 }

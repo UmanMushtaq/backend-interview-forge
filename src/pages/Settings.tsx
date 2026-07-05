@@ -5,7 +5,7 @@ import { useProgressState } from '../hooks/useProgress';
 import { updateSettings, resetAll, importJSON } from '../lib/storage';
 import { testGeminiConnection } from '../lib/gemini';
 import { ConfirmButton } from '../components/Confirm';
-import type { TargetRole } from '../types';
+import type { Settings as SettingsType, TargetRole } from '../types';
 
 const ROLES: { id: TargetRole; label: string; hint: string }[] = [
   { id: 'mid', label: 'Mid', hint: 'Foundations and core concepts' },
@@ -13,27 +13,50 @@ const ROLES: { id: TargetRole; label: string; hint: string }[] = [
   { id: 'lead', label: 'Lead', hint: 'Architecture and judgement' },
 ];
 
+type KeyStatus = 'idle' | 'loading' | 'ok' | 'error';
+
+const KEY_FIELDS = [
+  { field: 'geminiApiKey', label: 'Key 1', placeholder: 'Paste your Gemini API key…' },
+  { field: 'geminiApiKey2', label: 'Key 2', placeholder: 'Gemini API key 2 (optional)' },
+  { field: 'geminiApiKey3', label: 'Key 3', placeholder: 'Gemini API key 3 (optional)' },
+] as const;
+
 export function Settings() {
   const { theme, toggle } = useTheme();
   const { settings } = useProgressState();
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState('');
-  const [geminiStatus, setGeminiStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
-  const [geminiError, setGeminiError] = useState('');
+  const [keyStatuses, setKeyStatuses] = useState<Record<string, KeyStatus>>({});
+  const [keyErrors, setKeyErrors] = useState<Record<string, string>>({});
 
-  async function testGemini() {
-    const key = settings.geminiApiKey ?? '';
-    if (!key) return;
-    setGeminiStatus('loading');
-    setGeminiError('');
-    try {
-      await testGeminiConnection(key);
-      setGeminiStatus('ok');
-    } catch (err) {
-      setGeminiError(err instanceof Error ? err.message : 'Connection failed');
-      setGeminiStatus('error');
-    }
+  async function testAllKeys() {
+    const keys = KEY_FIELDS.map((k) => ({ field: k.field, value: settings[k.field] ?? '' })).filter(
+      (k) => k.value.trim().length > 0,
+    );
+    if (keys.length === 0) return;
+
+    setKeyStatuses((s) => {
+      const next = { ...s };
+      keys.forEach((k) => (next[k.field] = 'loading'));
+      return next;
+    });
+    setKeyErrors({});
+
+    await Promise.all(
+      keys.map(async (k) => {
+        try {
+          await testGeminiConnection(k.value);
+          setKeyStatuses((s) => ({ ...s, [k.field]: 'ok' }));
+        } catch (err) {
+          setKeyErrors((e) => ({ ...e, [k.field]: err instanceof Error ? err.message : 'Connection failed' }));
+          setKeyStatuses((s) => ({ ...s, [k.field]: 'error' }));
+        }
+      }),
+    );
   }
+
+  const anyKeyFilled = KEY_FIELDS.some((k) => (settings[k.field] ?? '').trim().length > 0);
+  const anyLoading = Object.values(keyStatuses).some((s) => s === 'loading');
 
   function onImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -83,33 +106,51 @@ export function Settings() {
           Add your own free Gemini API key to unlock AI-generated fresh tests and the AI mock interviewer. It is stored
           only on this device and never leaves your browser except to call Google directly.
         </p>
-        <input
-          type="password"
-          value={settings.geminiApiKey ?? ''}
-          onChange={(e) => {
-            updateSettings({ geminiApiKey: e.target.value });
-            setGeminiStatus('idle');
-          }}
-          placeholder="Paste your Gemini API key…"
-          className="w-full rounded-lg border border-border bg-surface-2 p-2.5 text-sm outline-none focus:border-primary/50"
-        />
+
+        <div className="space-y-3">
+          {KEY_FIELDS.map((k, i) => (
+            <div key={k.field}>
+              {i > 0 && i === 1 && (
+                <p className="mb-2 text-xs text-muted">
+                  Add up to 3 keys. The platform automatically rotates to the next key when one hits its daily quota
+                  limit.
+                </p>
+              )}
+              <input
+                type="password"
+                value={settings[k.field] ?? ''}
+                onChange={(e) => {
+                  updateSettings({ [k.field]: e.target.value } as Partial<SettingsType>);
+                  setKeyStatuses((s) => ({ ...s, [k.field]: 'idle' }));
+                }}
+                placeholder={k.placeholder}
+                className="w-full rounded-lg border border-border bg-surface-2 p-2.5 text-sm outline-none focus:border-primary/50"
+              />
+              <div className="mt-1 flex items-center gap-2 text-xs">
+                <span className="text-muted">{k.label}:</span>
+                {keyStatuses[k.field] === 'loading' && (
+                  <span className="flex items-center gap-1 text-muted">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Testing…
+                  </span>
+                )}
+                {keyStatuses[k.field] === 'ok' && <span className="font-medium text-success">Connected ✓</span>}
+                {keyStatuses[k.field] === 'error' && (
+                  <span className="text-danger">{keyErrors[k.field] ?? 'Quota exceeded or connection failed'}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="mt-2 flex items-center gap-3">
           <button
-            onClick={testGemini}
-            disabled={!settings.geminiApiKey || geminiStatus === 'loading'}
+            onClick={testAllKeys}
+            disabled={!anyKeyFilled || anyLoading}
             className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs transition hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {geminiStatus === 'loading' ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : null}
+            {anyLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
             Test connection
           </button>
-          {geminiStatus === 'ok' && (
-            <span className="text-xs font-medium text-success">Connected ✓</span>
-          )}
-          {geminiStatus === 'error' && (
-            <span className="text-xs text-danger">{geminiError}</span>
-          )}
         </div>
         <p className="mt-2 text-xs text-muted">
           Get a free key at aistudio.google.com/apikey.

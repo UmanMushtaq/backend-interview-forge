@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
-import { analyzeDebrief } from '../lib/gemini';
+import { analyzeDebrief, getApiKeys } from '../lib/gemini';
 
 type Feeling = 'great' | 'okay' | 'struggled';
 
@@ -136,7 +136,7 @@ function TopicPill({ topic }: { topic: string }) {
 
 export function InterviewDebrief() {
   const state = useProgressState();
-  const apiKey = state.settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(state.settings).length > 0;
 
   const [company, setCompany] = useState('');
   const [role, setRole] = useState('Senior Backend Engineer');
@@ -158,7 +158,7 @@ export function InterviewDebrief() {
     setError('');
     setSaved(false);
     try {
-      const r = await analyzeDebrief(apiKey, company, role, questionsAsked, yourAnswers, feeling);
+      const r = await analyzeDebrief(state.settings, company, role, questionsAsked, yourAnswers, feeling);
       setResult(r);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyse the debrief.');
@@ -195,7 +195,7 @@ export function InterviewDebrief() {
         </p>
       </div>
 
-      {!apiKey && (
+      {!hasApiKey && (
         <div className="rounded-xl border border-border bg-surface p-5 text-sm text-muted">
           Add your Gemini API key in{' '}
           <Link to="/settings" className="text-primary underline underline-offset-2 hover:opacity-80">
@@ -205,7 +205,7 @@ export function InterviewDebrief() {
         </div>
       )}
 
-      {apiKey && !result && (
+      {hasApiKey && !result && (
         <div className="space-y-4 rounded-xl border border-border bg-surface p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>

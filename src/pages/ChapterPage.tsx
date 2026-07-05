@@ -9,7 +9,7 @@ import { readSetFor, readingMinutes, keyTakeaway } from '../lib/courses';
 import { Markdown } from '../components/Markdown';
 import { ChapterQuiz } from '../components/ChapterQuiz';
 import { ChapterTutor } from '../components/ChapterTutor';
-import { explainSelectedText } from '../lib/gemini';
+import { explainSelectedText, getApiKeys } from '../lib/gemini';
 
 interface ExplainPopover {
   x: number;
@@ -32,7 +32,7 @@ export function ChapterPage() {
   const articleRef = useRef<HTMLDivElement>(null);
   const [explainButton, setExplainButton] = useState<{ x: number; y: number; text: string } | null>(null);
   const [popover, setPopover] = useState<ExplainPopover | null>(null);
-  const apiKey = state.settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(state.settings).length > 0;
 
   useEffect(() => {
     setExplainButton(null);
@@ -82,7 +82,7 @@ export function ChapterPage() {
     setPopover({ x, y, text, loading: true, explanation: '', error: '' });
     setExplainButton(null);
     try {
-      const explanation = await explainSelectedText(apiKey, text, course.title, lesson.title);
+      const explanation = await explainSelectedText(state.settings, text, course.title, lesson.title);
       setPopover({ x, y, text, loading: false, explanation, error: '' });
     } catch (err) {
       setPopover({
@@ -181,7 +181,7 @@ export function ChapterPage() {
           </div>
 
           {/* Floating "Explain" button on text selection */}
-          {explainButton && apiKey && (
+          {explainButton && hasApiKey && (
             <button
               data-explain-ui
               onClick={handleExplain}
@@ -235,7 +235,7 @@ export function ChapterPage() {
           {/* AI tutor */}
           <ChapterTutor
             key={chapterId}
-            apiKey={state.settings.geminiApiKey ?? ''}
+            settings={state.settings}
             courseTitle={course.title}
             chapterTitle={lesson.title}
             chapterContent={lesson.content}

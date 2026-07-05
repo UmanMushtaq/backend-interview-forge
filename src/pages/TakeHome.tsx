@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
 import { COMPANIES } from '../data/companies';
-import { generateTakeHomeAssessment, scoreTakeHomeApproach } from '../lib/gemini';
+import { generateTakeHomeAssessment, scoreTakeHomeApproach, getApiKeys } from '../lib/gemini';
 
 type Difficulty = 'Mid' | 'Senior' | 'Lead';
 type Phase = 'setup' | 'assessment' | 'result';
@@ -60,7 +60,7 @@ function useElapsed(active: boolean) {
 
 export function TakeHome() {
   const state = useProgressState();
-  const apiKey = state.settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(state.settings).length > 0;
 
   const [companyId, setCompanyId] = useState('');
   const [otherCompany, setOtherCompany] = useState('');
@@ -81,7 +81,7 @@ export function TakeHome() {
     setGenerating(true);
     setError('');
     try {
-      const a = await generateTakeHomeAssessment(apiKey, company, difficulty);
+      const a = await generateTakeHomeAssessment(state.settings, company, difficulty);
       setAssessment(a);
       setApproach('');
       setPhase('assessment');
@@ -97,7 +97,7 @@ export function TakeHome() {
     setScoring(true);
     setError('');
     try {
-      const r = await scoreTakeHomeApproach(apiKey, assessment, approach);
+      const r = await scoreTakeHomeApproach(state.settings, assessment, approach);
       setResult(r);
       setPhase('result');
     } catch (err) {
@@ -122,7 +122,7 @@ export function TakeHome() {
   const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
   const ss = String(elapsed % 60).padStart(2, '0');
 
-  if (!apiKey) {
+  if (!hasApiKey) {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
         <h1 className="text-2xl font-bold tracking-tight">Take-home Assessment Simulator</h1>

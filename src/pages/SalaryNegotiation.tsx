@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2, Copy, Check } from 'lucide-react';
 import { useProgressState } from '../hooks/useProgress';
 import { COMPANIES } from '../data/companies';
-import { getSalaryAdvice } from '../lib/gemini';
+import { getSalaryAdvice, getApiKeys } from '../lib/gemini';
 
 type Situation = 'first-mention' | 'counter-offer' | 'pushback' | 'competing-offer';
 
@@ -23,7 +23,7 @@ interface Advice {
 
 export function SalaryNegotiation() {
   const state = useProgressState();
-  const apiKey = state.settings.geminiApiKey ?? '';
+  const hasApiKey = getApiKeys(state.settings).length > 0;
 
   const [situation, setSituation] = useState<Situation | null>(null);
   const [companyId, setCompanyId] = useState('');
@@ -44,7 +44,7 @@ export function SalaryNegotiation() {
     setLoading(true);
     setError('');
     try {
-      const result = await getSalaryAdvice(apiKey, company, role, years, expectation, situation);
+      const result = await getSalaryAdvice(state.settings, company, role, years, expectation, situation);
       setAdvice(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate advice.');
@@ -66,7 +66,7 @@ export function SalaryNegotiation() {
     });
   }
 
-  if (!apiKey) {
+  if (!hasApiKey) {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
         <h1 className="text-2xl font-bold tracking-tight">Salary Negotiation Coach</h1>

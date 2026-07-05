@@ -2,5 +2,3 @@ node_modules/
 dist/
 package-lock.json
 src/data/learn/javascript.ts
-
-# Always commit and push directly to main. Never create a branch. Never use git checkout -b.
