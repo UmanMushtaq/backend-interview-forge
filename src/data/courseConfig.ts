@@ -58,7 +58,7 @@ export const COURSES: CourseConfig[] = [
   {
     id: 'oop',
     title: 'OOP',
-    description: 'The four pillars, SOLID principles, and design patterns applied to TypeScript and NestJS.',
+    description: 'Start from zero. Understand every class, interface, extends, and implements you see in a real TypeScript codebase.',
     icon: Boxes,
     estimatedHours: 5,
     color: 'text-rose-400',
