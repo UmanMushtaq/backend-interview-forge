@@ -56,6 +56,16 @@ export const COURSES: CourseConfig[] = [
     tint: 'bg-blue-400/10',
   },
   {
+    id: 'oop',
+    title: 'OOP',
+    description: 'The four pillars, SOLID principles, and design patterns applied to TypeScript and NestJS.',
+    icon: Boxes,
+    estimatedHours: 5,
+    color: 'text-rose-400',
+    bar: 'bg-rose-400',
+    tint: 'bg-rose-400/10',
+  },
+  {
     id: 'nodejs',
     title: 'Node.js',
     description: 'The runtime: event loop, streams, and non-blocking I/O.',

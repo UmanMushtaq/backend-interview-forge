@@ -1,6 +1,7 @@
 import type { LearnModule } from '../../types';
 import { javascript } from './javascript';
 import { typescript } from './typescript';
+import { oop } from './oop';
 import { nodejs } from './nodejs';
 import { nestjs } from './nestjs';
 import { postgresql } from './postgresql';
@@ -18,6 +19,7 @@ import { nexuspay } from './nexuspay';
 export const LEARN_MODULES: LearnModule[] = [
   javascript,
   typescript,
+  oop,
   nodejs,
   nestjs,
   postgresql,
