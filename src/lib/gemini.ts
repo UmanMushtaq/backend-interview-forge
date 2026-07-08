@@ -569,6 +569,76 @@ Return ONLY valid JSON:
   };
 }
 
+export async function reviewJestTests(
+  settings: GeminiKeySettings,
+  problemTitle: string,
+  implementationCode: string,
+  userTestCode: string,
+  testsPassed: boolean,
+): Promise<{
+  overallFeedback: string;
+  strengths: string[];
+  improvements: string[];
+  missingCases: string[];
+  refactoredExample: string;
+}> {
+  const prompt = `You are a senior backend engineer reviewing Jest test code written by a candidate practicing for technical interviews.
+
+Problem: ${problemTitle}
+
+The implementation being tested:
+"""
+${implementationCode}
+"""
+
+The candidate's test code:
+"""
+${userTestCode}
+"""
+
+Tests passed: ${testsPassed}
+
+Review the test quality, not just whether tests pass. Good tests: cover edge cases, use descriptive test names, have one assertion per test where possible, test error cases, and verify behaviour not implementation details.
+
+Return ONLY valid JSON:
+{
+  "overallFeedback": "<2-3 sentence overall assessment of the test quality>",
+  "strengths": ["<specific thing done well>"],
+  "improvements": ["<specific improvement to make>"],
+  "missingCases": ["<edge case or scenario not tested>"],
+  "refactoredExample": "<one specific test from their suite rewritten to be cleaner or more idiomatic, shown as a code snippet>"
+}`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.3, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    !obj.overallFeedback ||
+    !Array.isArray(obj.strengths) ||
+    !Array.isArray(obj.improvements) ||
+    !Array.isArray(obj.missingCases) ||
+    !obj.refactoredExample
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    overallFeedback: String(obj.overallFeedback),
+    strengths: (obj.strengths as unknown[]).map(String),
+    improvements: (obj.improvements as unknown[]).map(String),
+    missingCases: (obj.missingCases as unknown[]).map(String),
+    refactoredExample: String(obj.refactoredExample),
+  };
+}
+
 export async function testGeminiConnection(apiKey: string): Promise<void> {
   await callGemini([apiKey], 'Reply with the single word: OK', {
     temperature: 0,

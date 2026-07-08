@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Play, RotateCcw, Check, X, Loader2, Lightbulb } from 'lucide-react';
+import { Play, RotateCcw, Check, X, Loader2, Lightbulb, Sparkles } from 'lucide-react';
 import { codingById } from '../data/coding';
 import { getState, recordCodingAttempt, saveCodingCode } from '../lib/storage';
 import { runTests, type TestResult } from '../lib/runner';
+import { getApiKeys, reviewJestTests } from '../lib/gemini';
 import { CodeEditor } from '../components/CodeEditor';
 import { Markdown } from '../components/Markdown';
 import { Callout } from '../components/Callout';
 import { ConfirmButton } from '../components/Confirm';
 import { DifficultyBadge } from '../components/DifficultyBadge';
+
+interface JestReview {
+  overallFeedback: string;
+  strengths: string[];
+  improvements: string[];
+  missingCases: string[];
+  refactoredExample: string;
+}
 
 function fmt(v: unknown): string {
   try {
@@ -27,6 +36,11 @@ export function CodingChallenge() {
   const [running, setRunning] = useState(false);
   const [hintsShown, setHintsShown] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
+  const [jestReview, setJestReview] = useState<JestReview | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  const hasApiKey = getApiKeys(getState().settings).length > 0;
 
   async function run() {
     if (!problem || running) return;
@@ -35,7 +49,29 @@ export function CodingChallenge() {
     const res = await runTests(code, problem.testCases);
     setResults(res);
     setRunning(false);
+    setJestReview(null);
+    setReviewError(null);
     recordCodingAttempt(id, code, res.every((r) => r.passed));
+  }
+
+  async function getReview() {
+    if (!problem || reviewing) return;
+    setReviewing(true);
+    setReviewError(null);
+    try {
+      const review = await reviewJestTests(
+        getState().settings,
+        problem.title,
+        problem.description,
+        code,
+        results !== null && results.length > 0 && results.every((r) => r.passed),
+      );
+      setJestReview(review);
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setReviewing(false);
+    }
   }
 
   // Ctrl/Cmd+Enter to run tests.
@@ -130,6 +166,69 @@ export function CodingChallenge() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {results && problem.category === 'jest' && hasApiKey && (
+            <div className="mt-3 space-y-2 rounded-xl border border-border bg-surface p-4">
+              <button
+                onClick={getReview}
+                disabled={reviewing}
+                className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary transition hover:bg-surface-2 disabled:opacity-60"
+              >
+                {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                Get AI review
+              </button>
+
+              {reviewError && <p className="text-sm text-danger">{reviewError}</p>}
+
+              {jestReview && (
+                <div className="space-y-3 pt-2">
+                  <p className="text-sm text-text/90">{jestReview.overallFeedback}</p>
+
+                  {jestReview.strengths.length > 0 && (
+                    <div>
+                      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-success">Strengths</h4>
+                      <ul className="list-inside list-disc space-y-1 text-sm text-text/90">
+                        {jestReview.strengths.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {jestReview.improvements.length > 0 && (
+                    <div>
+                      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-warning">Improvements</h4>
+                      <ul className="list-inside list-disc space-y-1 text-sm text-text/90">
+                        {jestReview.improvements.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {jestReview.missingCases.length > 0 && (
+                    <div>
+                      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-danger">Missing cases</h4>
+                      <ul className="list-inside list-disc space-y-1 text-sm text-text/90">
+                        {jestReview.missingCases.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {jestReview.refactoredExample && (
+                    <div>
+                      <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">Refactored example</h4>
+                      <pre className="overflow-x-auto rounded-lg bg-surface-2 p-3 text-xs">
+                        <code className="font-mono">{jestReview.refactoredExample}</code>
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
