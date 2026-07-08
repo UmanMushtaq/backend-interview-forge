@@ -6,6 +6,7 @@ import { lock } from './lock';
 import { cache } from './cache';
 import { eventEmitter } from './event-emitter';
 import { algorithms } from './algorithms';
+import { jestPractice } from './jest-practice';
 
 export const allCodingProblems: CodingProblem[] = [
   ...diContainer,
@@ -15,6 +16,7 @@ export const allCodingProblems: CodingProblem[] = [
   ...cache,
   ...eventEmitter,
   ...algorithms,
+  ...jestPractice,
 ];
 
 export const codingById: Record<string, CodingProblem> = Object.fromEntries(
