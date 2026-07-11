@@ -12,6 +12,8 @@ import {
   GitMerge,
   BrainCircuit,
   Landmark,
+  Bot,
+  Wrench,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -174,6 +176,26 @@ export const COURSES: CourseConfig[] = [
     color: 'text-violet-400',
     bar: 'bg-violet-400',
     tint: 'bg-violet-400/10',
+  },
+  {
+    id: 'jobs-scrapper',
+    title: 'jobsScrapper Deep Dive',
+    description: 'The NestJS automation service that scrapes 18 job boards, scores with AI, and delivers to Telegram.',
+    icon: Bot,
+    estimatedHours: 3,
+    color: 'text-sky-400',
+    bar: 'bg-sky-400',
+    tint: 'bg-sky-400/10',
+  },
+  {
+    id: 'forge-architecture',
+    title: 'Forge Architecture',
+    description: 'Every technical decision behind this platform: React, Vite, GitHub Pages, Gemini, Web Speech API.',
+    icon: Wrench,
+    estimatedHours: 2,
+    color: 'text-slate-400',
+    bar: 'bg-slate-400',
+    tint: 'bg-slate-400/10',
   },
 ];
 

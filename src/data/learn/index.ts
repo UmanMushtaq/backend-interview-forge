@@ -13,6 +13,8 @@ import { testing } from './testing';
 import { microservices } from './microservices';
 import { dsa } from './dsa';
 import { nexuspay } from './nexuspay';
+import { jobsScrapper } from './jobs-scrapper';
+import { forgeArchitecture } from './forge-architecture';
 
 // Ordered as a learning path: language fundamentals first, then runtime,
 // frameworks, data stores, messaging, design, and testing.
@@ -31,6 +33,8 @@ export const LEARN_MODULES: LearnModule[] = [
   microservices,
   dsa,
   nexuspay,
+  jobsScrapper,
+  forgeArchitecture,
 ];
 
 export const moduleById: Record<string, LearnModule> = Object.fromEntries(
