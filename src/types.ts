@@ -202,6 +202,31 @@ export interface LastActivity {
   timestamp: number;
 }
 
+export interface DesignSession {
+  id: string; // unique session id
+  timestamp: number; // when it happened
+  challengeTitle: string; // what Gemini asked you to design
+  difficulty: string; // Beginner | Intermediate | Advanced
+  focusArea: string; // e.g. "caching", "message queues", "load balancing"
+  score: number; // 0-10 from Gemini
+  timeSpentSeconds: number; // how long the user spent on this challenge
+  componentCount: number; // how many components they placed
+  connectionCount: number; // how many arrows they drew
+  weakAreasIdentified: string[]; // specific weak areas Gemini identified this session
+  passed: boolean; // score >= 6
+}
+
+export interface DesignLearningProfile {
+  totalSessions: number;
+  currentLevel: number; // 1-5: 1=Beginner, 2=Elementary, 3=Intermediate, 4=Advanced, 5=Expert
+  xp: number; // earned XP, 10 per pass, 2 per attempt
+  weakAreas: Record<string, number>; // focusArea -> number of times struggled
+  strongAreas: Record<string, number>; // focusArea -> number of times passed quickly
+  averageScore: number;
+  averageTimeSeconds: number;
+  sessions: DesignSession[]; // all past sessions, max 50 kept
+}
+
 export interface ProgressState {
   quizProgress: Record<string, QuizProgressEntry>;
   codingProgress: Record<string, CodingProgressEntry>;
@@ -213,4 +238,5 @@ export interface ProgressState {
   settings: Settings;
   lastActivity?: LastActivity;
   bookmarks?: Array<{ courseId: string; lessonId: string }>;
+  designLearningProfile?: DesignLearningProfile;
 }

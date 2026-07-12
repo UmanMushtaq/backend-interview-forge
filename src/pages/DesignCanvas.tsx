@@ -16,12 +16,19 @@ import {
   X,
   Sparkles,
   Loader2,
-  CheckCircle2,
-  Circle,
+  Clock,
+  Lightbulb,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { getState } from '../lib/storage';
-import { getApiKeys, reviewSystemDesign } from '../lib/gemini';
+import type { DesignSession, DesignLearningProfile } from '../types';
+import { getState, getDesignLearningProfile, recordDesignSession } from '../lib/storage';
+import {
+  getApiKeys,
+  reviewSystemDesign,
+  generateDesignChallenge,
+  teachFromDesign,
+  getDesignWeakAreaSummary,
+} from '../lib/gemini';
 import { ConfirmButton } from '../components/Confirm';
 
 type ComponentType =
@@ -71,6 +78,31 @@ interface ReviewResult {
   suggestedImprovements: string[];
 }
 
+interface GeneratedChallenge {
+  title: string;
+  description: string;
+  difficulty: string;
+  focusArea: string;
+  learningGoal: string;
+  suggestedComponents: string[];
+  hints: string[];
+}
+
+interface TeachingResult {
+  teachingExplanation: string;
+  conceptToReview: string;
+  courseLink: string;
+  improvedDesignDescription: string;
+  encouragement: string;
+}
+
+interface WeakAreaSummary {
+  summary: string;
+  topWeakAreas: string[];
+  studyPlan: string[];
+  nextChallengeFocus: string;
+}
+
 const COMPONENT_META: Record<
   ComponentType,
   { paletteLabel: string; defaultLabel: string; icon: LucideIcon; border: string; bg: string; text: string }
@@ -114,197 +146,30 @@ const PRESET_SCENARIOS = [
 ];
 
 type CanvasMode = 'free' | 'guided';
-type ChallengeDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
 
-interface GuidedChallenge {
-  id: string;
-  level: number;
-  title: string;
-  difficulty: ChallengeDifficulty;
-  description: string;
-  requiredComponents: ComponentType[];
-  hints: string[];
-  minConnections: number;
-}
+const LEVEL_LABELS: Record<number, string> = {
+  1: 'Beginner',
+  2: 'Elementary',
+  3: 'Intermediate',
+  4: 'Advanced',
+  5: 'Expert',
+};
 
-const GUIDED_CHALLENGES: GuidedChallenge[] = [
-  {
-    id: 'gc-1',
-    level: 1,
-    title: 'A single server',
-    difficulty: 'Beginner',
-    description:
-      'Draw the simplest possible web system: a browser making a request to a server, which reads from a database. This is where everything starts.',
-    requiredComponents: ['client', 'service', 'database'],
-    hints: [
-      'Start with a Client on the left',
-      'Add a Service (your backend) in the middle',
-      'Add a Database on the right',
-      'Draw arrows showing the request flow',
-    ],
-    minConnections: 2,
-  },
-  {
-    id: 'gc-2',
-    level: 2,
-    title: 'Add a cache',
-    difficulty: 'Beginner',
-    description:
-      'Your API is slow because every request hits the database. Add a Redis cache between your service and database to speed up reads.',
-    requiredComponents: ['client', 'service', 'cache', 'database'],
-    hints: [
-      'Add a Cache between your Service and Database',
-      'The Service checks the cache first, then the database on a miss',
-    ],
-    minConnections: 3,
-  },
-  {
-    id: 'gc-3',
-    level: 3,
-    title: 'Handle more traffic',
-    difficulty: 'Beginner',
-    description:
-      'Your one server cannot handle the load. Add a load balancer and a second service instance to distribute traffic.',
-    requiredComponents: ['client', 'load-balancer', 'service', 'service', 'database'],
-    hints: [
-      'Add a Load Balancer between the Client and your Services',
-      'Add two Service boxes to show multiple instances',
-      'Both services share the same database',
-    ],
-    minConnections: 4,
-  },
-  {
-    id: 'gc-4',
-    level: 4,
-    title: 'Add an API Gateway',
-    difficulty: 'Beginner',
-    description:
-      'Add an API Gateway as the single entry point. It handles auth and rate limiting before requests reach your services.',
-    requiredComponents: ['client', 'api-gateway', 'load-balancer', 'service', 'database'],
-    hints: [
-      'The API Gateway sits between the Client and the Load Balancer',
-      'Label the connection from Client to Gateway as "HTTPS"',
-      'Label the arrow from Gateway as "validated request"',
-    ],
-    minConnections: 4,
-  },
-  {
-    id: 'gc-5',
-    level: 5,
-    title: 'Make it async',
-    difficulty: 'Intermediate',
-    description:
-      'Your service needs to send a welcome email when a user registers. This should not slow down the registration response. Add a message queue to handle it asynchronously.',
-    requiredComponents: ['client', 'api-gateway', 'service', 'database', 'queue'],
-    hints: [
-      'The Service publishes to the Queue after saving to the database',
-      'A separate worker (another Service box) consumes from the Queue',
-      'Label the queue connection as "user.registered"',
-    ],
-    minConnections: 5,
-  },
-  {
-    id: 'gc-6',
-    level: 6,
-    title: 'Design a URL shortener',
-    difficulty: 'Intermediate',
-    description:
-      'Design bit.ly. A user submits a long URL and gets a short code. Anyone visiting the short code gets redirected. Optimise for redirects which outnumber creates 1000 to 1.',
-    requiredComponents: ['client', 'api-gateway', 'service', 'cache', 'database'],
-    hints: [
-      'Cache the short code to URL mapping in Redis',
-      'Cache hit = instant redirect, no database call',
-      'Cache miss = database lookup, then populate cache',
-    ],
-    minConnections: 5,
-  },
-  {
-    id: 'gc-7',
-    level: 7,
-    title: 'Design a notification system',
-    difficulty: 'Intermediate',
-    description:
-      'Design a system that sends notifications across email, SMS, and push. It must handle 10 million notifications per day without dropping any.',
-    requiredComponents: ['service', 'queue', 'service', 'external-api', 'database'],
-    hints: [
-      'Any service publishes notification events to a queue',
-      'A Notification Service consumes events and routes to providers',
-      'External API boxes represent email (SendGrid) and SMS (Twilio) providers',
-      'Log every send attempt to the database',
-    ],
-    minConnections: 6,
-  },
-  {
-    id: 'gc-8',
-    level: 8,
-    title: 'Design NexusPay transfers',
-    difficulty: 'Advanced',
-    description:
-      'Design the payment transfer system you built. A user sends money to another user. The system must never lose money, never double-charge, and recover from partial failures.',
-    requiredComponents: ['client', 'api-gateway', 'service', 'cache', 'queue', 'database', 'kafka'],
-    hints: [
-      'Use Redis (Cache) for the distributed lock on the wallet',
-      'Use RabbitMQ (Queue) for the Saga steps between services',
-      'Use Kafka for publishing completed transactions to analytics',
-      'Show the compensation flow: what happens if the credit step fails',
-    ],
-    minConnections: 8,
-  },
-  {
-    id: 'gc-9',
-    level: 9,
-    title: 'Design WhatsApp messaging',
-    difficulty: 'Advanced',
-    description:
-      'Design the core messaging feature of WhatsApp. Users send messages to other users. Messages must be delivered even if the recipient is offline. Support 1 billion users.',
-    requiredComponents: ['client', 'api-gateway', 'load-balancer', 'service', 'queue', 'database', 'cache'],
-    hints: [
-      'WebSocket connections keep users online',
-      'If recipient is offline, store the message and push when they reconnect',
-      'Shard the message database by user ID',
-      'Cache the last N messages per conversation in Redis',
-    ],
-    minConnections: 7,
-  },
-  {
-    id: 'gc-10',
-    level: 10,
-    title: 'Design Twitter timeline',
-    difficulty: 'Advanced',
-    description:
-      'Design the Twitter home timeline. When a user opens Twitter, they see tweets from everyone they follow, ordered by time. Design for 100 million active users.',
-    requiredComponents: ['client', 'api-gateway', 'load-balancer', 'service', 'cache', 'database', 'kafka'],
-    hints: [
-      'Fan-out on write: when someone tweets, push to all followers timelines in Redis',
-      'Fan-out on read: fetch from each followed user at read time (for users with millions of followers)',
-      'Kafka streams new tweets to the fan-out workers',
-      'Cache timelines in Redis, not the database',
-    ],
-    minConnections: 8,
-  },
-];
+const LEVEL_THRESHOLDS = [0, 30, 80, 180, 350];
 
-const GUIDED_PROGRESS_KEY = 'design-canvas-progress';
-
-function loadGuidedProgress(): Set<string> {
-  try {
-    const raw = localStorage.getItem(GUIDED_PROGRESS_KEY);
-    if (!raw) return new Set();
-    const parsed = JSON.parse(raw);
-    return new Set(Array.isArray(parsed) ? parsed : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveGuidedProgress(ids: Set<string>): void {
-  localStorage.setItem(GUIDED_PROGRESS_KEY, JSON.stringify([...ids]));
-}
-
-function difficultyBadgeClasses(difficulty: ChallengeDifficulty): string {
-  if (difficulty === 'Beginner') return 'rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success';
-  if (difficulty === 'Intermediate') return 'rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning';
+function difficultyBadgeClasses(difficulty: string): string {
+  const d = difficulty.toLowerCase();
+  if (d === 'beginner') return 'rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success';
+  if (d === 'elementary') return 'rounded-full bg-teal-400/15 px-2 py-0.5 text-[10px] font-semibold text-teal-400';
+  if (d === 'intermediate') return 'rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning';
+  if (d === 'advanced') return 'rounded-full bg-orange-400/15 px-2 py-0.5 text-[10px] font-semibold text-orange-400';
   return 'rounded-full bg-danger/15 px-2 py-0.5 text-[10px] font-semibold text-danger';
+}
+
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 const NODE_SIZE = 80;
@@ -354,8 +219,26 @@ export function DesignCanvas() {
   const [customScenario, setCustomScenario] = useState('');
 
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('free');
-  const [guidedProgress, setGuidedProgress] = useState<Set<string>>(() => loadGuidedProgress());
-  const [selectedChallengeId, setSelectedChallengeId] = useState<string>(GUIDED_CHALLENGES[0].id);
+
+  // Adaptive guided-practice state
+  const [designProfile, setDesignProfile] = useState<DesignLearningProfile>(() => getDesignLearningProfile());
+  const [activeChallenge, setActiveChallenge] = useState<GeneratedChallenge | null>(null);
+  const [challengeLoading, setChallengeLoading] = useState(false);
+  const [challengeError, setChallengeError] = useState<string | null>(null);
+  const [challengeStartTime, setChallengeStartTime] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [hintsRevealedCount, setHintsRevealedCount] = useState(0);
+  const [guidedXpGained, setGuidedXpGained] = useState<number | null>(null);
+  const [leveledUp, setLeveledUp] = useState(false);
+
+  const [teachingLoading, setTeachingLoading] = useState(false);
+  const [teachingError, setTeachingError] = useState<string | null>(null);
+  const [teachingResult, setTeachingResult] = useState<TeachingResult | null>(null);
+
+  const [weakAreaModalOpen, setWeakAreaModalOpen] = useState(false);
+  const [weakAreaLoading, setWeakAreaLoading] = useState(false);
+  const [weakAreaError, setWeakAreaError] = useState<string | null>(null);
+  const [weakAreaResult, setWeakAreaResult] = useState<WeakAreaSummary | null>(null);
 
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -367,15 +250,16 @@ export function DesignCanvas() {
 
   const hasApiKey = getApiKeys(getState().settings).length > 0;
   const effectiveScenario = scenarioChoice === 'custom' ? customScenario.trim() || 'Custom scenario' : scenarioChoice;
+  const guidedPassed = reviewResult ? reviewResult.overallScore >= 6 : false;
 
-  const currentChallengeIndex = GUIDED_CHALLENGES.findIndex((c) => c.id === selectedChallengeId);
-  const currentChallenge = currentChallengeIndex >= 0 ? GUIDED_CHALLENGES[currentChallengeIndex] : null;
-  const allChallengesComplete = GUIDED_CHALLENGES.every((c) => guidedProgress.has(c.id));
-
-  function isChallengeUnlocked(index: number): boolean {
-    if (index === 0) return true;
-    return guidedProgress.has(GUIDED_CHALLENGES[index - 1].id);
-  }
+  // Elapsed-time ticker for the active guided challenge; stops once results come in.
+  useEffect(() => {
+    if (canvasMode !== 'guided' || !activeChallenge || reviewResult) return;
+    const id = setInterval(() => {
+      setElapsedSeconds(Math.round((Date.now() - (challengeStartTime ?? Date.now())) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [canvasMode, activeChallenge, reviewResult, challengeStartTime]);
 
   function pushHistory() {
     setHistory((prev) => {
@@ -567,31 +451,146 @@ export function DesignCanvas() {
     }
   }
 
+  async function handleGenerateChallenge() {
+    if (!hasApiKey) return;
+    setChallengeLoading(true);
+    setChallengeError(null);
+    setReviewOpen(false);
+    setReviewResult(null);
+    setReviewError(null);
+    setTeachingResult(null);
+    setTeachingError(null);
+    setGuidedXpGained(null);
+    setLeveledUp(false);
+    try {
+      const result = await generateDesignChallenge(getState().settings, {
+        currentLevel: designProfile.currentLevel,
+        weakAreas: designProfile.weakAreas,
+        strongAreas: designProfile.strongAreas,
+        recentChallenges: designProfile.sessions.slice(0, 5).map((s) => s.challengeTitle),
+      });
+      setActiveChallenge(result);
+      setHintsRevealedCount(0);
+      setChallengeStartTime(Date.now());
+      setElapsedSeconds(0);
+    } catch (err) {
+      setChallengeError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setChallengeLoading(false);
+    }
+  }
+
+  function handleTryAgain() {
+    pushHistory();
+    setComponents([]);
+    setConnections([]);
+    setSelectedId(null);
+    setSelectedConnectionId(null);
+    setReviewOpen(false);
+    setReviewResult(null);
+    setReviewError(null);
+    setTeachingResult(null);
+    setTeachingError(null);
+    setGuidedXpGained(null);
+    setLeveledUp(false);
+    setChallengeStartTime(Date.now());
+    setElapsedSeconds(0);
+  }
+
   async function handleSubmitGuided() {
-    if (!hasApiKey || !currentChallenge || components.length === 0) return;
+    if (!hasApiKey || !activeChallenge || components.length < 2) return;
     setReviewOpen(true);
     setReviewLoading(true);
     setReviewError(null);
     setReviewResult(null);
+    setTeachingResult(null);
+    setTeachingError(null);
+    setGuidedXpGained(null);
+    setLeveledUp(false);
+    const startedAt = challengeStartTime ?? Date.now();
     try {
       const result = await reviewSystemDesign(
         getState().settings,
-        currentChallenge.description,
+        activeChallenge.description,
         components.map((c) => ({ id: c.id, type: c.type, label: c.label })),
         connections.map((c) => ({ from: c.from, to: c.to, label: c.label })),
       );
       setReviewResult(result);
-      if (result.overallScore >= 6 && connections.length >= currentChallenge.minConnections) {
-        setGuidedProgress((prev) => {
-          const next = new Set(prev).add(currentChallenge.id);
-          saveGuidedProgress(next);
-          return next;
-        });
+
+      const passed = result.overallScore >= 6;
+      const timeSpentSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+      const session: DesignSession = {
+        id: uid(),
+        timestamp: Date.now(),
+        challengeTitle: activeChallenge.title,
+        difficulty: activeChallenge.difficulty,
+        focusArea: activeChallenge.focusArea,
+        score: result.overallScore,
+        timeSpentSeconds,
+        componentCount: components.length,
+        connectionCount: connections.length,
+        weakAreasIdentified: passed ? [] : [activeChallenge.focusArea],
+        passed,
+      };
+
+      const previousLevel = designProfile.currentLevel;
+      recordDesignSession(session);
+      const updatedProfile = getDesignLearningProfile();
+      setDesignProfile(updatedProfile);
+      setGuidedXpGained(passed ? 10 : 2);
+      setLeveledUp(updatedProfile.currentLevel > previousLevel);
+
+      if (!passed) {
+        setTeachingLoading(true);
+        try {
+          const teaching = await teachFromDesign(
+            getState().settings,
+            { title: activeChallenge.title, focusArea: activeChallenge.focusArea, description: activeChallenge.description },
+            components.map((c) => ({ type: c.type, label: c.label })),
+            connections.map((c) => ({ from: c.from, to: c.to, label: c.label })),
+            result.overallScore,
+            {
+              bottlenecks: result.bottlenecks,
+              missingComponents: result.missingComponents,
+              scalingIssues: result.scalingIssues,
+            },
+          );
+          setTeachingResult(teaching);
+        } catch (err) {
+          setTeachingError(err instanceof Error ? err.message : String(err));
+        } finally {
+          setTeachingLoading(false);
+        }
       }
     } catch (err) {
       setReviewError(err instanceof Error ? err.message : String(err));
     } finally {
       setReviewLoading(false);
+    }
+  }
+
+  async function handleViewFullAnalysis() {
+    if (!hasApiKey || designProfile.totalSessions === 0) return;
+    setWeakAreaModalOpen(true);
+    setWeakAreaLoading(true);
+    setWeakAreaError(null);
+    setWeakAreaResult(null);
+    try {
+      const result = await getDesignWeakAreaSummary(getState().settings, {
+        weakAreas: designProfile.weakAreas,
+        sessions: designProfile.sessions.map((s) => ({
+          challengeTitle: s.challengeTitle,
+          score: s.score,
+          timeSpentSeconds: s.timeSpentSeconds,
+          passed: s.passed,
+          focusArea: s.focusArea,
+        })),
+      });
+      setWeakAreaResult(result);
+    } catch (err) {
+      setWeakAreaError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setWeakAreaLoading(false);
     }
   }
 
@@ -609,6 +608,17 @@ export function DesignCanvas() {
   }
 
   const editorConn = connections.find((c) => c.id === (pendingLabelId ?? selectedConnectionId)) ?? null;
+
+  const topWeakAreas = Object.entries(designProfile.weakAreas)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+  const topStrongAreas = Object.entries(designProfile.strongAreas)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2);
+  const xpFloor = LEVEL_THRESHOLDS[designProfile.currentLevel - 1];
+  const xpCeil = designProfile.currentLevel < 5 ? LEVEL_THRESHOLDS[designProfile.currentLevel] : xpFloor;
+  const xpProgressPercent =
+    designProfile.currentLevel >= 5 ? 100 : Math.min(100, ((designProfile.xp - xpFloor) / (xpCeil - xpFloor)) * 100);
 
   return (
     <div className="space-y-4">
@@ -673,70 +683,78 @@ export function DesignCanvas() {
             <h2 className="pt-1 text-lg font-semibold">{effectiveScenario}</h2>
           </div>
         ) : (
-          /* Guided challenge list + detail */
-          <div className="flex items-start gap-4">
-            <div className="w-[220px] shrink-0 space-y-1 rounded-xl border border-border bg-surface p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Challenges</p>
-              {GUIDED_CHALLENGES.map((c, i) => {
-                const unlocked = isChallengeUnlocked(i);
-                const completed = guidedProgress.has(c.id);
-                const isSelected = c.id === selectedChallengeId;
-                return (
+          /* AI-generated challenge panel */
+          <div className="space-y-2 rounded-xl border border-border bg-surface p-4">
+            {!activeChallenge ? (
+              <div className="flex flex-col items-center gap-3 py-4 text-center">
+                <h2 className="text-lg font-semibold">Ready for your next challenge?</h2>
+                {!hasApiKey ? (
+                  <p className="text-sm text-muted">
+                    Add your Gemini API key in{' '}
+                    <Link to="/settings" className="text-primary underline underline-offset-2 hover:opacity-80">
+                      Settings
+                    </Link>{' '}
+                    to generate a challenge.
+                  </p>
+                ) : challengeLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Gemini is choosing a challenge for you...
+                  </div>
+                ) : (
                   <button
-                    key={c.id}
-                    disabled={!unlocked}
-                    onClick={() => unlocked && setSelectedChallengeId(c.id)}
-                    className={`flex w-full items-center gap-2 rounded-lg border px-2 py-2 text-left text-xs transition ${
-                      isSelected ? 'border-primary bg-primary/10' : 'border-transparent'
-                    } ${unlocked ? 'hover:bg-surface-2' : 'cursor-not-allowed opacity-50'}`}
+                    onClick={handleGenerateChallenge}
+                    className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
                   >
-                    <span className="w-4 shrink-0 text-center text-muted">{c.level}</span>
-                    {completed ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
-                    ) : unlocked ? (
-                      <Circle className="h-3.5 w-3.5 shrink-0 text-muted/40" />
-                    ) : (
-                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted/40" />
-                    )}
-                    <span className="flex-1 truncate">{c.title}</span>
+                    <Sparkles className="h-4 w-4" />
+                    Generate Challenge
                   </button>
-                );
-              })}
-            </div>
-
-            <div className="flex-1 space-y-2 rounded-xl border border-border bg-surface p-4">
-              {allChallengesComplete ? (
-                <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
-                  <Sparkles className="h-8 w-8 text-primary" />
-                  <h2 className="text-lg font-semibold">You completed the full guided practice path.</h2>
-                  <p className="text-sm text-muted">From a single server to a Twitter-scale timeline. Nice work.</p>
+                )}
+                {challengeError && <p className="text-sm text-danger">{challengeError}</p>}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={difficultyBadgeClasses(activeChallenge.difficulty)}>{activeChallenge.difficulty}</span>
+                  <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium text-muted">
+                    {activeChallenge.focusArea}
+                  </span>
+                  <span className="ml-auto flex items-center gap-1 text-xs text-muted">
+                    <Clock className="h-3.5 w-3.5" />
+                    {formatElapsed(elapsedSeconds)}
+                  </span>
                 </div>
-              ) : (
-                currentChallenge && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <span className={difficultyBadgeClasses(currentChallenge.difficulty)}>
-                        {currentChallenge.difficulty}
-                      </span>
-                      <h2 className="text-lg font-semibold">
-                        Level {currentChallenge.level}: {currentChallenge.title}
-                      </h2>
-                    </div>
-                    <p className="text-sm text-text/90">{currentChallenge.description}</p>
-                    <details className="rounded-lg border border-border p-2">
-                      <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-primary">
-                        Show hints
-                      </summary>
-                      <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-text/90">
-                        {currentChallenge.hints.map((h, i) => (
-                          <li key={i}>{h}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  </>
-                )
-              )}
-            </div>
+                <h2 className="text-lg font-semibold">{activeChallenge.title}</h2>
+                <p className="text-sm text-text/90">{activeChallenge.description}</p>
+                <div className="rounded-lg border border-border bg-surface-2 p-2 text-xs text-muted">
+                  <span className="font-semibold text-text/80">Learning goal: </span>
+                  {activeChallenge.learningGoal}
+                </div>
+                <details className="rounded-lg border border-border p-2">
+                  <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-primary">
+                    Show hints
+                  </summary>
+                  <div className="mt-2 space-y-1">
+                    {activeChallenge.hints.slice(0, hintsRevealedCount).map((h, i) => (
+                      <p key={i} className="text-xs text-text/90">
+                        {i + 1}. {h}
+                      </p>
+                    ))}
+                    {hintsRevealedCount < activeChallenge.hints.length && (
+                      <button
+                        onClick={() => setHintsRevealedCount((n) => n + 1)}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Reveal hint {hintsRevealedCount + 1}
+                      </button>
+                    )}
+                  </div>
+                </details>
+                <button onClick={handleGenerateChallenge} className="text-xs text-muted hover:text-text hover:underline">
+                  Skip this challenge
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -784,7 +802,10 @@ export function DesignCanvas() {
 
           <button
             onClick={canvasMode === 'guided' ? handleSubmitGuided : handleReview}
-            disabled={!hasApiKey || components.length === 0 || (canvasMode === 'guided' && !currentChallenge)}
+            disabled={
+              !hasApiKey ||
+              (canvasMode === 'guided' ? !activeChallenge || components.length < 2 : components.length === 0)
+            }
             className="ml-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
           >
             <Sparkles className="h-4 w-4" />
@@ -805,8 +826,93 @@ export function DesignCanvas() {
           <p className="text-xs text-muted">Add some components to the canvas first.</p>
         )}
 
-        {/* Palette + canvas + review panel */}
+        {/* Profile panel + Palette + canvas + review/teaching panel */}
         <div className="flex items-start gap-4">
+          {/* Learning Profile panel (guided mode only) */}
+          {canvasMode === 'guided' && (
+            <div className="w-[240px] shrink-0 space-y-3 rounded-xl border border-border bg-surface p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">Learning Profile</p>
+
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary">
+                  Level {designProfile.currentLevel}
+                </span>
+                <span className="text-xs text-muted">{LEVEL_LABELS[designProfile.currentLevel]}</span>
+              </div>
+
+              <div className="space-y-1">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-500"
+                    style={{ width: `${xpProgressPercent}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-muted">
+                  {designProfile.currentLevel >= 5
+                    ? `${designProfile.xp} XP (max level)`
+                    : `${designProfile.xp} / ${xpCeil} XP`}
+                </p>
+              </div>
+
+              {designProfile.totalSessions === 0 ? (
+                <p className="text-xs text-muted">No sessions yet. Generate your first challenge.</p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="rounded-lg bg-surface-2 p-2">
+                      <div className="text-sm font-semibold">{designProfile.totalSessions}</div>
+                      <div className="text-[10px] text-muted">Sessions</div>
+                    </div>
+                    <div className="rounded-lg bg-surface-2 p-2">
+                      <div className="text-sm font-semibold">{designProfile.averageScore.toFixed(1)}</div>
+                      <div className="text-[10px] text-muted">Avg score</div>
+                    </div>
+                  </div>
+
+                  {topWeakAreas.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-warning">Weak areas</p>
+                      <div className="flex flex-wrap gap-1">
+                        {topWeakAreas.map(([area, count]) => (
+                          <span
+                            key={area}
+                            className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning"
+                          >
+                            {area} ({count})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {topStrongAreas.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-success">Strong areas</p>
+                      <div className="flex flex-wrap gap-1">
+                        {topStrongAreas.map(([area, count]) => (
+                          <span
+                            key={area}
+                            className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success"
+                          >
+                            {area} ({count})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <button
+                onClick={handleViewFullAnalysis}
+                disabled={!hasApiKey || designProfile.totalSessions === 0}
+                className="w-full rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition hover:text-text disabled:opacity-40"
+              >
+                View full analysis
+              </button>
+            </div>
+          )}
+
           {/* Palette */}
           <div className="w-[200px] shrink-0 space-y-1 rounded-xl border border-border bg-surface p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Components</p>
@@ -1021,8 +1127,8 @@ export function DesignCanvas() {
             )}
           </div>
 
-          {/* Review panel */}
-          {reviewOpen && (
+          {/* Review panel (Free Canvas mode) */}
+          {canvasMode === 'free' && reviewOpen && (
             <div className="w-[280px] shrink-0 space-y-3 rounded-xl border border-border bg-surface p-4 animate-slide-down">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Design Review</h3>
@@ -1062,8 +1168,179 @@ export function DesignCanvas() {
               )}
             </div>
           )}
+
+          {/* Teaching panel (Guided Practice mode) */}
+          {canvasMode === 'guided' && reviewOpen && (
+            <div className="w-[280px] shrink-0 space-y-3 rounded-xl border border-border bg-surface p-4 animate-slide-down">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Design Review</h3>
+                <button onClick={() => setReviewOpen(false)} className="text-muted hover:text-text">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {reviewLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Reviewing your design...
+                </div>
+              )}
+
+              {reviewError && <p className="text-sm text-danger">{reviewError}</p>}
+
+              {reviewResult && (
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <div className={`text-4xl font-bold ${scoreColor(reviewResult.overallScore)}`}>
+                      {reviewResult.overallScore}/10
+                    </div>
+                    <p className="mt-1 text-sm text-text/90">{reviewResult.verdict}</p>
+                  </div>
+
+                  {guidedPassed ? (
+                    <div className="space-y-2 rounded-lg border border-success/30 bg-success/10 p-3 text-center">
+                      <p className="text-sm font-semibold text-success">Well done! Score: {reviewResult.overallScore}/10</p>
+                      {guidedXpGained !== null && <p className="text-xs text-success/90">+{guidedXpGained} XP</p>}
+                      {leveledUp && (
+                        <div className="animate-fade-in rounded-lg bg-primary/15 p-2 text-xs font-semibold text-primary">
+                          Level up! You are now Level {designProfile.currentLevel} · {LEVEL_LABELS[designProfile.currentLevel]}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-1 rounded-lg border border-warning/30 bg-warning/10 p-3 text-center">
+                      <p className="text-sm font-semibold text-warning">
+                        Score: {reviewResult.overallScore}/10 · needs improvement
+                      </p>
+                      {guidedXpGained !== null && <p className="text-xs text-warning/90">+{guidedXpGained} XP for trying</p>}
+                    </div>
+                  )}
+
+                  <ReviewSection title="What's good" items={reviewResult.whatIsGood} color="text-success" />
+                  <ReviewSection title="Bottlenecks" items={reviewResult.bottlenecks} color="text-warning" />
+                  <ReviewSection title="Missing components" items={reviewResult.missingComponents} color="text-danger" />
+
+                  {!guidedPassed && (
+                    <>
+                      <hr className="border-border" />
+                      {teachingLoading && (
+                        <div className="flex items-center gap-2 text-sm text-muted">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Preparing a teaching breakdown...
+                        </div>
+                      )}
+                      {teachingError && <p className="text-sm text-danger">{teachingError}</p>}
+                      {teachingResult && (
+                        <div className="space-y-2">
+                          <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
+                            <Lightbulb className="h-3.5 w-3.5" />
+                            Here is what to understand
+                          </h4>
+                          <p className="text-xs text-text/90">{teachingResult.teachingExplanation}</p>
+                          <div className="rounded-lg border border-primary/30 bg-primary/10 p-2 text-xs text-text/90">
+                            <span className="font-semibold text-primary">How to fix this design: </span>
+                            {teachingResult.improvedDesignDescription}
+                          </div>
+                          <Link
+                            to={`/courses/${teachingResult.courseLink}`}
+                            className="block w-full rounded-lg border border-border px-3 py-1.5 text-center text-xs font-medium text-primary hover:bg-surface-2"
+                          >
+                            Study this concept: {teachingResult.conceptToReview}
+                          </Link>
+                          <p className="text-xs italic text-muted">{teachingResult.encouragement}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    {guidedPassed ? (
+                      <button
+                        onClick={handleGenerateChallenge}
+                        className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+                      >
+                        Next Challenge
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={handleTryAgain}
+                          className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition hover:text-text"
+                        >
+                          Try Again
+                        </button>
+                        <button
+                          onClick={handleGenerateChallenge}
+                          className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+                        >
+                          New Challenge
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Weak area analysis modal */}
+      {weakAreaModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in"
+          onClick={() => setWeakAreaModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg space-y-4 rounded-xl border border-border bg-surface p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Your Design Weak Area Analysis</h3>
+              <button onClick={() => setWeakAreaModalOpen(false)} className="text-muted hover:text-text">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {weakAreaLoading && (
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analysing your session history...
+              </div>
+            )}
+            {weakAreaError && <p className="text-sm text-danger">{weakAreaError}</p>}
+
+            {weakAreaResult && (
+              <div className="space-y-4">
+                <p className="text-sm text-text/90">{weakAreaResult.summary}</p>
+
+                <div>
+                  <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-warning">Top weak areas</h4>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-text/90">
+                    {weakAreaResult.topWeakAreas.map((a, i) => (
+                      <li key={i}>{a}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">Study plan</h4>
+                  <ol className="list-inside list-decimal space-y-1 text-sm text-text/90">
+                    {weakAreaResult.studyPlan.map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm">
+                  <span className="font-semibold text-primary">Next challenge should focus on: </span>
+                  {weakAreaResult.nextChallengeFocus}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

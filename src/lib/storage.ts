@@ -7,6 +7,8 @@ import type {
   InterviewProgressEntry,
   ModuleProgress,
   ModuleStatus,
+  DesignSession,
+  DesignLearningProfile,
 } from '../types';
 import { applyQuizAnswer } from './spacedRepetition';
 
@@ -347,6 +349,76 @@ export function toggleBookmark(courseId: string, lessonId: string): void {
 
 export function getBookmarks(s: ProgressState): Array<{ courseId: string; lessonId: string }> {
   return s.bookmarks ?? [];
+}
+
+function emptyDesignLearningProfile(): DesignLearningProfile {
+  return {
+    totalSessions: 0,
+    currentLevel: 1,
+    xp: 0,
+    weakAreas: {},
+    strongAreas: {},
+    averageScore: 0,
+    averageTimeSeconds: 0,
+    sessions: [],
+  };
+}
+
+export function getDesignLearningProfile(): DesignLearningProfile {
+  const s = getState();
+  return s.designLearningProfile ?? emptyDesignLearningProfile();
+}
+
+export function recordDesignSession(session: DesignSession): void {
+  setState((s) => {
+    const profile = s.designLearningProfile ?? emptyDesignLearningProfile();
+
+    // Update weak and strong areas
+    const weakAreas = { ...profile.weakAreas };
+    const strongAreas = { ...profile.strongAreas };
+
+    if (!session.passed) {
+      session.weakAreasIdentified.forEach((area) => {
+        weakAreas[area] = (weakAreas[area] ?? 0) + 1;
+      });
+    } else if (session.timeSpentSeconds < profile.averageTimeSeconds * 0.7) {
+      // passed quickly - it is a strong area
+      strongAreas[session.focusArea] = (strongAreas[session.focusArea] ?? 0) + 1;
+    }
+
+    // Calculate new XP
+    const xpGained = session.passed ? 10 : 2;
+    const newXp = profile.xp + xpGained;
+
+    // Level up thresholds: 1->2: 30xp, 2->3: 80xp, 3->4: 180xp, 4->5: 350xp
+    const levelThresholds = [0, 30, 80, 180, 350];
+    let newLevel = profile.currentLevel;
+    while (newLevel < 5 && newXp >= levelThresholds[newLevel]) {
+      newLevel++;
+    }
+
+    // Keep only last 50 sessions
+    const sessions = [session, ...profile.sessions].slice(0, 50);
+
+    // Recalculate averages
+    const totalSessions = profile.totalSessions + 1;
+    const averageScore = sessions.reduce((sum, sess) => sum + sess.score, 0) / sessions.length;
+    const averageTimeSeconds = sessions.reduce((sum, sess) => sum + sess.timeSpentSeconds, 0) / sessions.length;
+
+    return {
+      ...s,
+      designLearningProfile: {
+        totalSessions,
+        currentLevel: newLevel,
+        xp: newXp,
+        weakAreas,
+        strongAreas,
+        averageScore,
+        averageTimeSeconds,
+        sessions,
+      },
+    };
+  });
 }
 
 export function resetAll(): void {

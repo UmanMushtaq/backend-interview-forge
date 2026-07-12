@@ -1143,6 +1143,213 @@ Return ONLY valid JSON:
   };
 }
 
+export async function generateDesignChallenge(
+  settings: GeminiKeySettings,
+  profile: {
+    currentLevel: number;
+    weakAreas: Record<string, number>;
+    strongAreas: Record<string, number>;
+    recentChallenges: string[];
+  },
+): Promise<{
+  title: string;
+  description: string;
+  difficulty: string;
+  focusArea: string;
+  learningGoal: string;
+  suggestedComponents: string[];
+  hints: string[];
+}> {
+  const prompt = `You are an adaptive system design tutor generating a personalised challenge for a backend engineer.
+
+Candidate profile:
+- Current level: ${profile.currentLevel} out of 5 (1=Beginner, 5=Expert)
+- Weak areas (times struggled): ${JSON.stringify(profile.weakAreas)}
+- Strong areas (times succeeded): ${JSON.stringify(profile.strongAreas)}
+- Recent challenges (do not repeat these): ${profile.recentChallenges.join(', ')}
+
+Generate ONE system design challenge appropriate for this candidate's level. If they have weak areas, target those. If they just struggled with something, give them a chance to practice it again in a slightly different context. Do not repeat recent challenges.
+
+Level guidelines:
+1 (Beginner): single server, add a cache, basic load balancing
+2 (Elementary): URL shortener, notification sender, simple API with queue
+3 (Intermediate): rate limiter, job queue, basic microservices
+4 (Advanced): payment system, real-time chat, ride-sharing dispatch
+5 (Expert): Twitter timeline fan-out, WhatsApp at scale, Netflix video pipeline
+
+Return ONLY valid JSON:
+{
+  "title": "<short challenge title>",
+  "description": "<2-3 sentences describing what to design and why it is interesting>",
+  "difficulty": "<Beginner|Elementary|Intermediate|Advanced|Expert>",
+  "focusArea": "<the main concept being tested, e.g. caching, message queues, sharding>",
+  "learningGoal": "<one sentence: what understanding this challenge builds>",
+  "suggestedComponents": ["<component type names to use, e.g. client, api-gateway, cache>"],
+  "hints": ["<hint 1>", "<hint 2>", "<hint 3>"]
+}`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.8, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    !obj.title ||
+    !obj.description ||
+    !obj.difficulty ||
+    !obj.focusArea ||
+    !obj.learningGoal ||
+    !Array.isArray(obj.suggestedComponents) ||
+    !Array.isArray(obj.hints)
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    title: String(obj.title),
+    description: String(obj.description),
+    difficulty: String(obj.difficulty),
+    focusArea: String(obj.focusArea),
+    learningGoal: String(obj.learningGoal),
+    suggestedComponents: (obj.suggestedComponents as unknown[]).map(String),
+    hints: (obj.hints as unknown[]).map(String),
+  };
+}
+
+export async function teachFromDesign(
+  settings: GeminiKeySettings,
+  challenge: { title: string; focusArea: string; description: string },
+  components: Array<{ type: string; label: string }>,
+  connections: Array<{ from: string; to: string; label: string }>,
+  score: number,
+  existingFeedback: { bottlenecks: string[]; missingComponents: string[]; scalingIssues: string[] },
+): Promise<{
+  teachingExplanation: string;
+  conceptToReview: string;
+  courseLink: string;
+  improvedDesignDescription: string;
+  encouragement: string;
+}> {
+  const prompt = `You are a system design tutor helping a backend engineer who just scored ${score}/10 on a design challenge.
+
+Challenge: ${challenge.title}
+Focus area: ${challenge.focusArea}
+
+Their design had these issues:
+- Bottlenecks: ${existingFeedback.bottlenecks.join(', ')}
+- Missing components: ${existingFeedback.missingComponents.join(', ')}
+- Scaling issues: ${existingFeedback.scalingIssues.join(', ')}
+
+Now teach them. Do not just repeat the problems. Explain WHY these are problems, what breaks in production, and how to fix them with a concrete improved design.
+
+Return ONLY valid JSON:
+{
+  "teachingExplanation": "<3-5 sentences explaining the root cause of the main issue and what breaks in production without fixing it. Be specific, not generic.>",
+  "conceptToReview": "<the one concept they most need to study, e.g. 'Redis distributed locks' or 'message queue fan-out'>",
+  "courseLink": "<the most relevant course id from this list: system-design, redis, rabbitmq, kafka, microservices, nestjs, postgresql. Pick the one most relevant to the conceptToReview>",
+  "improvedDesignDescription": "<describe in 3-4 sentences what the correct design looks like, specific enough that they can redraw it>",
+  "encouragement": "<one honest encouraging sentence, not generic cheerleading>"
+}`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.5, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    !obj.teachingExplanation ||
+    !obj.conceptToReview ||
+    !obj.courseLink ||
+    !obj.improvedDesignDescription ||
+    !obj.encouragement
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    teachingExplanation: String(obj.teachingExplanation),
+    conceptToReview: String(obj.conceptToReview),
+    courseLink: String(obj.courseLink),
+    improvedDesignDescription: String(obj.improvedDesignDescription),
+    encouragement: String(obj.encouragement),
+  };
+}
+
+export async function getDesignWeakAreaSummary(
+  settings: GeminiKeySettings,
+  profile: {
+    weakAreas: Record<string, number>;
+    sessions: Array<{ challengeTitle: string; score: number; timeSpentSeconds: number; passed: boolean; focusArea: string }>;
+  },
+): Promise<{
+  summary: string;
+  topWeakAreas: string[];
+  studyPlan: string[];
+  nextChallengeFocus: string;
+}> {
+  const prompt = `Analyse this backend engineer's system design learning history and identify patterns in their struggles.
+
+Weak areas and how many times they struggled: ${JSON.stringify(profile.weakAreas)}
+
+Recent session history:
+${profile.sessions
+    .slice(0, 10)
+    .map(
+      (s) =>
+        `${s.challengeTitle}: score ${s.score}/10, ${Math.round(s.timeSpentSeconds / 60)} minutes, ${s.passed ? 'passed' : 'failed'}, focus: ${s.focusArea}`,
+    )
+    .join('\n')}
+
+Give specific, actionable insights. Do not be vague.
+
+Return ONLY valid JSON:
+{
+  "summary": "<2-3 sentences identifying the clearest pattern in their struggles>",
+  "topWeakAreas": ["<specific weak area with reason>"],
+  "studyPlan": ["<specific actionable step to improve>"],
+  "nextChallengeFocus": "<the single area they should focus on next and why>"
+}`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.4, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    !obj.summary ||
+    !Array.isArray(obj.topWeakAreas) ||
+    !Array.isArray(obj.studyPlan) ||
+    !obj.nextChallengeFocus
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    summary: String(obj.summary),
+    topWeakAreas: (obj.topWeakAreas as unknown[]).map(String),
+    studyPlan: (obj.studyPlan as unknown[]).map(String),
+    nextChallengeFocus: String(obj.nextChallengeFocus),
+  };
+}
+
 export async function reviewSystemDesign(
   settings: GeminiKeySettings,
   scenario: string,
