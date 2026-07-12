@@ -11,6 +11,7 @@ import { CodingList } from './pages/CodingList';
 import { CodingChallenge } from './pages/CodingChallenge';
 import { DesignList } from './pages/DesignList';
 import { DesignChallenge } from './pages/DesignChallenge';
+import { DesignCanvas } from './pages/DesignCanvas';
 import { SqlList } from './pages/SqlList';
 import { SqlChallenge } from './pages/SqlChallenge';
 import { InterviewQA } from './pages/InterviewQA';
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="/code/:id" element={<CodingChallenge />} />
         <Route path="/design" element={<DesignList />} />
         <Route path="/design/:id" element={<DesignChallenge />} />
+        <Route path="/design-canvas" element={<DesignCanvas />} />
         <Route path="/sql" element={<SqlList />} />
         <Route path="/sql/:id" element={<SqlChallenge />} />
         <Route path="/interview" element={<InterviewQA />} />

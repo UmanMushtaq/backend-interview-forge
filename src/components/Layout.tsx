@@ -35,6 +35,7 @@ import {
   Flag,
   ClipboardCheck,
   Mic,
+  PenLine,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -49,6 +50,7 @@ import { GlobalSearch } from './GlobalSearch';
 
 const PRACTICE = [
   { to: '/code', label: 'Coding', icon: Code2 },
+  { to: '/design-canvas', label: 'Design Canvas', icon: PenLine },
   { to: '/design', label: 'System Design', icon: Network },
   { to: '/sql', label: 'SQL', icon: Database },
   { to: '/interview-simulator', label: 'Interview Simulator', icon: BrainCircuit },
@@ -73,6 +75,7 @@ const ACCOUNT = [
 
 const SECTION_LABELS: Record<string, string> = {
   code: 'Coding',
+  'design-canvas': 'Design Canvas',
   design: 'System Design',
   sql: 'SQL',
   interview: 'Interview Q&A',

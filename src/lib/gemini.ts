@@ -1142,3 +1142,86 @@ Return ONLY valid JSON:
     modelAnswer: String(obj.modelAnswer),
   };
 }
+
+export async function reviewSystemDesign(
+  settings: GeminiKeySettings,
+  scenario: string,
+  components: Array<{ id: string; type: string; label: string }>,
+  connections: Array<{ from: string; to: string; label: string }>,
+): Promise<{
+  overallScore: number;
+  verdict: string;
+  whatIsGood: string[];
+  bottlenecks: string[];
+  missingComponents: string[];
+  securityConcerns: string[];
+  scalingIssues: string[];
+  suggestedImprovements: string[];
+}> {
+  const connectionLines = connections
+    .map((c) => {
+      const from = components.find((comp) => comp.id === c.from)?.label ?? c.from;
+      const to = components.find((comp) => comp.id === c.to)?.label ?? c.to;
+      return `${from} -> ${to}${c.label ? ` [${c.label}]` : ''}`;
+    })
+    .join('\n');
+
+  const prompt = `You are a senior system design interviewer at a European fintech company reviewing a candidate's architecture diagram.
+
+Scenario: ${scenario}
+
+The candidate drew this architecture:
+Components: ${components.map((c) => `${c.label} (${c.type})`).join(', ')}
+
+Connections:
+${connectionLines}
+
+Review this design as if it were drawn on a whiteboard in a real senior engineering interview. Score it 0-10. Be specific and honest.
+
+Return ONLY valid JSON:
+{
+  "overallScore": <0-10>,
+  "verdict": "<one precise sentence summary>",
+  "whatIsGood": ["<specific good design decision>"],
+  "bottlenecks": ["<specific bottleneck in this design>"],
+  "missingComponents": ["<component or concern not addressed>"],
+  "securityConcerns": ["<specific security issue>"],
+  "scalingIssues": ["<specific scaling problem>"],
+  "suggestedImprovements": ["<concrete actionable improvement>"]
+}`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.3, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (
+    typeof obj.overallScore !== 'number' ||
+    !obj.verdict ||
+    !Array.isArray(obj.whatIsGood) ||
+    !Array.isArray(obj.bottlenecks) ||
+    !Array.isArray(obj.missingComponents) ||
+    !Array.isArray(obj.securityConcerns) ||
+    !Array.isArray(obj.scalingIssues) ||
+    !Array.isArray(obj.suggestedImprovements)
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    overallScore: Math.max(0, Math.min(10, Math.round(obj.overallScore as number))),
+    verdict: String(obj.verdict),
+    whatIsGood: (obj.whatIsGood as unknown[]).map(String),
+    bottlenecks: (obj.bottlenecks as unknown[]).map(String),
+    missingComponents: (obj.missingComponents as unknown[]).map(String),
+    securityConcerns: (obj.securityConcerns as unknown[]).map(String),
+    scalingIssues: (obj.scalingIssues as unknown[]).map(String),
+    suggestedImprovements: (obj.suggestedImprovements as unknown[]).map(String),
+  };
+}
