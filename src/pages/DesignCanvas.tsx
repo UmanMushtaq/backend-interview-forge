@@ -16,6 +16,8 @@ import {
   X,
   Sparkles,
   Loader2,
+  CheckCircle2,
+  Circle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getState } from '../lib/storage';
@@ -111,6 +113,200 @@ const PRESET_SCENARIOS = [
   'Design a job queue system',
 ];
 
+type CanvasMode = 'free' | 'guided';
+type ChallengeDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+
+interface GuidedChallenge {
+  id: string;
+  level: number;
+  title: string;
+  difficulty: ChallengeDifficulty;
+  description: string;
+  requiredComponents: ComponentType[];
+  hints: string[];
+  minConnections: number;
+}
+
+const GUIDED_CHALLENGES: GuidedChallenge[] = [
+  {
+    id: 'gc-1',
+    level: 1,
+    title: 'A single server',
+    difficulty: 'Beginner',
+    description:
+      'Draw the simplest possible web system: a browser making a request to a server, which reads from a database. This is where everything starts.',
+    requiredComponents: ['client', 'service', 'database'],
+    hints: [
+      'Start with a Client on the left',
+      'Add a Service (your backend) in the middle',
+      'Add a Database on the right',
+      'Draw arrows showing the request flow',
+    ],
+    minConnections: 2,
+  },
+  {
+    id: 'gc-2',
+    level: 2,
+    title: 'Add a cache',
+    difficulty: 'Beginner',
+    description:
+      'Your API is slow because every request hits the database. Add a Redis cache between your service and database to speed up reads.',
+    requiredComponents: ['client', 'service', 'cache', 'database'],
+    hints: [
+      'Add a Cache between your Service and Database',
+      'The Service checks the cache first, then the database on a miss',
+    ],
+    minConnections: 3,
+  },
+  {
+    id: 'gc-3',
+    level: 3,
+    title: 'Handle more traffic',
+    difficulty: 'Beginner',
+    description:
+      'Your one server cannot handle the load. Add a load balancer and a second service instance to distribute traffic.',
+    requiredComponents: ['client', 'load-balancer', 'service', 'service', 'database'],
+    hints: [
+      'Add a Load Balancer between the Client and your Services',
+      'Add two Service boxes to show multiple instances',
+      'Both services share the same database',
+    ],
+    minConnections: 4,
+  },
+  {
+    id: 'gc-4',
+    level: 4,
+    title: 'Add an API Gateway',
+    difficulty: 'Beginner',
+    description:
+      'Add an API Gateway as the single entry point. It handles auth and rate limiting before requests reach your services.',
+    requiredComponents: ['client', 'api-gateway', 'load-balancer', 'service', 'database'],
+    hints: [
+      'The API Gateway sits between the Client and the Load Balancer',
+      'Label the connection from Client to Gateway as "HTTPS"',
+      'Label the arrow from Gateway as "validated request"',
+    ],
+    minConnections: 4,
+  },
+  {
+    id: 'gc-5',
+    level: 5,
+    title: 'Make it async',
+    difficulty: 'Intermediate',
+    description:
+      'Your service needs to send a welcome email when a user registers. This should not slow down the registration response. Add a message queue to handle it asynchronously.',
+    requiredComponents: ['client', 'api-gateway', 'service', 'database', 'queue'],
+    hints: [
+      'The Service publishes to the Queue after saving to the database',
+      'A separate worker (another Service box) consumes from the Queue',
+      'Label the queue connection as "user.registered"',
+    ],
+    minConnections: 5,
+  },
+  {
+    id: 'gc-6',
+    level: 6,
+    title: 'Design a URL shortener',
+    difficulty: 'Intermediate',
+    description:
+      'Design bit.ly. A user submits a long URL and gets a short code. Anyone visiting the short code gets redirected. Optimise for redirects which outnumber creates 1000 to 1.',
+    requiredComponents: ['client', 'api-gateway', 'service', 'cache', 'database'],
+    hints: [
+      'Cache the short code to URL mapping in Redis',
+      'Cache hit = instant redirect, no database call',
+      'Cache miss = database lookup, then populate cache',
+    ],
+    minConnections: 5,
+  },
+  {
+    id: 'gc-7',
+    level: 7,
+    title: 'Design a notification system',
+    difficulty: 'Intermediate',
+    description:
+      'Design a system that sends notifications across email, SMS, and push. It must handle 10 million notifications per day without dropping any.',
+    requiredComponents: ['service', 'queue', 'service', 'external-api', 'database'],
+    hints: [
+      'Any service publishes notification events to a queue',
+      'A Notification Service consumes events and routes to providers',
+      'External API boxes represent email (SendGrid) and SMS (Twilio) providers',
+      'Log every send attempt to the database',
+    ],
+    minConnections: 6,
+  },
+  {
+    id: 'gc-8',
+    level: 8,
+    title: 'Design NexusPay transfers',
+    difficulty: 'Advanced',
+    description:
+      'Design the payment transfer system you built. A user sends money to another user. The system must never lose money, never double-charge, and recover from partial failures.',
+    requiredComponents: ['client', 'api-gateway', 'service', 'cache', 'queue', 'database', 'kafka'],
+    hints: [
+      'Use Redis (Cache) for the distributed lock on the wallet',
+      'Use RabbitMQ (Queue) for the Saga steps between services',
+      'Use Kafka for publishing completed transactions to analytics',
+      'Show the compensation flow: what happens if the credit step fails',
+    ],
+    minConnections: 8,
+  },
+  {
+    id: 'gc-9',
+    level: 9,
+    title: 'Design WhatsApp messaging',
+    difficulty: 'Advanced',
+    description:
+      'Design the core messaging feature of WhatsApp. Users send messages to other users. Messages must be delivered even if the recipient is offline. Support 1 billion users.',
+    requiredComponents: ['client', 'api-gateway', 'load-balancer', 'service', 'queue', 'database', 'cache'],
+    hints: [
+      'WebSocket connections keep users online',
+      'If recipient is offline, store the message and push when they reconnect',
+      'Shard the message database by user ID',
+      'Cache the last N messages per conversation in Redis',
+    ],
+    minConnections: 7,
+  },
+  {
+    id: 'gc-10',
+    level: 10,
+    title: 'Design Twitter timeline',
+    difficulty: 'Advanced',
+    description:
+      'Design the Twitter home timeline. When a user opens Twitter, they see tweets from everyone they follow, ordered by time. Design for 100 million active users.',
+    requiredComponents: ['client', 'api-gateway', 'load-balancer', 'service', 'cache', 'database', 'kafka'],
+    hints: [
+      'Fan-out on write: when someone tweets, push to all followers timelines in Redis',
+      'Fan-out on read: fetch from each followed user at read time (for users with millions of followers)',
+      'Kafka streams new tweets to the fan-out workers',
+      'Cache timelines in Redis, not the database',
+    ],
+    minConnections: 8,
+  },
+];
+
+const GUIDED_PROGRESS_KEY = 'design-canvas-progress';
+
+function loadGuidedProgress(): Set<string> {
+  try {
+    const raw = localStorage.getItem(GUIDED_PROGRESS_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveGuidedProgress(ids: Set<string>): void {
+  localStorage.setItem(GUIDED_PROGRESS_KEY, JSON.stringify([...ids]));
+}
+
+function difficultyBadgeClasses(difficulty: ChallengeDifficulty): string {
+  if (difficulty === 'Beginner') return 'rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success';
+  if (difficulty === 'Intermediate') return 'rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning';
+  return 'rounded-full bg-danger/15 px-2 py-0.5 text-[10px] font-semibold text-danger';
+}
+
 const NODE_SIZE = 80;
 const HISTORY_LIMIT = 10;
 
@@ -157,6 +353,10 @@ export function DesignCanvas() {
   const [scenarioChoice, setScenarioChoice] = useState<string>(PRESET_SCENARIOS[0]);
   const [customScenario, setCustomScenario] = useState('');
 
+  const [canvasMode, setCanvasMode] = useState<CanvasMode>('free');
+  const [guidedProgress, setGuidedProgress] = useState<Set<string>>(() => loadGuidedProgress());
+  const [selectedChallengeId, setSelectedChallengeId] = useState<string>(GUIDED_CHALLENGES[0].id);
+
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
@@ -167,6 +367,15 @@ export function DesignCanvas() {
 
   const hasApiKey = getApiKeys(getState().settings).length > 0;
   const effectiveScenario = scenarioChoice === 'custom' ? customScenario.trim() || 'Custom scenario' : scenarioChoice;
+
+  const currentChallengeIndex = GUIDED_CHALLENGES.findIndex((c) => c.id === selectedChallengeId);
+  const currentChallenge = currentChallengeIndex >= 0 ? GUIDED_CHALLENGES[currentChallengeIndex] : null;
+  const allChallengesComplete = GUIDED_CHALLENGES.every((c) => guidedProgress.has(c.id));
+
+  function isChallengeUnlocked(index: number): boolean {
+    if (index === 0) return true;
+    return guidedProgress.has(GUIDED_CHALLENGES[index - 1].id);
+  }
 
   function pushHistory() {
     setHistory((prev) => {
@@ -358,6 +567,34 @@ export function DesignCanvas() {
     }
   }
 
+  async function handleSubmitGuided() {
+    if (!hasApiKey || !currentChallenge || components.length === 0) return;
+    setReviewOpen(true);
+    setReviewLoading(true);
+    setReviewError(null);
+    setReviewResult(null);
+    try {
+      const result = await reviewSystemDesign(
+        getState().settings,
+        currentChallenge.description,
+        components.map((c) => ({ id: c.id, type: c.type, label: c.label })),
+        connections.map((c) => ({ from: c.from, to: c.to, label: c.label })),
+      );
+      setReviewResult(result);
+      if (result.overallScore >= 6 && connections.length >= currentChallenge.minConnections) {
+        setGuidedProgress((prev) => {
+          const next = new Set(prev).add(currentChallenge.id);
+          saveGuidedProgress(next);
+          return next;
+        });
+      }
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
   function getCenter(comp: CanvasComponent): { x: number; y: number } {
     return { x: comp.x + NODE_SIZE / 2, y: comp.y + NODE_SIZE / 2 };
   }
@@ -389,31 +626,119 @@ export function DesignCanvas() {
           </p>
         </div>
 
-        {/* Scenario selector */}
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4">
-          <label className="text-xs font-semibold uppercase tracking-wide text-muted">Scenario</label>
-          <select
-            value={scenarioChoice}
-            onChange={(e) => setScenarioChoice(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none"
+        {/* Mode tabs */}
+        <div className="flex w-fit overflow-hidden rounded-lg border border-border">
+          <button
+            onClick={() => setCanvasMode('free')}
+            className={`px-4 py-1.5 text-sm transition ${
+              canvasMode === 'free' ? 'bg-primary text-primary-foreground' : 'text-muted hover:text-text'
+            }`}
           >
-            {PRESET_SCENARIOS.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-            <option value="custom">Custom scenario</option>
-          </select>
-          {scenarioChoice === 'custom' && (
-            <input
-              value={customScenario}
-              onChange={(e) => setCustomScenario(e.target.value)}
-              placeholder="Describe your own scenario"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none"
-            />
-          )}
-          <h2 className="pt-1 text-lg font-semibold">{effectiveScenario}</h2>
+            Free Canvas
+          </button>
+          <button
+            onClick={() => setCanvasMode('guided')}
+            className={`px-4 py-1.5 text-sm transition ${
+              canvasMode === 'guided' ? 'bg-primary text-primary-foreground' : 'text-muted hover:text-text'
+            }`}
+          >
+            Guided Practice
+          </button>
         </div>
+
+        {canvasMode === 'free' ? (
+          /* Scenario selector */
+          <div className="space-y-2 rounded-xl border border-border bg-surface p-4">
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Scenario</label>
+            <select
+              value={scenarioChoice}
+              onChange={(e) => setScenarioChoice(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none"
+            >
+              {PRESET_SCENARIOS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+              <option value="custom">Custom scenario</option>
+            </select>
+            {scenarioChoice === 'custom' && (
+              <input
+                value={customScenario}
+                onChange={(e) => setCustomScenario(e.target.value)}
+                placeholder="Describe your own scenario"
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none"
+              />
+            )}
+            <h2 className="pt-1 text-lg font-semibold">{effectiveScenario}</h2>
+          </div>
+        ) : (
+          /* Guided challenge list + detail */
+          <div className="flex items-start gap-4">
+            <div className="w-[220px] shrink-0 space-y-1 rounded-xl border border-border bg-surface p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Challenges</p>
+              {GUIDED_CHALLENGES.map((c, i) => {
+                const unlocked = isChallengeUnlocked(i);
+                const completed = guidedProgress.has(c.id);
+                const isSelected = c.id === selectedChallengeId;
+                return (
+                  <button
+                    key={c.id}
+                    disabled={!unlocked}
+                    onClick={() => unlocked && setSelectedChallengeId(c.id)}
+                    className={`flex w-full items-center gap-2 rounded-lg border px-2 py-2 text-left text-xs transition ${
+                      isSelected ? 'border-primary bg-primary/10' : 'border-transparent'
+                    } ${unlocked ? 'hover:bg-surface-2' : 'cursor-not-allowed opacity-50'}`}
+                  >
+                    <span className="w-4 shrink-0 text-center text-muted">{c.level}</span>
+                    {completed ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+                    ) : unlocked ? (
+                      <Circle className="h-3.5 w-3.5 shrink-0 text-muted/40" />
+                    ) : (
+                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted/40" />
+                    )}
+                    <span className="flex-1 truncate">{c.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex-1 space-y-2 rounded-xl border border-border bg-surface p-4">
+              {allChallengesComplete ? (
+                <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                  <h2 className="text-lg font-semibold">You completed the full guided practice path.</h2>
+                  <p className="text-sm text-muted">From a single server to a Twitter-scale timeline. Nice work.</p>
+                </div>
+              ) : (
+                currentChallenge && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className={difficultyBadgeClasses(currentChallenge.difficulty)}>
+                        {currentChallenge.difficulty}
+                      </span>
+                      <h2 className="text-lg font-semibold">
+                        Level {currentChallenge.level}: {currentChallenge.title}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-text/90">{currentChallenge.description}</p>
+                    <details className="rounded-lg border border-border p-2">
+                      <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-primary">
+                        Show hints
+                      </summary>
+                      <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-text/90">
+                        {currentChallenge.hints.map((h, i) => (
+                          <li key={i}>{h}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  </>
+                )
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface p-3">
@@ -458,12 +783,12 @@ export function DesignCanvas() {
           </span>
 
           <button
-            onClick={handleReview}
-            disabled={!hasApiKey || components.length === 0}
+            onClick={canvasMode === 'guided' ? handleSubmitGuided : handleReview}
+            disabled={!hasApiKey || components.length === 0 || (canvasMode === 'guided' && !currentChallenge)}
             className="ml-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
           >
             <Sparkles className="h-4 w-4" />
-            Review Design
+            {canvasMode === 'guided' ? 'Submit Design' : 'Review Design'}
           </button>
         </div>
 
