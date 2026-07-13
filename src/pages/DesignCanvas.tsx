@@ -18,6 +18,7 @@ import {
   Loader2,
   Clock,
   Lightbulb,
+  BookOpen,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { DesignSession, DesignLearningProfile } from '../types';
@@ -27,6 +28,7 @@ import {
   reviewSystemDesign,
   generateDesignChallenge,
   teachFromDesign,
+  teachBeforeDesign,
   getDesignWeakAreaSummary,
 } from '../lib/gemini';
 import { ConfirmButton } from '../components/Confirm';
@@ -94,6 +96,13 @@ interface TeachingResult {
   courseLink: string;
   improvedDesignDescription: string;
   encouragement: string;
+}
+
+interface PreDesignTeaching {
+  lesson: string;
+  componentExplanations: Array<{ component: string; whatItDoes: string }>;
+  simpleFlowDiagram: string;
+  keyInsight: string;
 }
 
 interface WeakAreaSummary {
@@ -234,6 +243,11 @@ export function DesignCanvas() {
   const [teachingLoading, setTeachingLoading] = useState(false);
   const [teachingError, setTeachingError] = useState<string | null>(null);
   const [teachingResult, setTeachingResult] = useState<TeachingResult | null>(null);
+
+  const [showPreTeaching, setShowPreTeaching] = useState(false);
+  const [preTeachingLoading, setPreTeachingLoading] = useState(false);
+  const [preTeachingError, setPreTeachingError] = useState<string | null>(null);
+  const [preTeaching, setPreTeaching] = useState<PreDesignTeaching | null>(null);
 
   const [weakAreaModalOpen, setWeakAreaModalOpen] = useState(false);
   const [weakAreaLoading, setWeakAreaLoading] = useState(false);
@@ -462,6 +476,8 @@ export function DesignCanvas() {
     setTeachingError(null);
     setGuidedXpGained(null);
     setLeveledUp(false);
+    setPreTeaching(null);
+    setPreTeachingError(null);
     try {
       const result = await generateDesignChallenge(getState().settings, {
         currentLevel: designProfile.currentLevel,
@@ -473,6 +489,22 @@ export function DesignCanvas() {
       setHintsRevealedCount(0);
       setChallengeStartTime(Date.now());
       setElapsedSeconds(0);
+      setShowPreTeaching(true);
+      setPreTeachingLoading(true);
+      try {
+        const teaching = await teachBeforeDesign(getState().settings, {
+          title: result.title,
+          description: result.description,
+          focusArea: result.focusArea,
+          suggestedComponents: result.suggestedComponents,
+          learningGoal: result.learningGoal,
+        });
+        setPreTeaching(teaching);
+      } catch (err) {
+        setPreTeachingError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setPreTeachingLoading(false);
+      }
     } catch (err) {
       setChallengeError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -656,6 +688,57 @@ export function DesignCanvas() {
           </button>
         </div>
 
+        {canvasMode === 'guided' && showPreTeaching && activeChallenge ? (
+          /* Teaching screen (Guided Practice mode, before the canvas appears) */
+          <div className="space-y-4 rounded-xl border border-border bg-surface p-6">
+            <h2 className="text-lg font-semibold">{activeChallenge.title}</h2>
+
+            {preTeachingLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Gemini is preparing your lesson...
+              </div>
+            ) : (
+              <>
+                <h3 className="flex items-center gap-2 text-base font-semibold text-primary">
+                  <BookOpen className="h-5 w-5" />
+                  Before you draw
+                </h3>
+
+                {preTeachingError && <p className="text-sm text-danger">{preTeachingError}</p>}
+
+                {preTeaching && (
+                  <>
+                    <p className="text-sm text-text/90">{preTeaching.lesson}</p>
+
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Key concepts</p>
+                      <ul className="space-y-1.5">
+                        {preTeaching.componentExplanations.map((c, i) => (
+                          <li key={i} className="text-sm text-text/90">
+                            <span className="font-semibold">{c.component}:</span> {c.whatItDoes}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-surface-2 p-3 font-mono text-xs text-text/90">
+                      {preTeaching.simpleFlowDiagram}
+                    </div>
+                  </>
+                )}
+
+                <button
+                  onClick={() => setShowPreTeaching(false)}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                >
+                  I understand, let me draw it
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+          <>
         {canvasMode === 'free' ? (
           /* Scenario selector */
           <div className="space-y-2 rounded-xl border border-border bg-surface p-4">
@@ -1283,6 +1366,8 @@ export function DesignCanvas() {
             </div>
           )}
         </div>
+          </>
+        )}
       </div>
 
       {/* Weak area analysis modal */}

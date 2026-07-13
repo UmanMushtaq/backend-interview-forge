@@ -1222,6 +1222,59 @@ Return ONLY valid JSON:
   };
 }
 
+export async function teachBeforeDesign(
+  settings: GeminiKeySettings,
+  challenge: { title: string; description: string; focusArea: string; suggestedComponents: string[]; learningGoal: string },
+): Promise<{
+  lesson: string;
+  componentExplanations: Array<{ component: string; whatItDoes: string }>;
+  simpleFlowDiagram: string;
+  keyInsight: string;
+}> {
+  const prompt = `You are a system design teacher. A student is about to practice drawing this architecture:
+
+Challenge: ${challenge.title}
+Description: ${challenge.description}
+Focus area: ${challenge.focusArea}
+Learning goal: ${challenge.learningGoal}
+Components they will use: ${challenge.suggestedComponents.join(', ')}
+
+Teach them BEFORE they draw. Write a short clear lesson (3-4 sentences) explaining the concept. Then explain each component in one sentence. Then give a simple text flow diagram using -> arrows showing how the components connect. Then give one key insight they must understand about this design.
+
+Return ONLY valid JSON:
+{
+  "lesson": "<3-4 sentences teaching the core concept in plain language, no jargon without explanation>",
+  "componentExplanations": [{ "component": "<component name>", "whatItDoes": "<one clear sentence>" }],
+  "simpleFlowDiagram": "<text diagram using -> arrows, e.g. Client -> API Gateway -> Service -> Database>",
+  "keyInsight": "<the single most important thing to understand about this design, one sentence>"
+}`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.5, maxOutputTokens: 1024 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (!obj.lesson || !Array.isArray(obj.componentExplanations) || !obj.simpleFlowDiagram || !obj.keyInsight) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return {
+    lesson: String(obj.lesson),
+    componentExplanations: (obj.componentExplanations as Record<string, unknown>[]).map((c) => ({
+      component: String(c.component ?? ''),
+      whatItDoes: String(c.whatItDoes ?? ''),
+    })),
+    simpleFlowDiagram: String(obj.simpleFlowDiagram),
+    keyInsight: String(obj.keyInsight),
+  };
+}
+
 export async function teachFromDesign(
   settings: GeminiKeySettings,
   challenge: { title: string; focusArea: string; description: string },
