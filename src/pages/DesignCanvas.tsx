@@ -18,7 +18,8 @@ import {
   Loader2,
   Clock,
   Lightbulb,
-  BookOpen,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { DesignSession, DesignLearningProfile } from '../types';
@@ -28,7 +29,7 @@ import {
   reviewSystemDesign,
   generateDesignChallenge,
   teachFromDesign,
-  teachBeforeDesign,
+  generateWalkthroughSteps,
   getDesignWeakAreaSummary,
 } from '../lib/gemini';
 import { ConfirmButton } from '../components/Confirm';
@@ -98,11 +99,16 @@ interface TeachingResult {
   encouragement: string;
 }
 
-interface PreDesignTeaching {
-  lesson: string;
-  componentExplanations: Array<{ component: string; whatItDoes: string }>;
-  simpleFlowDiagram: string;
-  keyInsight: string;
+interface WalkthroughStep {
+  stepNumber: number;
+  componentType: string;
+  componentLabel: string;
+  heading: string;
+  explanation: string;
+  whyItMatters: string;
+  whatBreaksWithout: string;
+  connectionFrom?: string;
+  connectionLabel?: string;
 }
 
 interface WeakAreaSummary {
@@ -244,10 +250,12 @@ export function DesignCanvas() {
   const [teachingError, setTeachingError] = useState<string | null>(null);
   const [teachingResult, setTeachingResult] = useState<TeachingResult | null>(null);
 
-  const [showPreTeaching, setShowPreTeaching] = useState(false);
-  const [preTeachingLoading, setPreTeachingLoading] = useState(false);
-  const [preTeachingError, setPreTeachingError] = useState<string | null>(null);
-  const [preTeaching, setPreTeaching] = useState<PreDesignTeaching | null>(null);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [walkthroughLoading, setWalkthroughLoading] = useState(false);
+  const [walkthroughError, setWalkthroughError] = useState<string | null>(null);
+  const [walkthroughSteps, setWalkthroughSteps] = useState<WalkthroughStep[]>([]);
+  const [walkthroughStepIndex, setWalkthroughStepIndex] = useState(0);
+  const [showCompleteBanner, setShowCompleteBanner] = useState(false);
 
   const [weakAreaModalOpen, setWeakAreaModalOpen] = useState(false);
   const [weakAreaLoading, setWeakAreaLoading] = useState(false);
@@ -274,6 +282,17 @@ export function DesignCanvas() {
     }, 1000);
     return () => clearInterval(id);
   }, [canvasMode, activeChallenge, reviewResult, challengeStartTime]);
+
+  // Clear the auto-populated "complete architecture" preview once the banner has had its moment.
+  useEffect(() => {
+    if (!showCompleteBanner) return;
+    const id = setTimeout(() => {
+      setComponents([]);
+      setConnections([]);
+      setShowCompleteBanner(false);
+    }, 3000);
+    return () => clearTimeout(id);
+  }, [showCompleteBanner]);
 
   function pushHistory() {
     setHistory((prev) => {
@@ -476,8 +495,10 @@ export function DesignCanvas() {
     setTeachingError(null);
     setGuidedXpGained(null);
     setLeveledUp(false);
-    setPreTeaching(null);
-    setPreTeachingError(null);
+    setWalkthroughSteps([]);
+    setWalkthroughStepIndex(0);
+    setWalkthroughError(null);
+    setShowCompleteBanner(false);
     try {
       const result = await generateDesignChallenge(getState().settings, {
         currentLevel: designProfile.currentLevel,
@@ -489,27 +510,62 @@ export function DesignCanvas() {
       setHintsRevealedCount(0);
       setChallengeStartTime(Date.now());
       setElapsedSeconds(0);
-      setShowPreTeaching(true);
-      setPreTeachingLoading(true);
+      setShowWalkthrough(true);
+      setWalkthroughLoading(true);
       try {
-        const teaching = await teachBeforeDesign(getState().settings, {
+        const steps = await generateWalkthroughSteps(getState().settings, {
           title: result.title,
           description: result.description,
           focusArea: result.focusArea,
           suggestedComponents: result.suggestedComponents,
           learningGoal: result.learningGoal,
         });
-        setPreTeaching(teaching);
+        setWalkthroughSteps(steps);
       } catch (err) {
-        setPreTeachingError(err instanceof Error ? err.message : String(err));
+        setWalkthroughError(err instanceof Error ? err.message : String(err));
       } finally {
-        setPreTeachingLoading(false);
+        setWalkthroughLoading(false);
       }
     } catch (err) {
       setChallengeError(err instanceof Error ? err.message : String(err));
     } finally {
       setChallengeLoading(false);
     }
+  }
+
+  function handleFinishWalkthrough() {
+    const laidOutComponents: CanvasComponent[] = walkthroughSteps.map((step, i) => {
+      const row = Math.floor(i / 4);
+      const col = i % 4;
+      const type = (COMPONENT_META[step.componentType as ComponentType] ? step.componentType : 'service') as ComponentType;
+      return {
+        id: uid(),
+        type,
+        label: step.componentLabel,
+        x: 80 + col * 180,
+        y: row === 0 ? 200 : 380,
+      };
+    });
+
+    const labelToId = new Map(walkthroughSteps.map((step, i) => [step.componentLabel, laidOutComponents[i].id]));
+
+    const laidOutConnections: Connection[] = [];
+    walkthroughSteps.forEach((step, i) => {
+      if (!step.connectionFrom) return;
+      const fromId = labelToId.get(step.connectionFrom);
+      if (!fromId) return;
+      laidOutConnections.push({
+        id: uid(),
+        from: fromId,
+        to: laidOutComponents[i].id,
+        label: step.connectionLabel ?? '',
+      });
+    });
+
+    setComponents(laidOutComponents);
+    setConnections(laidOutConnections);
+    setShowWalkthrough(false);
+    setShowCompleteBanner(true);
   }
 
   function handleTryAgain() {
@@ -688,54 +744,113 @@ export function DesignCanvas() {
           </button>
         </div>
 
-        {canvasMode === 'guided' && showPreTeaching && activeChallenge ? (
-          /* Teaching screen (Guided Practice mode, before the canvas appears) */
-          <div className="space-y-4 rounded-xl border border-border bg-surface p-6">
-            <h2 className="text-lg font-semibold">{activeChallenge.title}</h2>
-
-            {preTeachingLoading ? (
-              <div className="flex items-center gap-2 text-sm text-muted">
+        {canvasMode === 'guided' && showWalkthrough && activeChallenge ? (
+          /* Walkthrough screen (Guided Practice mode, before the canvas appears) */
+          <div className="rounded-xl border border-border bg-surface p-6">
+            {walkthroughLoading ? (
+              <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Gemini is preparing your lesson...
+                Gemini is preparing your walkthrough...
               </div>
-            ) : (
-              <>
-                <h3 className="flex items-center gap-2 text-base font-semibold text-primary">
-                  <BookOpen className="h-5 w-5" />
-                  Before you draw
-                </h3>
-
-                {preTeachingError && <p className="text-sm text-danger">{preTeachingError}</p>}
-
-                {preTeaching && (
-                  <>
-                    <p className="text-sm text-text/90">{preTeaching.lesson}</p>
-
-                    <div>
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Key concepts</p>
-                      <ul className="space-y-1.5">
-                        {preTeaching.componentExplanations.map((c, i) => (
-                          <li key={i} className="text-sm text-text/90">
-                            <span className="font-semibold">{c.component}:</span> {c.whatItDoes}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="rounded-lg border border-border bg-surface-2 p-3 font-mono text-xs text-text/90">
-                      {preTeaching.simpleFlowDiagram}
-                    </div>
-                  </>
-                )}
-
+            ) : walkthroughError ? (
+              <div className="flex flex-col items-center gap-3 py-16 text-center">
+                <p className="text-sm text-danger">{walkthroughError}</p>
                 <button
-                  onClick={() => setShowPreTeaching(false)}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                  onClick={() => setShowWalkthrough(false)}
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition hover:text-text"
                 >
-                  I understand, let me draw it
+                  Continue to canvas
                 </button>
-              </>
-            )}
+              </div>
+            ) : walkthroughSteps.length > 0 ? (
+              (() => {
+                const currentStep = walkthroughSteps[walkthroughStepIndex];
+                const isLastStep = walkthroughStepIndex === walkthroughSteps.length - 1;
+                const meta = COMPONENT_META[currentStep.componentType as ComponentType] ?? COMPONENT_META.service;
+                const Icon = meta.icon;
+                return (
+                  <div className="space-y-4">
+                    {/* Top bar */}
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold">{activeChallenge.title}</h2>
+                      <span className="text-xs text-muted">
+                        Step {walkthroughStepIndex + 1} of {walkthroughSteps.length}
+                      </span>
+                    </div>
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-surface-2">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-300"
+                        style={{ width: `${((walkthroughStepIndex + 1) / walkthroughSteps.length) * 100}%` }}
+                      />
+                    </div>
+
+                    {/* Main content */}
+                    <div className="mx-auto max-w-[640px] space-y-6 py-8 text-center">
+                      <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                        {currentStep.stepNumber}
+                      </span>
+                      <h3 className="text-xl font-semibold">{currentStep.heading}</h3>
+
+                      <div className="flex flex-col items-center gap-3">
+                        {currentStep.connectionFrom && (
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-muted">{currentStep.connectionFrom}</span>
+                            <span className="flex flex-col items-center text-primary">
+                              <span>&rarr;</span>
+                              {currentStep.connectionLabel && (
+                                <span className="text-[10px] text-muted">{currentStep.connectionLabel}</span>
+                              )}
+                            </span>
+                            <span className="font-semibold text-primary">[{currentStep.componentLabel}]</span>
+                          </div>
+                        )}
+                        <div
+                          className={`flex min-h-[120px] w-[160px] flex-col items-center justify-center gap-2 rounded-2xl border-2 ${meta.border} ${meta.bg}`}
+                        >
+                          <Icon className={`h-12 w-12 ${meta.text}`} />
+                          <span className="text-sm font-semibold text-text">{currentStep.componentLabel}</span>
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-text/90">{currentStep.explanation}</p>
+
+                      <div className="grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
+                        <div className="rounded-lg border border-success/30 bg-success/10 p-3">
+                          <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-success">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Why it matters
+                          </h4>
+                          <p className="mt-1 text-xs text-text/90">{currentStep.whyItMatters}</p>
+                        </div>
+                        <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                          <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-warning">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            What breaks without it
+                          </h4>
+                          <p className="mt-1 text-xs text-text/90">{currentStep.whatBreaksWithout}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2">
+                        <button
+                          onClick={() => setWalkthroughStepIndex((i) => Math.max(0, i - 1))}
+                          disabled={walkthroughStepIndex === 0}
+                          className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition hover:text-text disabled:opacity-40"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={isLastStep ? handleFinishWalkthrough : () => setWalkthroughStepIndex((i) => i + 1)}
+                          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                        >
+                          {isLastStep ? 'See complete design' : 'Next'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : null}
           </div>
         ) : (
           <>
@@ -907,6 +1022,12 @@ export function DesignCanvas() {
         )}
         {hasApiKey && components.length === 0 && (
           <p className="text-xs text-muted">Add some components to the canvas first.</p>
+        )}
+
+        {showCompleteBanner && (
+          <div className="rounded-xl border border-success/30 bg-success/10 p-3 text-center text-sm font-medium text-success animate-fade-in">
+            Here is the complete design. Now it is your turn to draw it from scratch.
+          </div>
         )}
 
         {/* Profile panel + Palette + canvas + review/teaching panel */}

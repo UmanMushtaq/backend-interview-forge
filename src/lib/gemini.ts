@@ -1275,6 +1275,74 @@ Return ONLY valid JSON:
   };
 }
 
+export async function generateWalkthroughSteps(
+  settings: GeminiKeySettings,
+  challenge: { title: string; description: string; focusArea: string; suggestedComponents: string[]; learningGoal: string },
+): Promise<Array<{
+  stepNumber: number;
+  componentType: string;
+  componentLabel: string;
+  heading: string;
+  explanation: string;
+  whyItMatters: string;
+  whatBreaksWithout: string;
+  connectionFrom?: string;
+  connectionLabel?: string;
+}>> {
+  const prompt = `You are a system design teacher walking a student through an architecture one component at a time.
+
+Challenge: ${challenge.title}
+Description: ${challenge.description}
+Focus area: ${challenge.focusArea}
+Learning goal: ${challenge.learningGoal}
+Components to use: ${challenge.suggestedComponents.join(', ')}
+
+Generate a step-by-step walkthrough. Each step introduces ONE component, explains what it does, why it matters, and what breaks without it. Also specify how this component connects to the previous one.
+
+Return ONLY a valid JSON array:
+[
+  {
+    "stepNumber": 1,
+    "componentType": "<one of: client, api-gateway, load-balancer, service, database, cache, queue, kafka, cdn, external-api, auth, storage>",
+    "componentLabel": "<display label for this component, e.g. 'Browser Client' or 'PostgreSQL DB'>",
+    "heading": "<short heading for this step, e.g. 'Start with the Client'>",
+    "explanation": "<2-3 sentences explaining what this component is in plain language. No jargon without explanation.>",
+    "whyItMatters": "<1-2 sentences explaining why this component exists in this specific design>",
+    "whatBreaksWithout": "<1 sentence: what goes wrong if this component is missing>",
+    "connectionFrom": "<componentLabel of the previous component this connects FROM, omit for step 1>",
+    "connectionLabel": "<label for the arrow, e.g. 'HTTPS request' or 'SQL query', omit for step 1>"
+  }
+]
+
+Write as many steps as there are components. Make the explanation conversational and clear, like a teacher at a whiteboard talking to a student.`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.6, maxOutputTokens: 2048 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error('Gemini did not return a walkthrough step array. Try again.');
+  }
+
+  return (parsed as Record<string, unknown>[]).map((s, i) => ({
+    stepNumber: Number(s.stepNumber ?? i + 1),
+    componentType: String(s.componentType ?? ''),
+    componentLabel: String(s.componentLabel ?? ''),
+    heading: String(s.heading ?? ''),
+    explanation: String(s.explanation ?? ''),
+    whyItMatters: String(s.whyItMatters ?? ''),
+    whatBreaksWithout: String(s.whatBreaksWithout ?? ''),
+    connectionFrom: s.connectionFrom ? String(s.connectionFrom) : undefined,
+    connectionLabel: s.connectionLabel ? String(s.connectionLabel) : undefined,
+  }));
+}
+
 export async function teachFromDesign(
   settings: GeminiKeySettings,
   challenge: { title: string; focusArea: string; description: string },
