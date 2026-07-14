@@ -253,6 +253,8 @@ export interface ArchitectureModule {
   title: string;
   blurb: string;
   lessons: ArchitectureLesson[];
+  /** Titles of lessons planned for this module but not yet written; shown as upcoming. */
+  plannedLessons?: string[];
 }
 
 export type ArchitectureVerdict = 'correct' | 'partially-correct' | 'missing-something';
