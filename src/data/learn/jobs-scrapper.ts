@@ -22,6 +22,53 @@ In an interview, introduce jobsScrapper in under 20 seconds: "I built a NestJS s
       `.trim(),
     },
     {
+      id: 'jobs-scrapper-full-pipeline-diagram',
+      title: 'The full pipeline in one diagram',
+      content: `
+Every lesson in this course so far has walked through one piece of jobsScrapper at a time: the scheduler, the adapters, the scoring, the Gemini pipeline, the Telegram delivery. This lesson puts all of those pieces on one diagram, the same way you would have to draw the whole pipeline if an interviewer asked you to whiteboard how a job posting actually becomes a message in your Telegram chat.
+
+The diagram also marks the one known bug in the system: tapping the inline Applied or Dismissed button in Telegram currently triggers an unwanted scroll or navigation in the chat, a callback-handling issue that has not been fixed yet. Marking it here, the same way the NexusPay diagram marks its own known bug, is deliberate. A working pipeline with one named, understood bug is a stronger thing to bring into an interview than a vague claim that everything works perfectly, because that second claim is rarely true of any real system, and interviewers know it.
+
+\`\`\`mermaid
+flowchart TB
+    CRON["Scheduler - runs every 3 hours (Render)"] --> ORCH["Scraper Orchestrator"]
+
+    ORCH --> AD1["Job Board Adapter (JobSource interface)"]
+    ORCH --> AD2["Job Board Adapter (JobSource interface)"]
+    ORCH --> ADN["... 18 Job Board Adapters total"]
+
+    AD1 --> DEDUP{"Redis Dedup Check (Upstash, TTL-based)"}
+    AD2 --> DEDUP
+    ADN --> DEDUP
+
+    DEDUP -->|"seen before"| DISCARD["Discard"]
+    DEDUP -->|"new job"| SCORE["Match Scoring Engine"]
+
+    SCORE --> GEM["Gemini AI Enrichment"]
+    GEM -->|"outputs"| RESULT["Relevance score / Fraud flag / Cover letter / ATS gap analysis / Salary estimate"]
+
+    GEM -.->|"multi-key rotation across up to 10 keys"| KEYS[("Gemini API Keys")]
+    GEM -.->|"fallback chain"| MODELS["gemini-2.5-flash -> gemini-2.5-flash-8b -> gemini-2.0-flash-exp"]
+
+    RESULT --> TG["Telegram Bot"]
+    TG --> USER["Uman - inline Applied / Dismissed buttons"]
+    USER -.->|"callback query (known bug: causes unwanted scroll/navigation)"| TG
+
+    DEDUP -.-> REDIS[("Upstash Redis")]
+
+    subgraph Hosting
+        RENDERAPP["jobsScrapper service"]
+    end
+    ORCH --- RENDERAPP
+
+    classDef bug fill:#fee,stroke:#c00,color:#900
+    class USER bug
+\`\`\`
+
+In an interview, this diagram is worth two specific talking points beyond simply describing what the pipeline does. First, the 18 job board adapters are a clean, real-world example of the adapter pattern: each board has its own class implementing one shared JobSource interface, so the orchestrator, the dedup check, and the scoring engine never need to know which specific board a job came from. Second, the multi-key rotation across up to 10 Gemini API keys, falling back through gemini-2.5-flash, gemini-2.5-flash-8b, and gemini-2.0-flash-exp, is a practical, honest answer to a real constraint: free-tier API quotas. Naming both of these specifically, the pattern and the constraint it solves, says more about your engineering judgment than just saying you built a scraper.
+      `.trim(),
+    },
+    {
       id: 'jobs-scrapper-monolith',
       title: 'The architecture: one NestJS service doing many jobs',
       content: `
