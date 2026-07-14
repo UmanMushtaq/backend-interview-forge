@@ -227,6 +227,45 @@ export interface DesignLearningProfile {
   sessions: DesignSession[]; // all past sessions, max 50 kept
 }
 
+// ---------------------------------------------------------------------------
+// Architecture Studio: Read -> Design -> Review lessons
+// ---------------------------------------------------------------------------
+
+export interface ArchitectureDesignChallenge {
+  /** The canvas prompt shown before drawing, e.g. "Add the component that fixes this." */
+  prompt: string;
+  /** What Gemini checks for when reviewing the student's canvas. */
+  gradingCriteria: string[];
+  /** Optional restricted component palette for this lesson's canvas; defaults to the full palette. */
+  allowedComponents?: string[];
+}
+
+export interface ArchitectureLesson {
+  id: string;
+  title: string;
+  /** markdown, the "Read" part of the lesson */
+  content: string;
+  designChallenge: ArchitectureDesignChallenge;
+}
+
+export interface ArchitectureModule {
+  id: string;
+  title: string;
+  blurb: string;
+  lessons: ArchitectureLesson[];
+}
+
+export type ArchitectureVerdict = 'correct' | 'partially-correct' | 'missing-something';
+
+export interface ArchitectureLessonProgress {
+  read: boolean;
+  designed: boolean;
+  reviewed: boolean;
+  lastVerdict?: ArchitectureVerdict;
+  lastFeedback?: string;
+  lastAttemptAt?: number;
+}
+
 export interface ProgressState {
   quizProgress: Record<string, QuizProgressEntry>;
   codingProgress: Record<string, CodingProgressEntry>;
@@ -239,4 +278,6 @@ export interface ProgressState {
   lastActivity?: LastActivity;
   bookmarks?: Array<{ courseId: string; lessonId: string }>;
   designLearningProfile?: DesignLearningProfile;
+  /** Architecture Studio progress, keyed by lesson id. */
+  architectureProgress?: Record<string, ArchitectureLessonProgress>;
 }

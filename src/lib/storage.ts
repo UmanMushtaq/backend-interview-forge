@@ -9,6 +9,8 @@ import type {
   ModuleStatus,
   DesignSession,
   DesignLearningProfile,
+  ArchitectureLessonProgress,
+  ArchitectureVerdict,
 } from '../types';
 import { applyQuizAnswer } from './spacedRepetition';
 
@@ -418,6 +420,67 @@ export function recordDesignSession(session: DesignSession): void {
         sessions,
       },
     };
+  });
+}
+
+function emptyArchitectureLessonProgress(): ArchitectureLessonProgress {
+  return { read: false, designed: false, reviewed: false };
+}
+
+export function getArchitectureLessonProgress(lessonId: string): ArchitectureLessonProgress {
+  return getState().architectureProgress?.[lessonId] ?? emptyArchitectureLessonProgress();
+}
+
+/** Marks a lesson's "Read" step done; counts as a chapter read for the heatmap/streak. */
+export function markArchitectureLessonRead(lessonId: string): void {
+  setState((s) => {
+    const prev = s.architectureProgress?.[lessonId] ?? emptyArchitectureLessonProgress();
+    if (prev.read) return s;
+    const withProgress: ProgressState = {
+      ...s,
+      architectureProgress: { ...s.architectureProgress, [lessonId]: { ...prev, read: true } },
+      lastActivity: { label: 'Architecture Studio', path: '/architecture-studio', timestamp: Date.now() },
+    };
+    return bumpStudyToday(withProgress, 0, 0, 1);
+  });
+}
+
+/** Marks a lesson's "Design" step done (the student placed a canvas layout). */
+export function markArchitectureLessonDesigned(lessonId: string): void {
+  setState((s) => {
+    const prev = s.architectureProgress?.[lessonId] ?? emptyArchitectureLessonProgress();
+    if (prev.designed) return s;
+    return {
+      ...s,
+      architectureProgress: { ...s.architectureProgress, [lessonId]: { ...prev, designed: true } },
+    };
+  });
+}
+
+/** Records the Gemini review verdict; counts as a question answered for heatmap/streak. */
+export function recordArchitectureReview(
+  lessonId: string,
+  verdict: ArchitectureVerdict,
+  feedback: string,
+): void {
+  setState((s) => {
+    const prev = s.architectureProgress?.[lessonId] ?? emptyArchitectureLessonProgress();
+    const withProgress: ProgressState = {
+      ...s,
+      architectureProgress: {
+        ...s.architectureProgress,
+        [lessonId]: {
+          ...prev,
+          designed: true,
+          reviewed: true,
+          lastVerdict: verdict,
+          lastFeedback: feedback,
+          lastAttemptAt: Date.now(),
+        },
+      },
+      lastActivity: { label: 'Architecture Studio', path: '/architecture-studio', timestamp: Date.now() },
+    };
+    return bumpStudyToday(withProgress, 1, 0, 0);
   });
 }
 
