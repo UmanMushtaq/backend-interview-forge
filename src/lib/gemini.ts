@@ -639,6 +639,62 @@ Return ONLY valid JSON:
   };
 }
 
+export async function reviewArchitectureStudioDesign(
+  settings: GeminiKeySettings,
+  lesson: { title: string; concept: string; gradingCriteria: string[] },
+  design: {
+    components: Array<{ type: string; label: string }>;
+    connections: Array<{ from: string; to: string; label: string }>;
+  },
+): Promise<{ verdict: 'correct' | 'partially-correct' | 'missing-something'; reason: string }> {
+  const componentLines = design.components.length > 0
+    ? design.components.map((c) => `${c.label} (${c.type})`).join(', ')
+    : 'none';
+  const connectionLines = design.connections.length > 0
+    ? design.connections.map((c) => `${c.from} -> ${c.to}${c.label ? ` [${c.label}]` : ''}`).join(', ')
+    : 'none';
+
+  const prompt = `You are grading a system design canvas exercise inside an Architecture Studio lesson called "${lesson.title}".
+
+The concept being tested: ${lesson.concept}
+
+Grading criteria:
+${lesson.gradingCriteria.map((c) => `- ${c}`).join('\n')}
+
+The student drew this on the canvas:
+Components: ${componentLines}
+Connections: ${connectionLines}
+
+Give a short, direct verdict on whether the student's canvas satisfies the grading criteria. Never use em dashes in your response; use a comma or period instead.
+
+Return ONLY valid JSON:
+{
+  "verdict": "correct" | "partially-correct" | "missing-something",
+  "reason": "<one direct sentence explaining the verdict>"
+}`;
+
+  const raw = await callGeminiWithSettings(settings, prompt, { temperature: 0.3, maxOutputTokens: 300 });
+
+  let parsed: unknown;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/m, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini response was not valid JSON. Try again.');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  const verdict = obj.verdict;
+  if (
+    (verdict !== 'correct' && verdict !== 'partially-correct' && verdict !== 'missing-something') ||
+    !obj.reason
+  ) {
+    throw new Error('Gemini returned an unexpected shape. Try again.');
+  }
+
+  return { verdict, reason: String(obj.reason) };
+}
+
 export async function testGeminiConnection(apiKey: string): Promise<void> {
   await callGemini([apiKey], 'Reply with the single word: OK', {
     temperature: 0,
