@@ -240,6 +240,60 @@ In an interview, say: "Each service owns its data - that is the bounded context 
       `.trim(),
     },
     {
+      id: 'nexuspay-full-system-diagram',
+      title: 'The full system in one diagram',
+      content: `
+Every architecture diagram you have seen so far in this course, the bounded contexts, the KYC sequence, the Saga steps, has shown one slice of NexusPay at a time. None of them show the whole system at once, the way you would actually have to draw it on a whiteboard if an interviewer said "walk me through the whole architecture." This lesson gives you that single diagram.
+
+What makes this diagram useful is not that it is comprehensive, plenty of architecture diagrams are comprehensive and still misleading. What makes it useful is that it is honest. It shows the two services that are still empty scaffolds, Notification Service and Payment Gateway Service, with no real logic behind them yet. It shows the one confirmed bug in the system: the Transaction Service's Redis distributed lock currently has a key mismatch, so the mutual exclusion it is supposed to provide during a transfer does not actually work as intended right now. This is the real current state of the project, not the target state on a roadmap slide.
+
+Being honest about gaps and bugs in an interview is a strength, not a weakness, and it is worth saying that directly before you look at the diagram. A candidate who claims every part of their project is finished and bug-free either has not built anything real, or is not being straight with the interviewer, and experienced interviewers can tell the difference. A candidate who says these two services are scaffolded but not wired up yet, and here is a specific bug and how it would be fixed, sounds like someone who has actually operated the system, because that is exactly what operating a real system looks like.
+
+\`\`\`mermaid
+flowchart TB
+    FE["React Dashboard"] --> GW["API Gateway (NestJS)"]
+
+    GW --> US["User Service"]
+    GW --> WS["Wallet Service"]
+    GW --> TS["Transaction Service"]
+    GW --> PGS["Payment Gateway Service (empty scaffold)"]
+
+    US -->|"publishes user.kyc.approved"| MQ1(("RabbitMQ - fanout"))
+    MQ1 --> WS
+    MQ1 --> NS["Notification Service (empty scaffold)"]
+
+    TS -->|"1. publishes transaction.debit.requested"| MQ2(("RabbitMQ - Saga orchestration"))
+    MQ2 -->|"2. command"| WS
+    WS -->|"3. publishes wallet.debited"| MQ2
+    MQ2 -->|"4. publishes transaction.credit.requested"| WS
+    WS -->|"5. publishes wallet.credited"| MQ2
+    MQ2 -->|"6. triggers COMPLETED"| TS
+
+    TS -->|"7. publishes transaction.completed"| KF(("Kafka topic: transactions.stream"))
+    KF --> AS["Analytics Service"]
+    KF -.->|"planned: independent consumer group"| FD["Fraud Detection (not built)"]
+
+    US --> UDB[("user_db")]
+    WS --> WDB[("wallet_db")]
+    TS --> TDB[("transaction_db")]
+    NS -.-> NDB[("notification_db")]
+    AS --> ADB[("analytics_db")]
+    PGS -.-> PDB[("payment_db")]
+
+    TS -.->|"distributed lock: SET lock:wallet:id NX EX 30 (currently broken - key mismatch)"| RD[("Redis")]
+    US -.->|"profile cache TTL 5min + rate limiting"| RD
+    GW -.->|"JWT refresh token blacklist"| RD
+
+    classDef broken fill:#fee,stroke:#c00,color:#900
+    classDef empty fill:#eee,stroke:#999,color:#666,stroke-dasharray: 5 5
+    class TS broken
+    class NS,PGS,FD empty
+\`\`\`
+
+In an interview, if asked to whiteboard NexusPay's architecture, this is the exact diagram to draw, in this order: client to gateway, gateway to the four wired services, the KYC fanout through RabbitMQ, the transfer Saga through RabbitMQ, the transaction stream through Kafka, then the databases and Redis roles. Mention the two empty services, Notification and Payment Gateway, and the Transaction Service's lock bug proactively, before the interviewer has a chance to spot them and ask. Owning a known gap out loud reads as senior. Getting caught trying to hide one reads as junior, and it undermines trust in everything else you say about the parts that do work.
+      `.trim(),
+    },
+    {
       id: 'nexuspay-kyc-flow',
       title: 'The KYC flow end to end',
       content: `
