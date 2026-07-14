@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Search, X, Compass } from 'lucide-react';
 import { LEARN_MODULES } from '../data/learn';
 import { courseConfigById } from '../data/courseConfig';
+import { ARCHITECTURE_MODULES } from '../data/architecture';
 
 interface SearchResult {
   courseId: string;
@@ -10,6 +11,10 @@ interface SearchResult {
   courseTitle: string;
   lessonTitle: string;
   snippet: string;
+  /** Where this result navigates to; defaults to the Learn course path if omitted. */
+  path: string;
+  /** Undefined uses the course's own icon/color (Learn courses); set for non-course sources. */
+  sourceIcon?: typeof Compass;
 }
 
 function highlight(text: string, query: string): React.ReactNode {
@@ -77,8 +82,31 @@ export function GlobalSearch({ open, onClose }: Props) {
             courseTitle: courseConfigById[mod.id]?.title ?? mod.title,
             lessonTitle: lesson.title,
             snippet: getSnippet(lesson.content, q),
+            path: `/courses/${mod.id}/${lesson.id}`,
           });
           courseCount++;
+        }
+      }
+    }
+
+    for (const mod of ARCHITECTURE_MODULES) {
+      let moduleCount = 0;
+      for (const lesson of mod.lessons) {
+        if (moduleCount >= 5) break;
+        if (results.length >= 20) break;
+        const inTitle = lesson.title.toLowerCase().includes(q.toLowerCase());
+        const inContent = lesson.content.slice(0, 500).toLowerCase().includes(q.toLowerCase());
+        if (inTitle || inContent) {
+          results.push({
+            courseId: `architecture-studio:${mod.id}`,
+            lessonId: lesson.id,
+            courseTitle: `Architecture Studio · ${mod.title}`,
+            lessonTitle: lesson.title,
+            snippet: getSnippet(lesson.content, q),
+            path: `/architecture-studio/${mod.id}/${lesson.id}`,
+            sourceIcon: Compass,
+          });
+          moduleCount++;
         }
       }
     }
@@ -90,8 +118,8 @@ export function GlobalSearch({ open, onClose }: Props) {
     return acc;
   }, {});
 
-  function goTo(courseId: string, lessonId: string) {
-    navigate(`/courses/${courseId}/${lessonId}`);
+  function goTo(path: string) {
+    navigate(path);
     onClose();
   }
 
@@ -135,11 +163,11 @@ export function GlobalSearch({ open, onClose }: Props) {
             <div className="divide-y divide-border">
               {Object.entries(grouped).map(([courseId, items]) => {
                 const cfg = courseConfigById[courseId];
-                const Icon = cfg?.icon;
+                const Icon = items[0].sourceIcon ?? cfg?.icon;
                 return (
                   <div key={courseId} className="py-2">
                     <div className="flex items-center gap-2 px-4 py-1.5">
-                      {Icon && <Icon className={`h-3.5 w-3.5 ${cfg.color}`} />}
+                      {Icon && <Icon className={`h-3.5 w-3.5 ${cfg?.color ?? 'text-primary'}`} />}
                       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
                         {items[0].courseTitle}
                       </span>
@@ -147,7 +175,7 @@ export function GlobalSearch({ open, onClose }: Props) {
                     {items.map((r) => (
                       <button
                         key={r.lessonId}
-                        onClick={() => goTo(r.courseId, r.lessonId)}
+                        onClick={() => goTo(r.path)}
                         className="flex w-full flex-col gap-0.5 px-4 py-2.5 text-left transition hover:bg-surface-2"
                       >
                         <span className="text-sm font-medium text-text">

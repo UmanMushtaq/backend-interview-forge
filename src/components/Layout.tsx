@@ -36,6 +36,7 @@ import {
   ClipboardCheck,
   Mic,
   PenLine,
+  Compass,
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useProgressState } from '../hooks/useProgress';
@@ -43,6 +44,7 @@ import { logStudyMinutes } from '../lib/storage';
 import { computeStreaks } from '../lib/scoring';
 import { COURSES, courseConfigById } from '../data/courseConfig';
 import { moduleById } from '../data/learn';
+import { architectureModuleById } from '../data/architecture';
 import { courseProgress, overallChapterProgress, readSetFor } from '../lib/courses';
 import { getReviewQueue } from '../lib/spacedRepetition';
 import { OnboardingModal } from './OnboardingModal';
@@ -51,6 +53,7 @@ import { GlobalSearch } from './GlobalSearch';
 const PRACTICE = [
   { to: '/code', label: 'Coding', icon: Code2 },
   { to: '/design-canvas', label: 'Design Canvas', icon: PenLine },
+  { to: '/architecture-studio', label: 'Architecture Studio', icon: Compass },
   { to: '/design', label: 'System Design', icon: Network },
   { to: '/sql', label: 'SQL', icon: Database },
   { to: '/interview-simulator', label: 'Interview Simulator', icon: BrainCircuit },
@@ -76,6 +79,7 @@ const ACCOUNT = [
 const SECTION_LABELS: Record<string, string> = {
   code: 'Coding',
   'design-canvas': 'Design Canvas',
+  'architecture-studio': 'Architecture Studio',
   design: 'System Design',
   sql: 'SQL',
   interview: 'Interview Q&A',
@@ -170,6 +174,13 @@ export function Layout({ children }: { children: ReactNode }) {
     if (root === 'learn') {
       const crumbs = ['Learn'];
       if (a) crumbs.push(moduleById[a]?.title ?? a);
+      return crumbs;
+    }
+    if (root === 'architecture-studio') {
+      const crumbs = ['Architecture Studio'];
+      const mod = a ? architectureModuleById[a] : undefined;
+      if (mod) crumbs.push(mod.title);
+      if (mod && b) crumbs.push(mod.lessons.find((l) => l.id === b)?.title ?? b);
       return crumbs;
     }
     const label = SECTION_LABELS[root] ?? root.charAt(0).toUpperCase() + root.slice(1);
