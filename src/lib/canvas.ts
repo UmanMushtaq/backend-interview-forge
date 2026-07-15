@@ -91,6 +91,33 @@ export const ALL_COMPONENT_TYPES: ComponentType[] = [
 
 export const NODE_SIZE = 80;
 
+// ---------------------------------------------------------------------------
+// Read-only preset diagrams: same node/connection shape as the interactive
+// canvas, but hardcoded data for a static, non-editable diagram embedded in
+// lesson content (see CanvasBoard's presetNodes/presetConnections props).
+// ---------------------------------------------------------------------------
+
+export interface PresetNode {
+  id: string;
+  type: ComponentType;
+  label: string;
+  x: number;
+  y: number;
+  /** Visual flag for a node that is broken (red ring) or an empty scaffold (dashed grey ring). */
+  status?: 'broken' | 'empty';
+  /** Shown as a tooltip on the status badge, e.g. "Redis key mismatch". */
+  note?: string;
+}
+
+export interface PresetConnection {
+  id: string;
+  from: string;
+  to: string;
+  label: string;
+  /** Step number rendered as a small numbered badge near the start of the arrow. */
+  step: number;
+}
+
 export function uid(): string {
   return Math.random().toString(36).slice(2, 10);
 }
